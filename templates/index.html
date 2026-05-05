@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Live Marker Detection</title>
+    <!-- Import the component -->
+    <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+    <script nomodule src="https://unpkg.com/@google/model-viewer/dist/model-viewer-legacy.js"></script>
+</head>
+<body>
+    <h1>Live Marker Detection</h1>
+    <div id="marker-info">No markers detected.</div>
+
+    <!-- Use it like an HTML element -->
+    <model-viewer
+        orientation="0 0 0"
+        shadow-intensity="1"
+        id="viewer"
+        src='{{ url_for("static", filename="models/yourmodel.gltf") }}'>
+    </model-viewer>
+
+    <script>
+        // Ensure DOM is loaded before accessing elements
+        document.addEventListener('DOMContentLoaded', (event) => {
+            const modelViewerTransform = document.querySelector("model-viewer#viewer");
+                  // Define the updateOrientation function
+            const updateOrientation = (yawValue) => {
+                const roll = 0;  // Hardcoded roll value
+                const pitch = 0; // Hardcoded pitch value
+                console.log("Updating orientation with " + yawValue)
+                // Update orientation of modelViewerTransform
+                modelViewerTransform.orientation = `${roll}deg ${pitch}deg ${yawValue}deg`;
+                modelViewerTransform.updateFraming();
+            };
+            // Log to confirm if the model viewer element is found
+            if (modelViewerTransform == null) {
+                console.log("Modelviewer not found");
+            } else {
+                console.log("Modelviewer found");
+            }
+
+            const eventSource = new EventSource('/stream');
+
+            eventSource.onmessage = function(event) {
+                console.log('New markers detected:', event.data);
+                if (event.data && event.data !== "[]") {
+                    document.getElementById('marker-info').textContent = 'Detected markers: ' + event.data;
+                    updateOrientation(event.data);
+                    console.log("Orientation Update")
+                }
+            };
+
+
+        });
+    </script>
+</body>
+</html>
