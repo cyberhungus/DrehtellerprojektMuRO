@@ -11,46 +11,46 @@
     <h1>Live Marker Detection</h1>
     <div id="marker-info">No markers detected.</div>
 
-    <!-- Use it like an HTML element -->
     <model-viewer
         orientation="0 0 0"
+        camera-orbit="10deg 55deg 4m"
         shadow-intensity="1"
         id="viewer"
         src='{{ url_for("static", filename="models/yourmodel.gltf") }}'>
     </model-viewer>
 
     <script>
-        // Ensure DOM is loaded before accessing elements
+        let targetYaw = 0;
+        let currentYaw = 0;
+        const step = 0.1; // Step size in degrees
+
         document.addEventListener('DOMContentLoaded', (event) => {
             const modelViewerTransform = document.querySelector("model-viewer#viewer");
-                  // Define the updateOrientation function
-            const updateOrientation = (yawValue) => {
-                const roll = 0;  // Hardcoded roll value
-                const pitch = 0; // Hardcoded pitch value
-                console.log("Updating orientation with " + yawValue)
-                // Update orientation of modelViewerTransform
-                modelViewerTransform.orientation = `${roll}deg ${pitch}deg ${yawValue}deg`;
-                modelViewerTransform.updateFraming();
-            };
-            // Log to confirm if the model viewer element is found
-            if (modelViewerTransform == null) {
+
+            if (!modelViewerTransform) {
                 console.log("Modelviewer not found");
-            } else {
-                console.log("Modelviewer found");
+                return;
             }
 
-            const eventSource = new EventSource('/stream');
+            console.log("Modelviewer found");
 
+            const eventSource = new EventSource('/stream');
             eventSource.onmessage = function(event) {
                 console.log('New markers detected:', event.data);
                 if (event.data && event.data !== "[]") {
                     document.getElementById('marker-info').textContent = 'Detected markers: ' + event.data;
-                    updateOrientation(event.data);
-                    console.log("Orientation Update")
+                    targetYaw = parseFloat(event.data.replace("[","").replace("]","")); // Update target yaw
                 }
             };
 
-
+            setInterval(() => {
+                const difference = targetYaw - currentYaw;
+                if (Math.abs(difference) > 0.01) {
+                    currentYaw += step * Math.sign(difference);
+                    modelViewerTransform.orientation = `0deg 0deg ${currentYaw}deg`;
+                      modelViewerTransform.updateFraming();
+                }
+            }, 20); // Update every 20 milliseconds
         });
     </script>
 </body>
