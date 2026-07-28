@@ -1,0 +1,429 @@
+:root {
+    --marker-green: #6cb33f;
+}
+
+html, body {
+    font-family: Arial, sans-serif;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+}
+
+body {
+    position: relative; /* establishes a positioning context for the overlay */
+}
+
+#viewer-container {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+}
+
+model-viewer {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    z-index: 1;
+}
+
+/* SVG layer that holds the dynamically drawn connector lines.
+   pointer-events:none so it never blocks interaction with the model. */
+#connector-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 5;
+}
+
+/* ---------------------------------------------------
+   Bottom button row + open/close toggle
+   --------------------------------------------------- */
+
+/* Small circular toggle, fixed to bottom-right, shown when the
+   button row is closed */
+#open-buttons-toggle {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    border: none;
+    background-color: #e0e0e0;
+    color: #888;
+    font-size: 1.4rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 20;
+    transition: background 0.2s ease, transform 0.15s ease;
+}
+
+#open-buttons-toggle:hover {
+    background-color: #9f9f9f;
+    transform: scale(1.05);
+}
+
+/* Bottom-buttons row starts hidden, off-screen below the viewport */
+.bottom-buttons {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    justify-content: stretch;
+    gap: 0.5rem;
+    padding: 1rem;
+    background: transparent;
+    box-sizing: border-box;
+    z-index: 20;
+
+    transform: translateY(100%);
+    opacity: 0;
+    pointer-events: none;
+    transition: transform 0.25s ease, opacity 0.25s ease;
+}
+
+.bottom-buttons.open {
+    transform: translateY(0);
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.btn {
+    flex: 1 1 0; /* grow/shrink equally so buttons split the width evenly */
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    outline: #000000 solid 4px;
+    outline-offset: -2px;
+    border-radius: 0 0 1rem 0;
+    background-color: #404040;
+    color: #ffffff;
+    padding: 1.4rem 1rem; /* taller vertical padding */
+    min-height: 130px; /* explicit floor so height is consistent even with short labels */
+    font-size: 1.1rem;
+    border: none;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    appearance: none;
+    -webkit-appearance: none;
+    transition: outline-color 0.2s ease, color 0.2s ease, transform 0.15s ease;
+}
+
+.btn img {
+    width: 44px;
+    height: 44px;
+    object-fit: contain;
+    display: block;
+}
+
+.btn span {
+    position: absolute;
+    top: 0.7rem;
+    left: 0.9rem;
+    font-size: 0.85rem;
+    color: inherit;
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+}
+
+/* Explicitly pin the resting appearance on click/focus so the
+   browser's default button active/focus styling (which can flash
+   the background white) never shows through. */
+.btn:active,
+.btn:focus,
+.btn:focus-visible {
+    background-color: #404040;
+    color: #ffffff;
+    outline-color: #000000;
+    outline-style: solid;
+}
+
+.btn.selected {
+    color: var(--marker-green);
+    outline-color: var(--marker-green);
+    outline-width: 4px;
+}
+
+.btn.selected:hover {
+
+}
+
+.btn.selected:active,
+.btn.selected:focus,
+.btn.selected:focus-visible {
+    background-color: #404040;
+    color: var(--marker-green);
+    outline-color: var(--marker-green);
+}
+
+/* Back button — styled distinctly from the other .btn buttons, and
+   excluded from the select/toggle behavior (see script.js) */
+.btn-back {
+    flex: 0 0 90px; /* fixed width instead of growing like the others */
+    outline: none;
+    border-radius: 0 0 1rem 0;
+    background-color: #e0e0e0;
+    color: #555;
+    font-size: 1.4rem;
+    font-weight: 700;
+}
+
+.btn-back:hover {
+    background-color: #cccccc;
+    color: #555; /* override .btn:hover's green/white so it keeps its own look */
+    transform: none;
+}
+
+.btn-back:active,
+.btn-back:focus,
+.btn-back:focus-visible {
+    background-color: #cccccc;
+    color: #555;
+}
+
+/* ---------------------------------------------------
+   AR marker / hotspot styling
+   Circle with a plus icon. The annotation card sits
+   below the hotspot; the connecting line between them
+   is drawn dynamically in JS (see #connector-overlay),
+   not with CSS, since model-viewer repositions hotspots
+   every frame as the camera / model moves.
+   --------------------------------------------------- */
+
+.hotspot {
+    --hotspot-light: var(--marker-green);
+    --hotspot-dark: #4a8a2c;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background-color: var(--hotspot-light);
+    border: 4px solid var(--hotspot-dark);
+    box-sizing: border-box;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+    position: relative;
+    z-index: 6;
+    cursor: pointer;
+}
+
+.hotspot--blue {
+    --hotspot-light: #29abe2;
+    --hotspot-dark: #0f6fb0;
+}
+
+.hotspot--pink {
+    --hotspot-light: #ec0f8c;
+    --hotspot-dark: #a0006e;
+}
+
+/* White inner circle */
+.hotspot::before {
+    content: "";
+    position: absolute;
+    width: 34px;
+    height: 34px;
+    background-color: #ffffff;
+    border-radius: 50%;
+}
+
+/* Right-pointing chevron arrow, drawn with a rotated corner border */
+.hotspot::after {
+    content: "";
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    border-top: 3px solid var(--hotspot-dark);
+    border-right: 3px solid var(--hotspot-dark);
+    border-radius: 1px;
+    transform: rotate(45deg);
+    margin-left: -3px;
+}
+
+.hotspot[slot="hotspot-repeat"] {
+    --min-hotspot-opacity: 0;
+}
+
+.hotspot[slot="hotspot-backside"] {
+    --min-hotspot-opacity: 0;
+}
+
+/* ---------------------------------------------------
+   Shared annotation panel
+   Sits on top of the model-viewer, positioned/colored
+   per the hotspot that opened it. Left column = text,
+   right column = 1–2 stacked images.
+   --------------------------------------------------- */
+
+.annotation-panel {
+    --panel-color: var(--marker-green);
+
+    position: absolute;
+    top: 5%;
+    left: 5%;
+    right: 5%;
+    bottom: 20%;
+    z-index: 15;
+
+    display: none;
+    width: auto;
+    height: auto;
+    max-height: none;
+    overflow: auto;
+    flex: none; /* don't grow/shrink if ever placed in a flex context */
+
+    background-color: #ffffff;
+    border: 3px solid var(--panel-color);
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    box-sizing: border-box;
+
+
+    transition: opacity 0.2s ease;
+}
+
+.annotation-panel.active {
+    display: block;
+    opacity: 95%;
+}
+
+.annotation-panel.type-green {
+    --panel-color: var(--marker-green);
+}
+
+.annotation-panel.type-blue {
+    --panel-color: #3f82c6;
+}
+
+.annotation-panel.type-pink {
+    --panel-color: #c63f96;
+}
+
+.annotation-close {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 60px;
+    height: 60px;
+    border: none;
+    border-radius: 50%;
+    background-color: #f0f0f0;
+    color: #555;
+    font-size: 1.3rem;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1;
+    transition: background 0.2s ease;
+}
+
+.annotation-close:hover {
+    background-color: #e0e0e0;
+}
+
+.annotation-content {
+    display: flex;
+    flex-direction: row;
+    gap: 1.25rem;
+    padding: 20px;
+    min-height: 100%;
+    box-sizing: border-box;
+
+}
+
+.annotation-text {
+    flex: 1 1 55%;
+    min-width: 0;
+    margin-left: 1.5rem;
+}
+
+.annotation-images {
+    flex: 1 1 45%;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-right: 1.5rem;
+    margin-top: 1.5rem;
+    align-self: center;
+}
+
+.annotation-images img {
+    width: 100%;
+    height: auto;
+    max-height: 160px;
+    object-fit: cover;
+    border-radius: 8px;
+    display: block;
+}
+
+/* If there's only one image, let it take fuller height */
+.annotation-images:has(img:only-child) img {
+    max-height: 320px;
+}
+
+.annotation-label {
+    display: block;
+    color: var(--panel-color);
+    font-weight: 700;
+    font-size: 0.85rem;
+    margin-bottom: 4px;
+}
+
+.annotation-title {
+    font-weight: 800;
+    font-size: 1.6rem;
+    letter-spacing: 0.5px;
+    margin: 0 0 8px 0;
+    color: #111;
+}
+
+.annotation-body {
+    font-size: 0.85rem;
+    line-height: 1.4;
+    color: #333;
+    margin: 0;
+}
+
+/* This keeps child nodes hidden while the element loads */
+:not(:defined) > * {
+    display: none;
+}
+
+
+/* ---------------------------------------------------
+   Top-right logo
+   --------------------------------------------------- */
+
+#top-left-logo {
+    position: fixed;
+    top: 24px;
+    left: 24px;
+    width: 100px;
+    height: 50px;
+    z-index: 20;
+    filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.15));
+}
+
+#top-left-logo svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+}

@@ -2,56 +2,87 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Live Marker Detection</title>
+    <title>DO Messedisplay</title>
     <!-- Import the component -->
-    <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
-    <script nomodule src="https://unpkg.com/@google/model-viewer/dist/model-viewer-legacy.js"></script>
+    <script type="module" src="{{ url_for('static', filename='js/vendor/model-viewer.min.js') }}"></script>
+    <link href="{{ url_for('static', filename='css/vendor/bootstrap.min.css') }}" rel="stylesheet">
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
 </head>
 <body>
-    <h1>Live Marker Detection</h1>
-    <div id="marker-info">No markers detected.</div>
-
+<div id="viewer-container">
     <model-viewer
-        orientation="0 0 0"
-        camera-orbit="10deg 55deg 4m"
-        shadow-intensity="1"
-        id="viewer"
-        src='{{ url_for("static", filename="models/yourmodel.gltf") }}'>
+            orientation="0 0 0"
+            camera-orbit="20deg 75deg 150m"
+            camera-target="auto 8.5m auto"
+            camera-controls
+            shadow-intensity="10"
+            orbit-sensitivity="33"
+            pan-sensitivity="0.000001"
+            animation-name='CubeAction'
+            id="viewer"
+            src='{{ url_for("static", filename="models/boot.gltf") }}'>
+        <!-- Hotspot buttons are generated dynamically by script.js from hotspotData -->
     </model-viewer>
 
-    <script>
-        let targetYaw = 0;
-        let currentYaw = 0;
-        const step = 0.1; // Step size in degrees
 
-        document.addEventListener('DOMContentLoaded', (event) => {
-            const modelViewerTransform = document.querySelector("model-viewer#viewer");
+    <!-- Shared annotation panel: populated dynamically on hotspot click -->
+    <div id="annotation-panel" class="annotation-panel">
+        <button type="button" class="annotation-close" aria-label="Close">&times;</button>
+        <div class="annotation-content">
+            <div class="annotation-text">
+                <span class="annotation-label"></span>
+                <h3 class="annotation-title"></h3>
+                <p class="annotation-body"></p>
+            </div>
+            <div class="annotation-images"></div>
+        </div>
+    </div>
+</div>
 
-            if (!modelViewerTransform) {
-                console.log("Modelviewer not found");
-                return;
-            }
+<!-- Logo / brand mark, fixed to the top-right corner -->
+<div id="top-left-logo" aria-hidden="true">
+    <svg viewBox="0 0 100 50" xmlns="http://www.w3.org/2000/svg">
+        <rect x="1.5" y="1.5" width="97" height="47" rx="8" fill="#ffffff" stroke="var(--marker-green)"
+              stroke-width="3"/>
+        <path d="M28 27 L38 37 L72 15" fill="none" stroke="var(--marker-green)" stroke-width="5" stroke-linecap="round"
+              stroke-linejoin="round"/>
+    </svg>
+</div>
 
-            console.log("Modelviewer found");
+<!-- Toggle to open the bottom button row; hidden once the row is open -->
+<button type="button" id="open-buttons-toggle" aria-label="Show buttons">&lt;</button>
 
-            const eventSource = new EventSource('/stream');
-            eventSource.onmessage = function(event) {
-                console.log('New markers detected:', event.data);
-                if (event.data && event.data !== "[]") {
-                    document.getElementById('marker-info').textContent = 'Detected markers: ' + event.data;
-                    targetYaw = parseFloat(event.data.replace("[","").replace("]","")); // Update target yaw
-                }
-            };
+<div id="bottom-buttons" class="bottom-buttons">
 
-            setInterval(() => {
-                const difference = targetYaw - currentYaw;
-                if (Math.abs(difference) > 0.01) {
-                    currentYaw += step * Math.sign(difference);
-                    modelViewerTransform.orientation = `0deg 0deg ${currentYaw}deg`;
-                      modelViewerTransform.updateFraming();
-                }
-            }, 20); // Update every 20 milliseconds
-        });
-    </script>
+    <button type="button" id="btn-1" class="btn">
+        <img src="{{ url_for('static', filename='images/icons/btn-1.svg') }}" alt="">
+        <span>Button 1</span>
+    </button>
+    <button type="button" id="btn-2" class="btn">
+        <img src="{{ url_for('static', filename='images/icons/btn-2.svg') }}" alt="">
+        <span>Button 2</span>
+    </button>
+    <button type="button" id="btn-3" class="btn">
+        <img src="{{ url_for('static', filename='images/icons/btn-3.svg') }}" alt="">
+        <span>Button 3</span>
+    </button>
+    <button type="button" id="btn-4" class="btn">
+        <img src="{{ url_for('static', filename='images/icons/btn-4.svg') }}" alt="">
+        <span>Button 4</span>
+    </button>
+    <button type="button" id="btn-5" class="btn">
+        <img src="{{ url_for('static', filename='images/icons/btn-5.svg') }}" alt="">
+        <span>Button 5</span>
+    </button>
+    <button type="button" id="btn-6" class="btn">
+        <img src="{{ url_for('static', filename='images/icons/btn-6.svg') }}" alt="">
+        <span>Button 6</span>
+    </button>
+    <button type="button" class="btn btn-back" aria-label="Close buttons">&gt;</button>
+</div>
+
+<script src="{{ url_for('static', filename='js/script.js') }}"></script>
 </body>
 </html>
