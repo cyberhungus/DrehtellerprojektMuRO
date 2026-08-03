@@ -12,7 +12,15 @@
 </head>
 <body>
 <div id="viewer-container">
+    <!-- One model-viewer per model, all loaded up front and stacked
+         in the same container. switchModel() in script.js toggles
+         which one has the "active" class (display) rather than
+         swapping a single viewer's src. Hotspots for each model are
+         rendered once, directly into their own viewer, at page load. -->
     <model-viewer
+            class="model-viewer-instance active"
+            id="viewer-boot"
+            data-model-name="boot"
             orientation="0 0 0"
             camera-orbit="20deg 75deg 150m"
             camera-target="auto 8.5m auto"
@@ -21,13 +29,45 @@
             orbit-sensitivity="33"
             pan-sensitivity="0.000001"
             animation-name='CubeAction'
-            id="viewer"
             src='{{ url_for("static", filename="models/boot.gltf") }}'>
-        <!-- Hotspot buttons are generated dynamically by script.js from hotspotData -->
+        <!-- Hotspot buttons are generated dynamically by script.js from hotspotDataByModel -->
+    </model-viewer>
+
+    <model-viewer
+            class="model-viewer-instance"
+            id="viewer-boot2"
+            data-model-name="boot2"
+            orientation="0 0 0"
+            camera-orbit="20deg 75deg 150m"
+            camera-target="auto 8.5m auto"
+            camera-controls
+            shadow-intensity="10"
+            orbit-sensitivity="33"
+            pan-sensitivity="0.000001"
+            animation-name='CubeAction'
+            src='{{ url_for("static", filename="models/boot2.gltf") }}'>
+        <!-- Hotspot buttons are generated dynamically by script.js from hotspotDataByModel -->
+    </model-viewer>
+
+    <model-viewer
+            class="model-viewer-instance"
+            id="viewer-AnimatedCube"
+            data-model-name="AnimatedCube"
+            orientation="0 0 0"
+            camera-orbit="20deg 75deg 150m"
+            camera-target="auto 8.5m auto"
+            camera-controls
+            shadow-intensity="10"
+            orbit-sensitivity="33"
+            pan-sensitivity="0.000001"
+            animation-name='CubeAction'
+            src='{{ url_for("static", filename="models/AnimatedCube.gltf") }}'>
+        <!-- Hotspot buttons are generated dynamically by script.js from hotspotDataByModel -->
     </model-viewer>
 
 
-    <!-- Shared annotation panel: populated dynamically on hotspot click -->
+    <!-- Shared annotation panel: populated dynamically on hotspot click,
+         regardless of which model-viewer instance is currently active -->
     <div id="annotation-panel" class="annotation-panel">
         <button type="button" class="annotation-close" aria-label="Close">&times;</button>
         <div class="annotation-content">
@@ -41,7 +81,7 @@
     </div>
 </div>
 
-<!-- Logo / brand mark, fixed to the top-right corner -->
+<!-- Logo / brand mark, fixed to the top-right corner
 <div id="top-left-logo" aria-hidden="true">
     <svg viewBox="0 0 100 50" xmlns="http://www.w3.org/2000/svg">
         <rect x="1.5" y="1.5" width="97" height="47" rx="8" fill="#ffffff" stroke="var(--marker-green)"
@@ -50,7 +90,7 @@
               stroke-linejoin="round"/>
     </svg>
 </div>
-
+ -->
 <!-- Toggle to open the bottom button row; hidden once the row is open -->
 <button type="button" id="open-buttons-toggle" aria-label="Show buttons">&lt;</button>
 

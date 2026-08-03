@@ -21,11 +21,21 @@ body {
     height: 100vh;
 }
 
-model-viewer {
+/* Multiple model-viewer instances are stacked in the same container.
+   Only the one with .active is shown; switchModel() in script.js
+   toggles this class instead of swapping a single viewer's src. */
+.model-viewer-instance {
     width: 100%;
     height: 100%;
-    position: relative;
+    position: absolute;
+    top: 0;
+    left: 0;
     z-index: 1;
+    display: none;
+}
+
+.model-viewer-instance.active {
+    display: block;
 }
 
 /* SVG layer that holds the dynamically drawn connector lines.
@@ -155,11 +165,11 @@ model-viewer {
 .btn.selected {
     color: var(--marker-green);
     outline-color: var(--marker-green);
-    outline-width: 4px;
+    outline-width: 3px;
 }
 
 .btn.selected:hover {
-
+    transform: translateY(-2px);
 }
 
 .btn.selected:active,
@@ -275,10 +285,10 @@ model-viewer {
     --panel-color: var(--marker-green);
 
     position: absolute;
-    top: 5%;
-    left: 5%;
-    right: 5%;
-    bottom: 20%;
+    top: 2%;
+    left: 2%;
+    right: 2%;
+    bottom: 21%;
     z-index: 15;
 
     display: none;

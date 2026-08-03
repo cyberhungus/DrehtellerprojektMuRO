@@ -24,10 +24,10 @@ const step = 0.1; // Step size in degrees
 
 
 // ---------------------------------------------------------
-// Hotspot data, grouped per model. When switchModel(name) runs,
-// the hotspots shown on the model are swapped to
-// hotspotDataByModel[name] (or an empty set if that model has none
-// defined). Add/remove entries here to change what's shown.
+// Hotspot data, grouped per model. Each model has its own
+// <model-viewer data-model-name="..."> element in the page (see
+// index.html); at load, each viewer gets its own hotspots rendered
+// directly into it, once, from hotspotDataByModel[modelName].
 // `type` controls the color (green/blue/pink).
 // ---------------------------------------------------------
 const hotspotDataByModel = {
@@ -66,7 +66,7 @@ const hotspotDataByModel = {
             images: ['/static/images/boat.jpg']
         }
     ],
- boot2: [
+    boot2: [
         {
             id: 'Example2',
             slot: 'hotspot-example2',
@@ -90,8 +90,8 @@ const hotspotDataByModel = {
             images: ['/static/images/boat.jpg']
         },
         {
-            id: 'ExampleNote',
-            slot: 'hotspot-example',
+            id: 'ExampleNote2',
+            slot: 'hotspot-example-2b',
             type: 'pink',
             position: '6m 10m 3m',
             normal: '0m 1m 0m',
@@ -120,42 +120,50 @@ function renderHotspots(data, modelViewer) {
     });
 }
 
-// Set by DOMContentLoaded once the annotation panel / model-viewer are
-// wired up, so switchModel() (called from buttonActions, outside that
-// scope) can swap the hotspot set and reset the annotation panel.
-let applyHotspotsForModel = null;
+// Set inside DOMContentLoaded, once the annotation panel is wired up,
+// so switchModel() (called from buttonActions, outside that scope)
+// can close whatever annotation was open before switching viewers.
+let closeAnnotationPanelFn = null;
 
+// ---------------------------------------------------------
+// Switches which model-viewer instance is visible. Rather than
+// changing a single viewer's src, every model has its own
+// <model-viewer> already loaded in the page (see index.html) —
+// this just toggles the "active" class so only one shows at a time.
+// Each viewer keeps its own hotspots and its own camera-change
+// listener (wired up once, in DOMContentLoaded), so no per-switch
+// re-rendering is needed here.
+// ---------------------------------------------------------
 function switchModel(name) {
-    const modelViewerTransform = document.querySelector("model-viewer#viewer");
-    const base = "/static/models/" + name;
-    modelViewerTransform.src = base + '.gltf';
-
-    if (applyHotspotsForModel) {
-        applyHotspotsForModel(name);
+    if (closeAnnotationPanelFn) {
+        closeAnnotationPanelFn();
     }
+
+    document.querySelectorAll('.model-viewer-instance').forEach((el) => {
+        el.classList.toggle('active', el.dataset.modelName === name);
+    });
+}
+
+function getActiveModelViewer() {
+    return document.querySelector('.model-viewer-instance.active');
 }
 
 
 document.addEventListener('DOMContentLoaded', (event) => {
-    const modelViewerTransform = document.querySelector("model-viewer#viewer");
-    const viewerContainer = document.getElementById('viewer-container');
-    const svg = document.getElementById('connector-overlay');
+    const modelViewers = document.querySelectorAll('.model-viewer-instance');
 
-    if (!modelViewerTransform) {
-        console.log("Modelviewer not found");
+    if (modelViewers.length === 0) {
+        console.log("No model-viewer instances found");
         return;
     }
 
-    console.log("Modelviewer found, loading hotspots");
-
-    renderHotspots(hotspotDataByModel.boot || [], modelViewerTransform);
-    let currentHotspotData = hotspotDataByModel.boot || [];
+    console.log(`Found ${modelViewers.length} model-viewer instance(s), loading hotspots for each`);
 
     // ---------------------------------------------------------
-    // Shared annotation panel: clicking a hotspot populates and
-    // shows the single panel (colored/bordered per hotspot type),
-    // rather than each hotspot carrying its own annotation card.
-    // Clicking the same hotspot again, or the close button, hides it.
+    // Shared annotation panel: clicking a hotspot on ANY viewer
+    // populates and shows the single panel (colored/bordered per
+    // hotspot type). Clicking the same hotspot again, the close
+    // button, or switching models, hides it.
     // ---------------------------------------------------------
     const annotationPanel = document.getElementById('annotation-panel');
     const annotationClose = annotationPanel.querySelector('.annotation-close');
@@ -164,7 +172,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
     const annotationBody = annotationPanel.querySelector('.annotation-body');
     const annotationImages = annotationPanel.querySelector('.annotation-images');
 
-    let activeHotspotEl = null; // tracks which hotspot the panel is "attached" to, for the connector line
+    let activeHotspotEl = null; // tracks which hotspot the panel is "attached" to
 
     function openAnnotationPanel(hotspotEl, item) {
         annotationPanel.className = `annotation-panel active type-${item.type}`;
@@ -189,55 +197,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
         activeHotspotEl = null;
     }
 
-    // ---------------------------------------------------------
-    // Swap the hotspots shown on the model: removes the currently
-    // rendered hotspot buttons, renders the set for `modelName`
-    // (falling back to an empty set if none is defined), and closes
-    // the annotation panel since whatever it was showing no longer
-    // applies to the new model.
-    // ---------------------------------------------------------
-    function applyHotspots(modelName) {
-        closeAnnotationPanel();
-
-        modelViewerTransform.querySelectorAll('.hotspot').forEach((el) => el.remove());
-
-        currentHotspotData = hotspotDataByModel[modelName] || [];
-        renderHotspots(currentHotspotData, modelViewerTransform);
-    }
-
-    applyHotspotsForModel = applyHotspots;
-
-    modelViewerTransform.addEventListener('click', (event) => {
-        const hotspot = event.target.closest('.hotspot');
-        if (!hotspot) return;
-
-        event.stopPropagation();
-
-        const item = currentHotspotData.find((h) => h.id === hotspot.dataset.hotspotId);
-        if (!item) return;
-
-        const wasActive = activeHotspotEl === hotspot && annotationPanel.classList.contains('active');
-
-        if (wasActive) {
-            closeAnnotationPanel();
-        } else {
-            openAnnotationPanel(hotspot, item);
-        }
-    });
-
-    annotationClose.addEventListener('click', (event) => {
-        event.stopPropagation();
-        closeAnnotationPanel();
-    });
-
-
-
-    modelViewerTransform.addEventListener('camera-change', (event) => {
-        console.log('Camera:', modelViewerTransform.getCameraOrbit());
-        if (checkYawInRange(modelViewerTransform.cameraOrbit)) {
-            modelViewerTransform.play();
-        }
-    });
+    closeAnnotationPanelFn = closeAnnotationPanel;
 
     function checkYawInRange(cameraOrbitStr) {
         // Split the camera orbit string by spaces
@@ -259,13 +219,61 @@ document.addEventListener('DOMContentLoaded', (event) => {
         }
     }
 
-    // Server-Sent Events (gets data from the ARUCO recognizer)
+    // ---------------------------------------------------------
+    // Wire up every model-viewer instance identically: render its
+    // own hotspots, listen for hotspot clicks (feeding the shared
+    // annotation panel), and listen for camera-change the same way
+    // the old single-viewer version did.
+    // ---------------------------------------------------------
+    modelViewers.forEach((modelViewerTransform) => {
+        const modelName = modelViewerTransform.dataset.modelName;
+        const hotspotData = hotspotDataByModel[modelName] || [];
+
+        renderHotspots(hotspotData, modelViewerTransform);
+
+        modelViewerTransform.addEventListener('click', (event) => {
+            const hotspot = event.target.closest('.hotspot');
+            if (!hotspot) return;
+
+            event.stopPropagation();
+
+            const item = hotspotData.find((h) => h.id === hotspot.dataset.hotspotId);
+            if (!item) return;
+
+            const wasActive = activeHotspotEl === hotspot && annotationPanel.classList.contains('active');
+
+            if (wasActive) {
+                closeAnnotationPanel();
+            } else {
+                openAnnotationPanel(hotspot, item);
+            }
+        });
+
+        modelViewerTransform.addEventListener('camera-change', (event) => {
+            console.log('Camera:', modelViewerTransform.getCameraOrbit());
+            if (checkYawInRange(modelViewerTransform.cameraOrbit)) {
+                modelViewerTransform.play();
+            }
+        });
+    });
+
+    annotationClose.addEventListener('click', (event) => {
+        event.stopPropagation();
+        closeAnnotationPanel();
+    });
+
+    // Server-Sent Events (gets data from the ARUCO recognizer).
+    // Always applies to whichever model-viewer is currently visible.
     const eventSource = new EventSource('/stream');
     eventSource.onmessage = function (event) {
         console.log('New markers detected:', event.data);
         if (event.data && event.data !== "[]") {
             targetYaw = parseFloat(event.data.replace("[", "").replace("]", "")); // Update target yaw
-            modelViewerTransform.cameraOrbit = `${targetYaw}deg 75deg 500m`;
+
+            const activeViewer = getActiveModelViewer();
+            if (activeViewer) {
+                activeViewer.cameraOrbit = `${targetYaw}deg 75deg 500m`;
+            }
         }
     };
 
