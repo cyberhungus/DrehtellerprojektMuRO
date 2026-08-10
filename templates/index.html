@@ -81,7 +81,7 @@
     </div>
 </div>
 
-<!-- Logo / brand mark, fixed to the top-right corner
+<!-- Logo / brand mark, fixed to the top-right corner -->
 <div id="top-left-logo" aria-hidden="true">
     <svg viewBox="0 0 100 50" xmlns="http://www.w3.org/2000/svg">
         <rect x="1.5" y="1.5" width="97" height="47" rx="8" fill="#ffffff" stroke="var(--marker-green)"
@@ -90,7 +90,7 @@
               stroke-linejoin="round"/>
     </svg>
 </div>
- -->
+
 <!-- Toggle to open the bottom button row; hidden once the row is open -->
 <button type="button" id="open-buttons-toggle" aria-label="Show buttons">&lt;</button>
 
@@ -120,7 +120,21 @@
         <img src="{{ url_for('static', filename='images/icons/btn-6.svg') }}" alt="">
         <span>Button 6</span>
     </button>
+    <button type="button" id="btn-7" class="btn">
+        <img src="{{ url_for('static', filename='images/icons/btn-7.svg') }}" alt="">
+        <span>Button 7</span>
+    </button>
+    <button type="button" id="btn-8" class="btn">
+        <img src="{{ url_for('static', filename='images/icons/btn-8.svg') }}" alt="">
+        <span>Button 8</span>
+    </button>
     <button type="button" class="btn btn-back" aria-label="Close buttons">&gt;</button>
+</div>
+
+<!-- Screensaver: shown after SCREENSAVER_IDLE_SECONDS (see script.js) of no
+     mouse movement/click, hidden again on the next interaction. -->
+<div id="screensaver-overlay">
+    <img src="{{ url_for('static', filename='images/screensaver-placeholder.jpg') }}" alt="">
 </div>
 
 <script src="{{ url_for('static', filename='js/script.js') }}"></script>

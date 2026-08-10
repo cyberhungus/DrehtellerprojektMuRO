@@ -22,20 +22,26 @@ body {
 }
 
 /* Multiple model-viewer instances are stacked in the same container.
-   Only the one with .active is shown; switchModel() in script.js
-   toggles this class instead of swapping a single viewer's src. */
+   Only the one with .active is fully visible/interactive; switchModel()
+   in script.js crossfades between them by toggling this class — the
+   opacity transition (duration set inline per-call) does the fading. */
 .model-viewer-instance {
+    display: block;
     width: 100%;
     height: 100%;
     position: absolute;
     top: 0;
     left: 0;
     z-index: 1;
-    display: none;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 400ms ease;
 }
 
 .model-viewer-instance.active {
-    display: block;
+    opacity: 1;
+    pointer-events: auto;
+    z-index: 2;
 }
 
 /* SVG layer that holds the dynamically drawn connector lines.
@@ -54,15 +60,17 @@ body {
    Bottom button row + open/close toggle
    --------------------------------------------------- */
 
-/* Small circular toggle, fixed to bottom-right, shown when the
-   button row is closed */
+/* Toggle tab, fixed to bottom-center, shown when the button row is
+   closed. Flush with the bottom edge; only the top corners are
+   rounded so it reads as a handle/tab you pull the row up from. */
 #open-buttons-toggle {
     position: fixed;
-    bottom: 24px;
-    right: 24px;
-    width: 90px;
-    height: 90px;
-    border-radius: 50%;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 140px;
+    height: 56px;
+    border-radius: 16px 16px 0 0;
     border: none;
     background-color: #e0e0e0;
     color: #888;
@@ -78,7 +86,7 @@ body {
 
 #open-buttons-toggle:hover {
     background-color: #9f9f9f;
-    transform: scale(1.05);
+    transform: translateX(-50%) translateY(-4px);
 }
 
 /* Bottom-buttons row starts hidden, off-screen below the viewport */
@@ -285,10 +293,10 @@ body {
     --panel-color: var(--marker-green);
 
     position: absolute;
-    top: 2%;
-    left: 2%;
-    right: 2%;
-    bottom: 21%;
+    top: 5%;
+    left: 5%;
+    right: 5%;
+    bottom: 15%;
     z-index: 15;
 
     display: none;
@@ -435,5 +443,37 @@ body {
 #top-left-logo svg {
     width: 100%;
     height: 100%;
+    display: block;
+}
+
+/* ---------------------------------------------------
+   Screensaver
+   Full-page overlay, shown after an idle period (see
+   SCREENSAVER_IDLE_SECONDS in script.js) and dismissed on the
+   next interaction.
+   --------------------------------------------------- */
+
+#screensaver-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #0d0d0d;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.6s ease;
+}
+
+#screensaver-overlay.visible {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+#screensaver-overlay img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
     display: block;
 }

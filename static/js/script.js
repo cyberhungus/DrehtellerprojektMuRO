@@ -16,7 +16,13 @@ const buttonActions = {
     'btn-4': () => {},
     'btn-5': () => {},
     'btn-6': () => {},
+    'btn-7': () => {},
+    'btn-8': () => {},
 };
+
+// How many seconds of no mouse movement or click/tap before the
+// screensaver overlay appears. Change this to adjust the idle delay.
+const SCREENSAVER_IDLE_SECONDS = 5;
 
 let targetYaw = 0;
 let currentYaw = 0;
@@ -126,20 +132,24 @@ function renderHotspots(data, modelViewer) {
 let closeAnnotationPanelFn = null;
 
 // ---------------------------------------------------------
-// Switches which model-viewer instance is visible. Rather than
-// changing a single viewer's src, every model has its own
-// <model-viewer> already loaded in the page (see index.html) —
-// this just toggles the "active" class so only one shows at a time.
-// Each viewer keeps its own hotspots and its own camera-change
-// listener (wired up once, in DOMContentLoaded), so no per-switch
-// re-rendering is needed here.
+// Switches which model-viewer instance is visible, crossfading
+// between the current and target viewer. Rather than changing a
+// single viewer's src, every model has its own <model-viewer>
+// already loaded in the page (see index.html) — this toggles the
+// "active" class, and the opacity transition on .model-viewer-instance
+// (see style.css) handles the actual fade.
+//
+// fadeDuration: how long the fade takes, in milliseconds (default 400).
 // ---------------------------------------------------------
-function switchModel(name) {
+function switchModel(name, fadeDuration = 400) {
     if (closeAnnotationPanelFn) {
         closeAnnotationPanelFn();
     }
 
-    document.querySelectorAll('.model-viewer-instance').forEach((el) => {
+    const viewers = document.querySelectorAll('.model-viewer-instance');
+
+    viewers.forEach((el) => {
+        el.style.transitionDuration = `${fadeDuration}ms`;
         el.classList.toggle('active', el.dataset.modelName === name);
     });
 }
@@ -276,6 +286,34 @@ document.addEventListener('DOMContentLoaded', (event) => {
             }
         }
     };
+
+    // ---------------------------------------------------------
+    // Screensaver: shows the overlay after SCREENSAVER_IDLE_SECONDS
+    // of no mouse movement or click/tap, hides it again (and resets
+    // the timer) on the next interaction.
+    // ---------------------------------------------------------
+    const screensaverOverlay = document.getElementById('screensaver-overlay');
+    let screensaverTimer = null;
+
+    function showScreensaver() {
+        screensaverOverlay.classList.add('visible');
+    }
+
+    function hideScreensaver() {
+        screensaverOverlay.classList.remove('visible');
+    }
+
+    function resetScreensaverTimer() {
+        hideScreensaver();
+        clearTimeout(screensaverTimer);
+        screensaverTimer = setTimeout(showScreensaver, SCREENSAVER_IDLE_SECONDS * 1000);
+    }
+
+    ['mousemove', 'mousedown', 'touchstart', 'click'].forEach((eventName) => {
+        document.addEventListener(eventName, resetScreensaverTimer);
+    });
+
+    resetScreensaverTimer(); // start the idle countdown as soon as the page loads
 
     // ---------------------------------------------------------
     // Bottom button row: opened via the "<" toggle (bottom-right),

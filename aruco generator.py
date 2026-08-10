@@ -1,6 +1,6 @@
 import cv2# Parameters
 import numpy as np
-marker_size_mm = 9  # Side of each marker in millimeters
+marker_size_mm = 50  # Side of each marker in millimeters
 dpi = 300  # Dots per inch for printing
 spacing_mm = 1  # Space between markers in millimeters
 margin_mm = 5  # Margin on the sides in millimeters
