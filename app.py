@@ -5,6 +5,10 @@ import threading
 from flask import Flask, render_template, Response
 
 
+from flask_cors import CORS
+
+
+
 class MarkerBuffer:
     def __init__(self, size=10):
         self.size = size
@@ -37,7 +41,7 @@ marker_buffer = MarkerBuffer(size=10)
 app = Flask(__name__,
             static_folder='static',
             template_folder='templates')
-
+CORS(app)
 # Global variable to store the latest detected markers
 detected_markers = []
 def detect_markers(image):
@@ -73,7 +77,7 @@ def detect_markers(image):
 
 def camera_thread():
     # Capture from the camera
-    cap = cv2.VideoCapture(0)
+    cap = cv2.VideoCapture(1)
 
     if not cap.isOpened():
         print("Error: Could not open camera.")
