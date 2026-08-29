@@ -176,6 +176,9 @@
     display: none;
     pointer-events: none;
     white-space: pre;
+    max-height: 80vh; /* maximale Höhe auf 80% der Viewport-Höhe begrenzen */
+    overflow-y: auto; /* vertikalen Scrollbalken bei Überlauf aktivieren */
+    pointer-events: auto; /* Mausereignisse zulassen (sonst funktioniert das Scrollen nicht) */
 }
 
 #debug-overlay strong {
@@ -231,23 +234,55 @@
     z-index: 500;
 }
 
+/* --- Updated Hotspot Button --- */
 .hotspot-btn {
     position: absolute;
-    width: 24px;
-    height: 24px;
+    width: 44px;
+    height: 44px;
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.9);
-    border: 2px solid #222;
+    background: #ffffff; /* White ring between the green border and inner circle */
+    border: 4px solid #22c55e; /* Outer bright green ring */
     transform: translate(-50%, -50%);
-    pointer-events: auto; /* individual buttons ARE clickable */
+    pointer-events: auto;
     cursor: pointer;
-    display: none; /* shown/hidden by the engine */
-    transition: opacity 0.15s ease;
+    display: none;
+    transition: all 0.15s ease;
+    padding: 0;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 500;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15); /* Adds a subtle drop shadow for depth */
 }
 
+/* Inner solid green circle */
+.hotspot-btn::before {
+    content: '';
+    width: 66%;
+    height: 66%;
+    border-radius: 50%;
+    background: #22c55e;
+    position: absolute;
+}
+
+/* White Plus Sign */
+.hotspot-btn::after {
+    content: '+';
+    color: #ffffff;
+    font-size: 24px;
+    font-weight: 700;
+    font-family: Arial, sans-serif;
+    position: relative;
+    line-height: 0;
+    top: 1px; /* Slight optical adjustment for perfect centering */
+    z-index: 2;
+}
+
+/* Hover effect: slight scale up and a green glow */
 .hotspot-btn:hover {
-    background: #fff;
-    box-shadow: 0 0 8px rgba(255, 255, 255, 0.8);
+    transform: translate(-50%, -50%) scale(1.12);
+    box-shadow: 0 0 16px rgba(34, 197, 94, 0.5);
 }
 
 .hotspot-label {
@@ -386,4 +421,33 @@
     font-size: 12px;
     color: #777;
     margin-top: 4px;
+}
+
+.rotate-controls {
+    display: flex;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+.rotate-btn {
+    flex: 1;
+    padding: 6px 12px;
+    font-size: 13px;
+    font-family: inherit;
+    color: #f0f0f0;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+}
+
+.rotate-btn:hover {
+    background: rgba(255, 255, 255, 0.16);
+    border-color: rgba(255, 255, 255, 0.4);
+}
+
+.rotate-btn:active {
+    background: rgba(255, 255, 255, 0.24);
+    transform: scale(0.97);
 }

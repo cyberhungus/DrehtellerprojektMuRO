@@ -3,14 +3,14 @@ import numpy as np
 import math
 
 # ---- User-defined parameters ----
-marker_size_mm = 8        # Side of each marker in millimeters
+marker_size_mm =    8   # Side of each marker in millimeters
 dpi = 300                    # Dots per inch for printing
 spacing_x_mm = 1             # Horizontal space between markers (mm)
 spacing_y_mm = 4           # Vertical space between markers (mm) – increase if text overlaps
 margin_mm = 5                # Margin on all sides (mm)
 
 marker_id_start = 0          # First marker ID to generate
-marker_id_end   = 360        # Last marker ID to generate (inclusive)
+marker_id_end   = 360       # Last marker ID to generate (inclusive)
 
 # ---- Conversion to pixels ----
 marker_size_px = int((marker_size_mm / 25.4) * dpi)
@@ -18,8 +18,15 @@ spacing_x_px = int((spacing_x_mm / 25.4) * dpi)
 spacing_y_px = int((spacing_y_mm / 25.4) * dpi)
 margin_px = int((margin_mm / 25.4) * dpi)
 
-# ---- Load ArUco dictionary ----
-aruco_dict = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_6X6_1000)
+# ---- Load AprilTag 36h11 dictionary ----
+aruco_dict = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_APRILTAG_36h11)
+MAX_MARKER_ID = 586  # DICT_APRILTAG_36h11 only has 587 unique IDs (0-586)
+
+if marker_id_end > MAX_MARKER_ID:
+    raise ValueError(
+        f"DICT_APRILTAG_36h11 only supports IDs 0-{MAX_MARKER_ID} "
+        f"(587 unique tags). Reduce marker_id_end."
+    )
 
 # ---- A4 page size in pixels ----
 a4_width_px, a4_height_px = int(8.27 * dpi), int(11.69 * dpi)
@@ -44,7 +51,7 @@ print(f"Each page holds {markers_per_page} markers.")
 print(f"Total markers to generate: {total_markers} -> {pages_needed} page(s).")
 
 # ---- Generate pages ----
-current_id = marker_id_start  # starts at the given start ID, wraps if >999
+current_id = marker_id_start  # starts at the given start ID
 page_counter = 1
 
 for page in range(pages_needed):
@@ -71,7 +78,7 @@ for page in range(pages_needed):
             y = margin_px + i * (marker_size_px + spacing_y_px)
             canvas[y:y + marker_size_px, x:x + marker_size_px] = marker
 
-            # ---- NEW: Draw the marker ID as text below the marker ----
+            # ---- Draw the marker ID as text below the marker ----
             text = str(current_id)
             font = cv2.FONT_HERSHEY_SIMPLEX
             font_scale = 0.6          # Adjust if you want larger/smaller text
@@ -86,16 +93,14 @@ for page in range(pages_needed):
             # Draw the text in black (0) on the white canvas
             cv2.putText(canvas, text, (text_x, text_y), font, font_scale, 0, thickness, cv2.LINE_AA)
 
-            # Advance to next ID, wrapping if necessary
+            # Advance to next ID (no wrap needed since we validated the range up front)
             current_id += 1
-            if current_id > 999:
-                current_id = 0
 
     # Save this page
     if pages_needed == 1:
-        filename = 'aruco_markers_a4.png'
+        filename = 'apriltag_36h11_markers_a4.png'
     else:
-        filename = f'aruco_markers_a4_page{page_counter}.png'
+        filename = f'apriltag_36h11_markers_a4_page{page_counter}.png'
     cv2.imwrite(filename, canvas)
     print(f"Saved {filename}")
     page_counter += 1

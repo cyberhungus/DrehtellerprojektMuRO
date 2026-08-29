@@ -24,9 +24,12 @@ def detect_and_display_markers(y_start, y_end):
         # Convert the ROI to grayscale for marker detection
         gray = cv2.cvtColor(roi, cv2.COLOR_BGR2GRAY)
 
+
+
         # Define the ArUco dictionary and parameters
         aruco_dict = aruco.getPredefinedDictionary(aruco.DICT_6X6_1000)
         parameters = aruco.DetectorParameters()
+
 
         # Create the ArUco detector
         detector = aruco.ArucoDetector(aruco_dict, parameters)

@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Backend Debug</title>
+<style>
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: #101418;
+    color: #e6e6e6;
+    padding: 24px;
+    max-width: 640px;
+    margin: 0 auto;
+  }
+  h1 { font-size: 1.3rem; margin-bottom: 4px; }
+  .subtitle { color: #8a94a0; font-size: 0.85rem; margin-bottom: 24px; }
+  .card {
+    background: #181e24;
+    border: 1px solid #262e36;
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin-bottom: 16px;
+  }
+  .card h2 {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #8a94a0;
+    margin: 0 0 12px 0;
+  }
+  .row {
+    display: flex;
+    justify-content: space-between;
+    padding: 5px 0;
+    border-bottom: 1px solid #1f262d;
+    font-size: 0.92rem;
+  }
+  .row:last-child { border-bottom: none; }
+  .row .label { color: #a3adb8; }
+  .row .value { font-family: 'SF Mono', Consolas, monospace; }
+  .status-dot {
+    display: inline-block;
+    width: 9px; height: 9px;
+    border-radius: 50%;
+    margin-right: 6px;
+  }
+  .status-on { background: #3ddc84; }
+  .status-off { background: #e5484d; }
+  input[type=number] {
+    background: #0d1116;
+    border: 1px solid #2a323a;
+    color: #e6e6e6;
+    border-radius: 6px;
+    padding: 6px 10px;
+    width: 100px;
+    font-family: monospace;
+  }
+  button {
+    background: #2f6fed;
+    border: none;
+    color: white;
+    padding: 7px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    margin-left: 8px;
+  }
+  button:hover { background: #4a82f0; }
+  .saved-flash { color: #3ddc84; font-size: 0.8rem; margin-left: 10px; opacity: 0; transition: opacity 0.3s; }
+  #camera-snapshot-img {
+    display: none;
+    width: 100%;
+    margin-top: 12px;
+    border-radius: 6px;
+    border: 1px solid #262e36;
+  }
+</style>
+</head>
+<body>
+
+<h1>Backend Debug</h1>
+<div class="subtitle">Live telemetry — auto-refreshes every 500ms</div>
+
+<div class="card">
+  <h2>Camera</h2>
+  <div class="row"><span class="label">Active</span>
+    <span class="value"><span id="cam-dot" class="status-dot"></span><span id="cam-active">—</span></span></div>
+  <div class="row"><span class="label">Index</span><span class="value" id="cam-index">—</span></div>
+  <div class="row"><span class="label">Resolution</span><span class="value" id="cam-resolution">—</span></div>
+  <div class="row"><span class="label">Exposure (requested / actual)</span><span class="value" id="cam-exposure">—</span></div>
+  <div class="row"><span class="label">Gain (requested / actual)</span><span class="value" id="cam-gain">—</span></div>
+</div>
+
+<div class="card">
+  <h2>Camera Image</h2>
+  <div class="row" style="border-bottom: none;">
+    <span class="label">Live snapshot</span>
+    <span class="value"><button onclick="toggleCameraImage()" id="camera-toggle-btn">Show</button></span>
+  </div>
+  <!-- No request to /api/camera_snapshot is made until the button above is clicked. -->
+  <img id="camera-snapshot-img" alt="Latest camera frame">
+</div>
+
+<div class="card">
+  <h2>Markers</h2>
+  <div class="row"><span class="label">Last detected</span><span class="value" id="last-markers">—</span></div>
+  <div class="row"><span class="label">Last marker time</span><span class="value" id="last-marker-time">—</span></div>
+  <div class="row"><span class="label">Current yaw</span><span class="value" id="current-yaw">—</span></div>
+</div>
+
+<div class="card">
+  <h2>Serial</h2>
+  <div class="row"><span class="label">Connected</span>
+    <span class="value"><span id="serial-dot" class="status-dot"></span><span id="serial-connected">—</span></span></div>
+  <div class="row"><span class="label">Port</span><span class="value" id="serial-port">—</span></div>
+  <div class="row"><span class="label">Last message</span><span class="value" id="last-serial-line">—</span></div>
+  <div class="row"><span class="label">Last message time</span><span class="value" id="last-serial-time">—</span></div>
+</div>
+
+<div class="card">
+  <h2>Interaction</h2>
+  <div class="row">
+    <span class="label">Rotation multiplier</span>
+    <span class="value">
+      <input type="number" id="multiplier-input" step="0.1">
+      <button onclick="saveMultiplier()">Set</button>
+      <span class="saved-flash" id="saved-flash">saved</span>
+    </span>
+  </div>
+</div>
+
+<script>
+let userIsEditingMultiplier = false;
+document.getElementById('multiplier-input').addEventListener('focus', () => userIsEditingMultiplier = true);
+document.getElementById('multiplier-input').addEventListener('blur', () => userIsEditingMultiplier = false);
+
+// Camera snapshot: stays untouched (no network request at all) until the
+// user explicitly clicks "Show". Once shown, it rides along with the
+// existing 500ms telemetry refresh loop below to stay live; clicking
+// "Hide" stops the requests again.
+let cameraImageVisible = false;
+
+function toggleCameraImage() {
+  cameraImageVisible = !cameraImageVisible;
+  const img = document.getElementById('camera-snapshot-img');
+  const btn = document.getElementById('camera-toggle-btn');
+  img.style.display = cameraImageVisible ? 'block' : 'none';
+  btn.textContent = cameraImageVisible ? 'Hide' : 'Show';
+  if (cameraImageVisible) refreshCameraImage();
+}
+
+function refreshCameraImage() {
+  // Cache-bust so the browser doesn't just show a stale cached image.
+  document.getElementById('camera-snapshot-img').src = '/api/camera_snapshot?t=' + Date.now();
+}
+
+function fmtTime(epochSeconds) {
+  if (epochSeconds === null || epochSeconds === undefined) return '—';
+  const d = new Date(epochSeconds * 1000);
+  return d.toLocaleTimeString();
+}
+
+async function refresh() {
+  try {
+    const res = await fetch('/api/state');
+    const s = await res.json();
+
+    document.getElementById('cam-active').textContent = s.camera_active ? 'Active' : 'Inactive';
+    document.getElementById('cam-dot').className = 'status-dot ' + (s.camera_active ? 'status-on' : 'status-off');
+    document.getElementById('cam-index').textContent = s.camera_index ?? '—';
+    document.getElementById('cam-resolution').textContent = s.camera_resolution ? s.camera_resolution.join(' x ') : '—';
+    document.getElementById('cam-exposure').textContent = `${s.camera_exposure_requested ?? '—'} / ${s.camera_exposure_actual ?? '—'}`;
+    document.getElementById('cam-gain').textContent = `${s.camera_gain_requested ?? '—'} / ${s.camera_gain_actual ?? '—'}`;
+
+    document.getElementById('last-markers').textContent = (s.last_markers && s.last_markers.length) ? s.last_markers.join(', ') : 'none';
+    document.getElementById('last-marker-time').textContent = fmtTime(s.last_marker_time);
+    document.getElementById('current-yaw').textContent = (s.current_yaw ?? 0).toFixed(2) + '°';
+
+    document.getElementById('serial-connected').textContent = s.serial_connected ? 'Connected' : 'Disconnected';
+    document.getElementById('serial-dot').className = 'status-dot ' + (s.serial_connected ? 'status-on' : 'status-off');
+    document.getElementById('serial-port').textContent = s.serial_port ?? '—';
+    document.getElementById('last-serial-line').textContent = s.last_serial_line ?? '—';
+    document.getElementById('last-serial-time').textContent = fmtTime(s.last_serial_time);
+
+    if (!userIsEditingMultiplier) {
+      document.getElementById('multiplier-input').value = s.rotation_multiplier ?? 1.0;
+    }
+
+    if (cameraImageVisible) {
+      refreshCameraImage();
+    }
+
+  } catch (e) {
+    console.error('Failed to fetch state:', e);
+  }
+}
+
+async function saveMultiplier() {
+  const value = parseFloat(document.getElementById('multiplier-input').value);
+  if (isNaN(value)) return;
+
+  await fetch('/api/settings', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({rotation_multiplier: value})
+  });
+
+  const flash = document.getElementById('saved-flash');
+  flash.style.opacity = 1;
+  setTimeout(() => flash.style.opacity = 0, 1000);
+}
+
+refresh();
+setInterval(refresh, 500);
+</script>
+
+</body>
+</html>

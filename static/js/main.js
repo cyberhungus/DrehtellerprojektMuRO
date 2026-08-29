@@ -2,14 +2,17 @@ import * as THREE from 'three';
 
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
-import {DRACOLoader} from 'three/addons/loaders/DRACOLoader.js'; // add this import
+import {DRACOLoader} from 'three/addons/loaders/DRACOLoader.js';
+import {OBJLoader} from 'three/addons/loaders/OBJLoader.js';
+import {MTLLoader} from 'three/addons/loaders/MTLLoader.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
 let camera, scene, renderer, controls;
 let ambientLight, directionalLight; // hoisted so the debug-overlay light controls can reach them
 
 // Toggle which boat models are loaded/active — index 0 = Boot 1, index 1 = Boot 2, etc.
 // Set to false to skip loading that model entirely (useful for testing/debugging).
-const modelEnabled = [true, true, true, true, true, true];
+const modelEnabled = [true, true, false, false, false, false];
 
 // Edit this to customize what each button shows and what the top-right status text
 // says when that button is clicked. Index matches modelEnabled / data-index (0 = button 1, etc).
@@ -77,17 +80,30 @@ let loadingOverlayEl, loadingTitleEl, loadingCurrentFileEl, loadingBarFillEl, lo
 let drawerToggleEl, toggleBarEl, statusTextEl;
 let drawerOpen = false;
 
+
+
 const hotspotDefinitions = {
 
     0: [ // Boot 1
         {
             id: 'boot1-engine',
-            localPosition: new THREE.Vector3(0, 0.5, -1.2),
+            localPosition: new THREE.Vector3(0, 0, 0),
             minAngle: 315, // degrees — hotspot shows only while the camera sits within this arc
             maxAngle: 45,  // wraps through 0°, e.g. 315°→360°/0°→45°
             content: {
                 title: 'Motor',
                 text: 'Der Motor liefert 150 PS und ermöglicht eine Höchstgeschwindigkeit von 45 km/h.',
+                images: ['static/images/hotspots/engine-1.jpg']
+            }
+        },
+                {
+            id: 'boot1-pipe',
+            localPosition: new THREE.Vector3(1.5, 0, 0),
+            minAngle: 0, // degrees — hotspot shows only while the camera sits within this arc
+            maxAngle: 358,  // wraps through 0°, e.g. 315°→360°/0°→45°
+            content: {
+                title: 'Pipe',
+                text: 'Fat smokestack remove all bad air ',
                 images: ['static/images/hotspots/engine-1.jpg']
             }
         }
@@ -116,8 +132,8 @@ const hotspotDefinitions = {
 
 initLoadingOverlay();
 init();
-initDrawer();
 initLightControls();
+initDrawer();
 initServerSentEvents();
 initKeyboardControls();
 initScreensaver();
@@ -248,33 +264,260 @@ function updateCameraMovement(delta) {
 
 }
 
+// Signed volume of a closed mesh — negative means its triangle winding is
+// inside-out relative to a normal, consistently-wound mesh.
+function getSignedVolume(geometry) {
+
+    const pos = geometry.attributes.position;
+    const index = geometry.index;
+    const p1 = new THREE.Vector3(), p2 = new THREE.Vector3(), p3 = new THREE.Vector3();
+    let volume = 0;
+
+    const triCount = index ? index.count : pos.count;
+
+    for (let i = 0; i < triCount; i += 3) {
+
+        const i1 = index ? index.getX(i) : i;
+        const i2 = index ? index.getX(i + 1) : i + 1;
+        const i3 = index ? index.getX(i + 2) : i + 2;
+
+        p1.fromBufferAttribute(pos, i1);
+        p2.fromBufferAttribute(pos, i2);
+        p3.fromBufferAttribute(pos, i3);
+
+        volume += p1.dot(p2.clone().cross(p3)) / 6;
+
+    }
+
+    return volume;
+
+}
+
+// Flat/open geometry (railings, decals, thin panels) has no real "inside", so its
+// computed volume is just floating-point noise near zero — this checks whether the
+// volume is large enough relative to the mesh's size to be a meaningful signal at all.
+function isVolumeMeasurable(geometry, volume) {
+
+    if (!geometry.boundingSphere) geometry.computeBoundingSphere();
+    const radius = geometry.boundingSphere.radius;
+    const scaleReference = Math.pow(radius, 3);
+
+    return scaleReference > 0 && Math.abs(volume) / scaleReference > 0.01;
+
+}
+
+// Reverses triangle winding (swaps vertex 0 and 2 of every triangle) on any closed
+// mesh whose winding comes out inside-out — fixes disappearing faces caused by
+// inconsistent winding baked into the source model (mirrored geometry, bad exports, etc).
+// Skips open/flat geometry where "inside vs outside" isn't a meaningful concept.
+// Works on both GLTF- and OBJ-sourced meshes.
+function fixInvertedWinding(object3D) {
+
+    object3D.traverse((node) => {
+
+        if (!node.isMesh) return;
+
+        const geometry = node.geometry;
+        const volume = getSignedVolume(geometry);
+
+        if (!isVolumeMeasurable(geometry, volume)) {
+            console.log(`Skipping "${node.name}" — too flat/open to reliably tell if winding is inverted`);
+            return;
+        }
+
+        if (volume >= 0) return; // already correctly wound
+
+        console.log(`Fixing inverted winding on mesh "${node.name}" (material: ${node.material.name || 'unnamed'})`);
+
+        if (geometry.index) {
+
+            const arr = geometry.index.array;
+            for (let i = 0; i < arr.length; i += 3) {
+                const tmp = arr[i];
+                arr[i] = arr[i + 2];
+                arr[i + 2] = tmp;
+            }
+            geometry.index.needsUpdate = true;
+
+        } else {
+
+            for (const attr of Object.values(geometry.attributes)) {
+
+                const itemSize = attr.itemSize;
+
+                for (let i = 0; i < attr.count; i += 3) {
+
+                    const a = i * itemSize, c = (i + 2) * itemSize;
+
+                    for (let k = 0; k < itemSize; k++) {
+                        const tmp = attr.array[a + k];
+                        attr.array[a + k] = attr.array[c + k];
+                        attr.array[c + k] = tmp;
+                    }
+
+                }
+
+                attr.needsUpdate = true;
+
+            }
+
+        }
+
+        geometry.computeVertexNormals(); // normals must be recomputed to match the corrected winding
+
+    });
+
+}
+
+// Strips directory info off texture map lines in a raw .mtl file's text, so that
+// e.g. "map_Kd C:\Users\Someone\Desktop\textures\foo.tga" becomes "map_Kd foo.tga".
+// Needed because some exporters (older 3ds Max, etc.) bake the original absolute
+// Windows export path into the .mtl instead of a relative filename.
+function stripMtlTexturePaths(mtlText) {
+
+    const mapDirectives = ['map_Kd', 'map_Ks', 'map_Ka', 'map_Bump', 'bump', 'map_d', 'map_Ns', 'disp', 'decal', 'refl'];
+
+    return mtlText
+        .split('\n')
+        .map((line) => {
+
+            const trimmed = line.trim();
+            const directive = mapDirectives.find((d) => trimmed.startsWith(d + ' ') || trimmed.startsWith(d + '\t'));
+
+            if (!directive) return line;
+
+            // Keep any leading option flags (-s, -o, -bm, ...) intact, but collapse
+            // the actual path — the last whitespace-separated chunk — down to just its filename.
+            const parts = trimmed.slice(directive.length).trim().split(/\s+/);
+            const fileName = parts[parts.length - 1].replace(/\\/g, '/').split('/').pop();
+            parts[parts.length - 1] = fileName;
+
+            return `${directive} ${parts.join(' ')}`;
+
+        })
+        .join('\n');
+
+}
+
+async function urlExists(url) {
+
+    try {
+        const res = await fetch(url, {method: 'HEAD'});
+        return res.ok;
+    } catch (e) {
+        return false;
+    }
+
+}
+
+// Tries "<folder>/<folderAndFile>.gltf" first; if that's not present, falls back
+// to "<folder>/<folderAndFile>.obj" (+ .mtl if it's there too). Returns a THREE.Object3D
+// either way, so the calling code doesn't need to care which format was used.
+async function loadBoatModel({gltfLoader, folderPath, folderAndFile, onProgress}) {
+
+    const gltfPath = `${folderPath}${folderAndFile}.gltf`;
+    const objPath = `${folderPath}${folderAndFile}.obj`;
+    const mtlPath = `${folderPath}${folderAndFile}.mtl`;
+
+    if (await urlExists(gltfPath)) {
+
+        console.log(`${folderAndFile}: found GLTF, loading ${gltfPath}`);
+
+        const gltf = await new Promise((resolve, reject) => {
+
+            gltfLoader.load(
+                gltfPath,
+                resolve,
+                (xhr) => onProgress(xhr.total > 0 ? xhr.loaded / xhr.total : 0),
+                reject
+            );
+
+        });
+
+        return gltf.scene;
+
+    }
+
+    if (!(await urlExists(objPath))) {
+        throw new Error(`Neither ${gltfPath} nor ${objPath} exist`);
+    }
+
+    const hasMtl = await urlExists(mtlPath);
+    console.log(`${folderAndFile}: no GLTF found, loading OBJ${hasMtl ? ' + MTL' : ' (no MTL, default material)'}`);
+
+    let materials = null;
+
+    if (hasMtl) {
+
+        const rawMtlText = await (await fetch(mtlPath)).text();
+        const cleanedMtlText = stripMtlTexturePaths(rawMtlText);
+
+        const mtlLoader = new MTLLoader().setPath(folderPath); // texture filenames now resolve relative to this folder
+        materials = mtlLoader.parse(cleanedMtlText, folderPath);
+        materials.preload();
+
+    }
+
+    const objLoader = new OBJLoader().setPath(folderPath);
+    if (materials) objLoader.setMaterials(materials);
+
+    const object = await new Promise((resolve, reject) => {
+
+        objLoader.load(
+            `${folderAndFile}.obj`,
+            resolve,
+            (xhr) => onProgress(xhr.total > 0 ? xhr.loaded / xhr.total : 0),
+            reject
+        );
+
+    });
+
+    return object;
+
+}
+
 async function init() {
 // Set the camera position above the model and pointing downwards to center on the model
     camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 2000);
-    camera.position.set(-0.16, 2.7, 2.85); // Set above the model (adjust height based on scale and size)
-    camera.lookAt(0, 0, 0); // Ensures it's looking at the center; adjust to the middle of your scene if needed
+    camera.position.set(-2.42, 1.08, 1.06); // Set above the model (adjust height based on scale and size)
+    camera.rotation.set(57, 52.2, 50.5); // Ensures it's looking at the center; adjust to the middle of your scene if needed
 
 // Scene setup
     scene = new THREE.Scene();
-    scene.background = new THREE.Color(0xffffff); // Set scene background to white
+    scene.background = new THREE.Color(0xffffff); // white background, as requested
 
-    // Lights: Ambient and Directional light for shadows
-    ambientLight = new THREE.AmbientLight(0xffffff, 0.1); // White ambient light
+    // Lights: moody via a very low, cool-tinted ambient (keeps shadows deep instead of
+    // washing them out) plus a strong warm key light with tight, high-res shadows, and
+    // a dim cool fill light so the shadow side doesn't go pure black.
+    // ambientLight/directionalLight variable names are unchanged — initLightControls()
+    // binds the light panel sliders to these specific variables.
+    ambientLight = new THREE.AmbientLight(0x223344, 0.025); // slightly lower than before — a bit more contrast, darker shadows
     scene.add(ambientLight);
 
-    directionalLight = new THREE.DirectionalLight(0xffffff, 2);
-    directionalLight.position.set(5, 10, 5); // Position it so it casts shadows
-    directionalLight.castShadow = true; // Enable shadow casting
+    directionalLight = new THREE.DirectionalLight(0xfff1d0, 10); // warm, punchy key light
+    directionalLight.position.set(6, 8, -4); // low, angled position for longer, more dramatic shadows
+    directionalLight.castShadow = true;
 
-    // Adjust shadow map size and camera
-    directionalLight.shadow.mapSize.width = 256;
-    directionalLight.shadow.mapSize.height = 256;
-    directionalLight.shadow.camera.left = -10;
-    directionalLight.shadow.camera.right = 10;
-    directionalLight.shadow.camera.top = 10;
-    directionalLight.shadow.camera.bottom = -10;
+    // Higher-res, tightly-fitted shadow camera — sharp shadow edges read as more
+    // "cinematic" than the soft, low-res shadows the old wide/loose camera produced.
+    directionalLight.shadow.mapSize.width = 1024;
+    directionalLight.shadow.mapSize.height = 1024;
+    directionalLight.shadow.camera.left = -4;
+    directionalLight.shadow.camera.right = 4;
+    directionalLight.shadow.camera.top = 4;
+    directionalLight.shadow.camera.bottom = -4;
+    directionalLight.shadow.camera.near = 0.5;
+    directionalLight.shadow.camera.far = 30;
+    directionalLight.shadow.bias = -0.0005; // reduces shadow acne at this higher resolution
 
     scene.add(directionalLight);
+
+    // Dim, cool rim/fill light from the opposite side — preserves some shadow-side
+    // detail and adds a bit of separation without flattening the contrast.
+    const fillLight = new THREE.DirectionalLight(0x3a5a8f, 0.3);
+    fillLight.position.set(-6, 3, 5);
+    scene.add(fillLight);
+
     scene.add(camera);
 
 
@@ -299,10 +542,10 @@ async function init() {
         }
 
         const folderAndFile = `Boot ${i}`;
-        const path = `static/models/${folderAndFile}/${folderAndFile}.gltf`;
+        const folderPath = `static/models/${folderAndFile}/`;
 
         updateLoadingProgress({
-            fileName: `${folderAndFile}.gltf`,
+            fileName: folderAndFile,
             fileProgress: 0,
             modelsLoaded: modelsLoadedSoFar,
             modelsTotal: enabledCount
@@ -310,33 +553,19 @@ async function init() {
 
         try {
 
-            // Wrap loader.load() in a Promise to get onProgress callbacks
-            // while keeping the same await-based flow as loadAsync
-            const gltf = await new Promise((resolve, reject) => {
-
-                gltfLoader.load(
-                    path,
-                    resolve,
-                    (xhr) => {
-
-                        // xhr.total is 0 if the server doesn't send a Content-Length header —
-                        // guard against divide-by-zero in that case
-                        const fileProgress = xhr.total > 0 ? xhr.loaded / xhr.total : 0;
-
-                        updateLoadingProgress({
-                            fileName: `${folderAndFile}.gltf`,
-                            fileProgress,
-                            modelsLoaded: modelsLoadedSoFar,
-                            modelsTotal: enabledCount
-                        });
-
-                    },
-                    reject
-                );
-
+            const model = await loadBoatModel({
+                gltfLoader,
+                folderPath,
+                folderAndFile,
+                onProgress: (fileProgress) => updateLoadingProgress({
+                    fileName: folderAndFile,
+                    fileProgress,
+                    modelsLoaded: modelsLoadedSoFar,
+                    modelsTotal: enabledCount
+                })
             });
 
-            const model = gltf.scene;
+            fixInvertedWinding(model); // works for both GLTF- and OBJ-sourced meshes
 
             model.traverse((node) => {
                 if (node.isMesh) {
@@ -347,11 +576,11 @@ async function init() {
 
             model.scale.setScalar(0.03); // adjust per-model if needed
 
-            const boundingBox = new THREE.Box3().setFromObject(model);
-            const center = boundingBox.getCenter(new THREE.Vector3());
+   //         const boundingBox = new THREE.Box3().setFromObject(model);
+      //      const center = boundingBox.getCenter(new THREE.Vector3());
 
-            model.position.sub(center);
-            model.position.y = model.position.y - boundingBox.min.y + center.y;
+        //    model.position.sub(center);
+        //    model.position.y = model.position.y - boundingBox.min.y + center.y;
 
             const pivot = new THREE.Group();
             pivot.add(model);
@@ -363,7 +592,7 @@ async function init() {
             modelsLoadedSoFar++;
 
             updateLoadingProgress({
-                fileName: `${folderAndFile}.gltf`,
+                fileName: folderAndFile,
                 fileProgress: 1,
                 modelsLoaded: modelsLoadedSoFar,
                 modelsTotal: enabledCount
@@ -371,7 +600,7 @@ async function init() {
 
         } catch (error) {
 
-            console.error(`Failed to load ${path}:`, error);
+            console.error(`Failed to load model for ${folderAndFile}:`, error);
             modelsLoadedSoFar++; // still count it so the overall counter progresses even on failure
 
         }
@@ -389,19 +618,13 @@ async function init() {
 
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
-    renderer.setAnimationLoop(animate);
+    renderer.toneMapping = THREE.ACESFilmicToneMapping; // filmic contrast curve — supports the moody look better than the flat linear default
+    renderer.toneMappingExposure = 0.9;
+
     document.body.appendChild(renderer.domElement);
 
-
-    // Create a ground plane to receive shadows
-    const planeGeometry = new THREE.PlaneGeometry(100, 100);
-    const planeMaterial = new THREE.ShadowMaterial({color: 0x000000, opacity: 1});
-    const ground = new THREE.Mesh(planeGeometry, planeMaterial);
-    ground.rotation.x = -Math.PI / 2; // Rotate the plane to be horizontal
-    ground.position.y = -0.5; // Slightly below the model to catch shadows
-    ground.receiveShadow = true; // Enable shadow receiving
-
-    scene.add(ground);
+    const pmremGenerator = new THREE.PMREMGenerator(renderer);
+scene.environment = pmremGenerator.fromScene(new RoomEnvironment(), 0.04).texture;
 
 
 // Setup controls
@@ -422,6 +645,12 @@ async function init() {
     // so the first model is selected and the status text reflects it.
     selectModel(0);
 
+    // Started here, not right after the renderer is created — animate() calls
+    // controls.update(), which needs controls to exist first. The awaited boat model
+    // loads above yield control back to the browser mid-init(); if the loop had
+    // already started earlier, an animation frame could fire before controls was
+    // ready and crash on `undefined`.
+    renderer.setAnimationLoop(animate);
 
 }
 
@@ -437,7 +666,6 @@ function onWindowResize() {
 function animate() {
 
     const delta = clock.getDelta();
-
 
     updateModelRotations(delta); // rotates every registered model toward targetYaw
 
@@ -524,6 +752,30 @@ function hideLoadingOverlay() {
 
 }
 
+// Draws a texture's image onto an opaque white canvas, discarding any alpha channel
+// baked into the source file. Needed because registerToggleableModel keeps
+// mat.transparent = true on purpose (for the crossfade), which means three.js still
+// honors a texture's own per-pixel alpha — this removes that data so only our
+// fade-controlled mat.opacity affects visibility, not leftover holes from the source PNG/TGA.
+function flattenTextureAlpha(texture) {
+
+    if (!texture || !texture.image || !texture.image.width) return;
+
+    const img = texture.image;
+    const canvas = document.createElement('canvas');
+    canvas.width = img.width;
+    canvas.height = img.height;
+
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#ffffff'; // fully-transparent source pixels become opaque white
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(img, 0, 0);
+
+    texture.image = canvas;
+    texture.needsUpdate = true;
+
+}
+
 function registerToggleableModel(index, name, object3D) {
 
     const materials = []; // cache once
@@ -535,8 +787,31 @@ function registerToggleableModel(index, name, object3D) {
             const nodeMaterials = Array.isArray(node.material) ? node.material : [node.material];
 
             nodeMaterials.forEach((mat) => {
-                mat.transparent = true;
+                mat.transparent = true; // required for the crossfade — do not set this false
                 mat.opacity = 1;
+                mat.side = THREE.DoubleSide; // FrontSide culled thin/open geometry (railings, ladders) depending on view angle
+
+                // Kill baked-in glass/physical transparency from GLTF extensions like
+                // KHR_materials_transmission — this is separate from transparent/opacity
+                // entirely, and is what makes bridge "windows" see-through.
+                if ('transmission' in mat) mat.transmission = 0;
+
+                mat.alphaTest = 0; // don't let per-pixel alpha punch discard-holes independently
+                mat.blending = THREE.NormalBlending; // Additive/Subtractive would make black pixels vanish
+
+                // GLTFLoader auto-disables this for any material exported with alphaMode: BLEND
+                // (Blender's "Blend" material blend mode) — without it, this single continuous hull
+                // mesh can't correctly self-occlude, since triangles draw in export order rather than
+                // camera-distance order, letting far-side geometry paint over near-side by draw order.
+                mat.depthWrite = true;
+
+                // Strip any baked alpha channel from the diffuse texture — see comment above.
+                if (mat.map) flattenTextureAlpha(mat.map);
+    // ---- NEW: make the glass material grey ----
+    if (mat.name === 'Scheiben' || node.name === 'Glass_22') {
+        mat.color.setHex(0xaaaaaa);  // light grey, adjust as desired
+        // If you want it darker: 0x888888 or 0x666666
+    }
                 materials.push(mat);
             });
 
@@ -689,54 +964,6 @@ function updateModelFades(delta) {
 
 }
 
-function initLightControls() {
-
-    // Small helper: wires a range input to a setter function and keeps its
-    // numeric readout span in sync, both on load and on every drag.
-    function bindRange(inputId, valueId, initialValue, onChange) {
-
-        const input = document.getElementById(inputId);
-        const valueEl = document.getElementById(valueId);
-
-        input.value = initialValue;
-        valueEl.textContent = initialValue;
-
-        input.addEventListener('input', () => {
-            const val = parseFloat(input.value);
-            onChange(val);
-            valueEl.textContent = val;
-        });
-
-    }
-
-    // Ambient light
-    bindRange('ambient-intensity', 'ambient-intensity-val', ambientLight.intensity,
-        (val) => { ambientLight.intensity = val; });
-
-    const ambientColor = document.getElementById('ambient-color');
-    ambientColor.value = '#' + ambientLight.color.getHexString();
-    ambientColor.addEventListener('input', () => {
-        ambientLight.color.set(ambientColor.value);
-    });
-
-    // Directional light
-    bindRange('dir-intensity', 'dir-intensity-val', directionalLight.intensity,
-        (val) => { directionalLight.intensity = val; });
-    bindRange('dir-x', 'dir-x-val', directionalLight.position.x,
-        (val) => { directionalLight.position.x = val; });
-    bindRange('dir-y', 'dir-y-val', directionalLight.position.y,
-        (val) => { directionalLight.position.y = val; });
-    bindRange('dir-z', 'dir-z-val', directionalLight.position.z,
-        (val) => { directionalLight.position.z = val; });
-
-    const dirColor = document.getElementById('dir-color');
-    dirColor.value = '#' + directionalLight.color.getHexString();
-    dirColor.addEventListener('input', () => {
-        directionalLight.color.set(dirColor.value);
-    });
-
-}
-
 function initDebugOverlay() {
 
     debugOverlayEl = document.getElementById('debug-overlay');
@@ -745,6 +972,20 @@ function initDebugOverlay() {
     debugCamRotEl = document.getElementById('debug-cam-rot');
     debugModelPosEl = document.getElementById('debug-model-pos');
     debugModelRotEl = document.getElementById('debug-model-rot');
+
+    // Rotate-left/right buttons live in the HTML template (#rotate-left-btn /
+    // #rotate-right-btn) — just wire them up here. They nudge targetYaw, reusing the
+    // existing smooth lerp-based rotation in updateModelRotations() rather than
+    // snapping the model instantly.
+    const rotateStep = THREE.MathUtils.degToRad(15); // degrees per click — adjust to taste
+
+    document.getElementById('rotate-left-btn').addEventListener('click', () => {
+        targetYaw -= rotateStep;
+    });
+
+    document.getElementById('rotate-right-btn').addEventListener('click', () => {
+        targetYaw += rotateStep;
+    });
 
     window.addEventListener('keydown', (event) => {
 
@@ -966,6 +1207,26 @@ function initHotspotPlacementMode() {
         console.log(`localPosition: new THREE.Vector3(${localPos.x.toFixed(3)}, ${localPos.y.toFixed(3)}, ${localPos.z.toFixed(3)})`);
         console.log(`minAngle: ${suggestedMin}, maxAngle: ${suggestedMax}  (current camera angle: ${currentAngle.toFixed(1)}°)`);
 
+        // --- Material diagnostic dump — tells us exactly what's actually set on
+        // --- whatever mesh you clicked on, instead of guessing from screenshots. ---
+        const clickedMats = Array.isArray(hit.object.material) ? hit.object.material : [hit.object.material];
+        clickedMats.forEach((mat, i) => {
+            console.log(`Mesh "${hit.object.name}" material[${i}] ("${mat.name || 'unnamed'}"):`, {
+                type: mat.type,
+                transparent: mat.transparent,
+                opacity: mat.opacity,
+                depthWrite: mat.depthWrite,
+                depthTest: mat.depthTest,
+                side: mat.side, // 0 = FrontSide, 1 = BackSide, 2 = DoubleSide
+                blending: mat.blending,
+                alphaTest: mat.alphaTest,
+                transmission: mat.transmission,
+                hasMap: !!mat.map,
+                mapImageIsCanvas: mat.map ? (mat.map.image instanceof HTMLCanvasElement) : null,
+                vertexColors: mat.vertexColors,
+            });
+        });
+
     });
 
 }
@@ -1093,4 +1354,80 @@ function closeDrawer() {
 // (model-toggle click, a hotspot's onClick, etc.)
 function setStatusText(text) {
     statusTextEl.textContent = text;
+}
+
+
+
+function initLightControls() {
+
+
+    const ambintensitySlider = document.getElementById('ambient-intensity');
+    const ambcolorPicker = document.getElementById('ambient-color');
+    const ambintensityVal = document.getElementById('ambient-intensity-val');
+
+    // Set initial values
+    ambintensitySlider.value = ambientLight.intensity;
+    ambintensityVal.textContent = ambientLight.intensity.toFixed(2);
+    ambcolorPicker.value = '#' + ambientLight.color.getHexString();
+
+    ambintensitySlider.addEventListener('input', () => {
+        const val = parseFloat(ambintensitySlider.value);
+        ambientLight.intensity = val;
+        ambintensityVal.textContent = val.toFixed(2);
+    });
+
+    ambcolorPicker.addEventListener('input', () => {
+        const color = new THREE.Color(ambcolorPicker.value);
+        ambientLight.color.copy(color);
+    });
+
+
+    const intensitySlider = document.getElementById('dir-intensity');
+    const xSlider = document.getElementById('dir-x');
+    const ySlider = document.getElementById('dir-y');
+    const zSlider = document.getElementById('dir-z');
+    const colorPicker = document.getElementById('dir-color');
+    const intensityVal = document.getElementById('dir-intensity-val');
+    const xVal = document.getElementById('dir-x-val');
+    const yVal = document.getElementById('dir-y-val');
+    const zVal = document.getElementById('dir-z-val');
+
+    // Set initial values
+    intensitySlider.value = directionalLight.intensity;
+    intensityVal.textContent = directionalLight.intensity.toFixed(1);
+    xSlider.value = directionalLight.position.x;
+    xVal.textContent = directionalLight.position.x.toFixed(1);
+    ySlider.value = directionalLight.position.y;
+    yVal.textContent = directionalLight.position.y.toFixed(1);
+    zSlider.value = directionalLight.position.z;
+    zVal.textContent = directionalLight.position.z.toFixed(1);
+    colorPicker.value = '#' + directionalLight.color.getHexString();
+
+    // Listeners
+    intensitySlider.addEventListener('input', () => {
+        const val = parseFloat(intensitySlider.value);
+        directionalLight.intensity = val;
+        intensityVal.textContent = val.toFixed(1);
+    });
+
+    xSlider.addEventListener('input', () => {
+        const val = parseFloat(xSlider.value);
+        directionalLight.position.x = val;
+        xVal.textContent = val.toFixed(1);
+    });
+    ySlider.addEventListener('input', () => {
+        const val = parseFloat(ySlider.value);
+        directionalLight.position.y = val;
+        yVal.textContent = val.toFixed(1);
+    });
+    zSlider.addEventListener('input', () => {
+        const val = parseFloat(zSlider.value);
+        directionalLight.position.z = val;
+        zVal.textContent = val.toFixed(1);
+    });
+
+    colorPicker.addEventListener('input', () => {
+        const color = new THREE.Color(colorPicker.value);
+        directionalLight.color.copy(color);
+    });
 }
