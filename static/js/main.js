@@ -76,6 +76,11 @@ let hotspotOverlayEl, hotspotOverlayTitleEl, hotspotOverlayTextEl, hotspotOverla
 let loadingOverlayEl, loadingTitleEl, loadingCurrentFileEl, loadingBarFillEl, loadingProgressTextEl,
     loadingOverallTextEl;
 
+// Connection warning (camera/serial)
+let connectionWarningEl, connectionWarningTextEl, connectionWarningDismissEl;
+let connectionWarningDismissedFor = null; // text of the message the user dismissed — a *different* problem re-shows it
+const CONNECTION_POLL_INTERVAL = 2000; // ms between /api/state polls
+
 // Drawer + status text
 let drawerToggleEl, toggleBarEl, statusTextEl;
 let drawerOpen = false;
@@ -141,7 +146,7 @@ initToggleButtons();
 initDebugOverlay();
 initHotspotEngine();
 initHotspotOverlay();
-
+initConnectionWarning();
 
 function initServerSentEvents() {
     const eventSource = new EventSource('/stream');
@@ -1430,4 +1435,60 @@ function initLightControls() {
         const color = new THREE.Color(colorPicker.value);
         directionalLight.color.copy(color);
     });
+}
+
+function initConnectionWarning() {
+
+    connectionWarningEl = document.getElementById('connection-warning');
+    connectionWarningTextEl = document.getElementById('connection-warning-text');
+    connectionWarningDismissEl = document.getElementById('connection-warning-dismiss');
+
+    connectionWarningDismissEl.addEventListener('click', () => {
+        connectionWarningDismissedFor = connectionWarningTextEl.textContent;
+        connectionWarningEl.classList.remove('visible');
+    });
+
+    pollConnectionState();
+    setInterval(pollConnectionState, CONNECTION_POLL_INTERVAL);
+
+}
+
+async function pollConnectionState() {
+
+    try {
+
+        const res = await fetch('/api/state');
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+        const state = await res.json();
+        updateConnectionWarning(state.camera_active, state.serial_connected);
+
+    } catch (e) {
+        // Backend unreachable — treat both as offline so the user still gets a signal.
+        updateConnectionWarning(false, false);
+    }
+
+}
+
+function updateConnectionWarning(cameraActive, serialConnected) {
+
+    const problems = [];
+    if (!cameraActive) problems.push('Kamera');
+    if (!serialConnected) problems.push('Encoder');
+
+    if (problems.length === 0) {
+        connectionWarningEl.classList.remove('visible');
+        connectionWarningDismissedFor = null; // clear so a future problem always shows again
+        return;
+    }
+
+    const message = `${problems.join(' & ')} nicht verbunden`;
+    connectionWarningTextEl.textContent = message;
+
+    // Only stay hidden if the user dismissed exactly this message — if the problem
+    // changes (e.g. serial also drops after camera alone was flagged), show again.
+    if (message === connectionWarningDismissedFor) return;
+
+    connectionWarningEl.classList.add('visible');
+
 }
