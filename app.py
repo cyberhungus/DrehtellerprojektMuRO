@@ -117,6 +117,11 @@ debug_state = {
 }
 
 
+
+encoder_activity_lock = threading.Lock()
+last_encoder_activity_time = 0.0
+
+
 def update_debug(**kwargs):
     with debug_lock:
         debug_state.update(kwargs)
@@ -300,6 +305,12 @@ def serial_thread():
 
                 steps, speed, direction = parsed
 
+                # Any non-(0,0,0) reading counts as the object being touched/spun —
+                # used to suppress the screensaver, independent of yaw math below.
+                if steps != 0 or speed != 0 or direction != 0:
+                    with encoder_activity_lock:
+                        last_encoder_activity_time = time.time()
+
                 with settings_lock:
                     multiplier = ROTATION_MULTIPLIER
 
@@ -396,6 +407,8 @@ def photobooth():
 def stream():
     def event_stream():
         last_sent = None
+        last_encoder_sent_time = 0.0
+
         while True:
             with yaw_lock:
                 yaw_to_send = current_yaw
@@ -404,10 +417,16 @@ def stream():
                 yield f"data: [{yaw_to_send:.2f}]\n\n"
                 last_sent = yaw_to_send
 
+            with encoder_activity_lock:
+                activity_time = last_encoder_activity_time
+
+            if activity_time > last_encoder_sent_time:
+                last_encoder_sent_time = activity_time
+                yield "event: encoder\ndata: active\n\n"
+
             threading.Event().wait(0.02)
 
     return Response(event_stream(), mimetype="text/event-stream")
-
 
 def run_flask():
     app.run(port=5000, debug=False, use_reloader=False)

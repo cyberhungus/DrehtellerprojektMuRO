@@ -3,9 +3,7 @@ import * as THREE from 'three';
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {DRACOLoader} from 'three/addons/loaders/DRACOLoader.js';
-import {OBJLoader} from 'three/addons/loaders/OBJLoader.js';
-import {MTLLoader} from 'three/addons/loaders/MTLLoader.js';
-import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
 
 let camera, scene, renderer, controls;
 let ambientLight, directionalLight; // hoisted so the debug-overlay light controls can reach them
@@ -37,7 +35,6 @@ const rotationLerpSpeed = 2.0; // higher = snappier turn, tune to taste
 const moveState = {forward: false, backward: false, left: false, right: false, up: false, down: false};
 const moveSpeed = 5; // units per second, tune to your scene scale
 
-const fadeDuration = 0.6; // seconds for a full fade in/out — tune to taste
 const clock = new THREE.Clock();
 
 // Screensaver
@@ -57,8 +54,6 @@ const hotspots = []; // { id, object, localPosition, minAngle, maxAngle, el, onC
 // Reused every frame instead of re-allocated
 const _worldPos = new THREE.Vector3();
 const _projected = new THREE.Vector3();
-
-let isTransitioning = false;
 
 // For Debug Overlay - press H:
 let debugOverlayVisible = false;
@@ -81,10 +76,17 @@ let connectionWarningEl, connectionWarningTextEl, connectionWarningDismissEl;
 let connectionWarningDismissedFor = null; // text of the message the user dismissed — a *different* problem re-shows it
 const CONNECTION_POLL_INTERVAL = 2000; // ms between /api/state polls
 
+// Model-switch cover overlay — hides the instant swap between models (replaces the
+// old opacity crossfade, which caused overlapping translucent surfaces to blend
+// toward the white scene background). Must match the CSS transition duration on
+// #model-switch-overlay in index.html.
+let switchOverlayEl;
+let switchInProgress = false;
+const switchTransitionMs = 300;
+
 // Drawer + status text
 let drawerToggleEl, toggleBarEl, statusTextEl;
 let drawerOpen = false;
-
 
 
 const hotspotDefinitions = {
@@ -101,7 +103,7 @@ const hotspotDefinitions = {
                 images: ['static/images/hotspots/engine-1.jpg']
             }
         },
-                {
+        {
             id: 'boot1-pipe',
             localPosition: new THREE.Vector3(1.5, 0, 0),
             minAngle: 0, // degrees — hotspot shows only while the camera sits within this arc
@@ -147,9 +149,12 @@ initDebugOverlay();
 initHotspotEngine();
 initHotspotOverlay();
 initConnectionWarning();
+initSwitchOverlay();
 
 function initServerSentEvents() {
+
     const eventSource = new EventSource('/stream');
+
     eventSource.onmessage = function (event) {
 
         console.log('New markers detected:', event.data);
@@ -157,11 +162,19 @@ function initServerSentEvents() {
         if (event.data && event.data !== "[]") {
 
             const yawDegrees = parseFloat(event.data.replace("[", "").replace("]", ""));
-            targetYaw = THREE.MathUtils.degToRad(yawDegrees); // convert once, store in radians
+            targetYaw = THREE.MathUtils.degToRad(yawDegrees);
 
         }
 
     };
+
+    // Non-zero encoder readings (STEPS/SPEED/DIR) mean someone's physically
+    // spinning the object — treat that as user activity, same as mouse/keyboard,
+    // so the screensaver doesn't kick in mid-interaction.
+    eventSource.addEventListener('encoder', function () {
+        resetScreensaverTimer();
+    });
+
 }
 
 function initKeyboardControls() {
@@ -315,7 +328,6 @@ function isVolumeMeasurable(geometry, volume) {
 // mesh whose winding comes out inside-out — fixes disappearing faces caused by
 // inconsistent winding baked into the source model (mirrored geometry, bad exports, etc).
 // Skips open/flat geometry where "inside vs outside" isn't a meaningful concept.
-// Works on both GLTF- and OBJ-sourced meshes.
 function fixInvertedWinding(object3D) {
 
     object3D.traverse((node) => {
@@ -374,102 +386,15 @@ function fixInvertedWinding(object3D) {
 
 }
 
-// Strips directory info off texture map lines in a raw .mtl file's text, so that
-// e.g. "map_Kd C:\Users\Someone\Desktop\textures\foo.tga" becomes "map_Kd foo.tga".
-// Needed because some exporters (older 3ds Max, etc.) bake the original absolute
-// Windows export path into the .mtl instead of a relative filename.
-function stripMtlTexturePaths(mtlText) {
-
-    const mapDirectives = ['map_Kd', 'map_Ks', 'map_Ka', 'map_Bump', 'bump', 'map_d', 'map_Ns', 'disp', 'decal', 'refl'];
-
-    return mtlText
-        .split('\n')
-        .map((line) => {
-
-            const trimmed = line.trim();
-            const directive = mapDirectives.find((d) => trimmed.startsWith(d + ' ') || trimmed.startsWith(d + '\t'));
-
-            if (!directive) return line;
-
-            // Keep any leading option flags (-s, -o, -bm, ...) intact, but collapse
-            // the actual path — the last whitespace-separated chunk — down to just its filename.
-            const parts = trimmed.slice(directive.length).trim().split(/\s+/);
-            const fileName = parts[parts.length - 1].replace(/\\/g, '/').split('/').pop();
-            parts[parts.length - 1] = fileName;
-
-            return `${directive} ${parts.join(' ')}`;
-
-        })
-        .join('\n');
-
-}
-
-async function urlExists(url) {
-
-    try {
-        const res = await fetch(url, {method: 'HEAD'});
-        return res.ok;
-    } catch (e) {
-        return false;
-    }
-
-}
-
-// Tries "<folder>/<folderAndFile>.gltf" first; if that's not present, falls back
-// to "<folder>/<folderAndFile>.obj" (+ .mtl if it's there too). Returns a THREE.Object3D
-// either way, so the calling code doesn't need to care which format was used.
+// Loads "<folder>/<folderAndFile>.gltf" via GLTFLoader.
 async function loadBoatModel({gltfLoader, folderPath, folderAndFile, onProgress}) {
 
     const gltfPath = `${folderPath}${folderAndFile}.gltf`;
-    const objPath = `${folderPath}${folderAndFile}.obj`;
-    const mtlPath = `${folderPath}${folderAndFile}.mtl`;
 
-    if (await urlExists(gltfPath)) {
+    const gltf = await new Promise((resolve, reject) => {
 
-        console.log(`${folderAndFile}: found GLTF, loading ${gltfPath}`);
-
-        const gltf = await new Promise((resolve, reject) => {
-
-            gltfLoader.load(
-                gltfPath,
-                resolve,
-                (xhr) => onProgress(xhr.total > 0 ? xhr.loaded / xhr.total : 0),
-                reject
-            );
-
-        });
-
-        return gltf.scene;
-
-    }
-
-    if (!(await urlExists(objPath))) {
-        throw new Error(`Neither ${gltfPath} nor ${objPath} exist`);
-    }
-
-    const hasMtl = await urlExists(mtlPath);
-    console.log(`${folderAndFile}: no GLTF found, loading OBJ${hasMtl ? ' + MTL' : ' (no MTL, default material)'}`);
-
-    let materials = null;
-
-    if (hasMtl) {
-
-        const rawMtlText = await (await fetch(mtlPath)).text();
-        const cleanedMtlText = stripMtlTexturePaths(rawMtlText);
-
-        const mtlLoader = new MTLLoader().setPath(folderPath); // texture filenames now resolve relative to this folder
-        materials = mtlLoader.parse(cleanedMtlText, folderPath);
-        materials.preload();
-
-    }
-
-    const objLoader = new OBJLoader().setPath(folderPath);
-    if (materials) objLoader.setMaterials(materials);
-
-    const object = await new Promise((resolve, reject) => {
-
-        objLoader.load(
-            `${folderAndFile}.obj`,
+        gltfLoader.load(
+            gltfPath,
             resolve,
             (xhr) => onProgress(xhr.total > 0 ? xhr.loaded / xhr.total : 0),
             reject
@@ -477,7 +402,7 @@ async function loadBoatModel({gltfLoader, folderPath, folderAndFile, onProgress}
 
     });
 
-    return object;
+    return gltf.scene;
 
 }
 
@@ -489,7 +414,7 @@ async function init() {
 
 // Scene setup
     scene = new THREE.Scene();
-    scene.background = new THREE.Color(0xffffff); // white background, as requested
+    scene.background = new THREE.Color(0xffffff); // white background — must match #model-switch-overlay's background in index.html
 
     // Lights: moody via a very low, cool-tinted ambient (keeps shadows deep instead of
     // washing them out) plus a strong warm key light with tight, high-res shadows, and
@@ -570,7 +495,7 @@ async function init() {
                 })
             });
 
-            fixInvertedWinding(model); // works for both GLTF- and OBJ-sourced meshes
+            fixInvertedWinding(model);
 
             model.traverse((node) => {
                 if (node.isMesh) {
@@ -581,11 +506,11 @@ async function init() {
 
             model.scale.setScalar(0.03); // adjust per-model if needed
 
-   //         const boundingBox = new THREE.Box3().setFromObject(model);
-      //      const center = boundingBox.getCenter(new THREE.Vector3());
+            //         const boundingBox = new THREE.Box3().setFromObject(model);
+            //      const center = boundingBox.getCenter(new THREE.Vector3());
 
-        //    model.position.sub(center);
-        //    model.position.y = model.position.y - boundingBox.min.y + center.y;
+            //    model.position.sub(center);
+            //    model.position.y = model.position.y - boundingBox.min.y + center.y;
 
             const pivot = new THREE.Group();
             pivot.add(model);
@@ -629,7 +554,7 @@ async function init() {
     document.body.appendChild(renderer.domElement);
 
     const pmremGenerator = new THREE.PMREMGenerator(renderer);
-scene.environment = pmremGenerator.fromScene(new RoomEnvironment(), 0.04).texture;
+    scene.environment = pmremGenerator.fromScene(new RoomEnvironment(), 0.04).texture;
 
 
 // Setup controls
@@ -675,8 +600,7 @@ function animate() {
     updateModelRotations(delta); // rotates every registered model toward targetYaw
 
     updateCameraMovement(delta);
-    updateModelFades(delta); // add this
-    updateDebugOverlay(); // add this
+    updateDebugOverlay();
     updateHotspots();
     controls.update();
     renderer.render(scene, camera);
@@ -757,30 +681,6 @@ function hideLoadingOverlay() {
 
 }
 
-// Draws a texture's image onto an opaque white canvas, discarding any alpha channel
-// baked into the source file. Needed because registerToggleableModel keeps
-// mat.transparent = true on purpose (for the crossfade), which means three.js still
-// honors a texture's own per-pixel alpha — this removes that data so only our
-// fade-controlled mat.opacity affects visibility, not leftover holes from the source PNG/TGA.
-function flattenTextureAlpha(texture) {
-
-    if (!texture || !texture.image || !texture.image.width) return;
-
-    const img = texture.image;
-    const canvas = document.createElement('canvas');
-    canvas.width = img.width;
-    canvas.height = img.height;
-
-    const ctx = canvas.getContext('2d');
-    ctx.fillStyle = '#ffffff'; // fully-transparent source pixels become opaque white
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.drawImage(img, 0, 0);
-
-    texture.image = canvas;
-    texture.needsUpdate = true;
-
-}
-
 function registerToggleableModel(index, name, object3D) {
 
     const materials = []; // cache once
@@ -792,31 +692,18 @@ function registerToggleableModel(index, name, object3D) {
             const nodeMaterials = Array.isArray(node.material) ? node.material : [node.material];
 
             nodeMaterials.forEach((mat) => {
-                mat.transparent = true; // required for the crossfade — do not set this false
-                mat.opacity = 1;
+
                 mat.side = THREE.DoubleSide; // FrontSide culled thin/open geometry (railings, ladders) depending on view angle
 
                 // Kill baked-in glass/physical transparency from GLTF extensions like
-                // KHR_materials_transmission — this is separate from transparent/opacity
-                // entirely, and is what makes bridge "windows" see-through.
+                // KHR_materials_transmission — this is what made bridge "windows" see-through.
                 if ('transmission' in mat) mat.transmission = 0;
 
-                mat.alphaTest = 0; // don't let per-pixel alpha punch discard-holes independently
-                mat.blending = THREE.NormalBlending; // Additive/Subtractive would make black pixels vanish
-
-                // GLTFLoader auto-disables this for any material exported with alphaMode: BLEND
-                // (Blender's "Blend" material blend mode) — without it, this single continuous hull
-                // mesh can't correctly self-occlude, since triangles draw in export order rather than
-                // camera-distance order, letting far-side geometry paint over near-side by draw order.
-                mat.depthWrite = true;
-
-                // Strip any baked alpha channel from the diffuse texture — see comment above.
-                if (mat.map) flattenTextureAlpha(mat.map);
-    // ---- NEW: make the glass material grey ----
-    if (mat.name === 'Scheiben' || node.name === 'Glass_22') {
-        mat.color.setHex(0xaaaaaa);  // light grey, adjust as desired
-        // If you want it darker: 0x888888 or 0x666666
-    }
+                // ---- glass material grey ----
+                if (mat.name === 'Scheiben' || node.name === 'Glass_22') {
+                    mat.color.setHex(0xaaaaaa);  // light grey, adjust as desired
+                    // If you want it darker: 0x888888 or 0x666666
+                }
                 materials.push(mat);
             });
 
@@ -829,10 +716,7 @@ function registerToggleableModel(index, name, object3D) {
     toggleableModels[index] = {
         name,
         object: object3D,
-        materials, // cached — no more re-traversal needed
-        targetOpacity: isFirstRegistered ? 1 : 0,
-        currentOpacity: isFirstRegistered ? 1 : 0,
-        fading: false
+        materials // cached — no more re-traversal needed
     };
 
     object3D.visible = isFirstRegistered;
@@ -841,12 +725,6 @@ function registerToggleableModel(index, name, object3D) {
 
         hasSetInitialActiveModel = true;
         activeModelIndex = index;
-
-    } else {
-
-        materials.forEach((mat) => {
-            mat.opacity = 0;
-        });
 
     }
 
@@ -866,50 +744,76 @@ function registerToggleableModel(index, name, object3D) {
 
 }
 
+// Switches the active model by covering the screen with an opaque overlay, hard-swapping
+// visibility underneath (no blending, so no white-wash from overlapping translucent
+// surfaces), then revealing. Hidden models keep rotating toward targetYaw the whole
+// time via updateModelRotations(), so whichever one appears is already facing correctly.
 function selectModel(index) {
 
     const entry = toggleableModels[index];
     if (!entry) return;
 
-    const btn = document.querySelector(`.model-toggle-btn[data-index="${index}"]`);
+    if (index === activeModelIndex || switchInProgress) {
 
-    if (index !== activeModelIndex) {
+        // Not actually switching (re-clicking the active model) — just make sure the
+        // button/status state is correct, no cover animation needed.
+        const btn = document.querySelector(`.model-toggle-btn[data-index="${index}"]`);
+        if (btn) {
+            btn.classList.remove('inactive');
+            btn.classList.add('active');
+        }
 
-        if (isTransitioning) return; // ignore while another fade is already in progress
+        setStatusText(
+            (buttonConfig[index] && buttonConfig[index].statusText) ? buttonConfig[index].statusText : entry.name
+        );
 
-        isTransitioning = true;
+        return;
 
-        entry.targetOpacity = 1;
-        entry.fading = true;
-        entry.object.visible = true;
+    }
 
+    switchInProgress = true;
+    switchOverlayEl.style.opacity = '1';
+
+    setTimeout(() => {
+
+        // Screen is fully covered here — hard-swap visibility, no blending involved.
         toggleableModels.forEach((otherEntry, otherIndex) => {
 
-            if (!otherEntry || otherIndex === index) return;
+            if (!otherEntry) return;
 
-            otherEntry.targetOpacity = 0;
-            otherEntry.fading = true;
+            otherEntry.object.visible = (otherIndex === index);
 
             const otherBtn = document.querySelector(`.model-toggle-btn[data-index="${otherIndex}"]`);
             if (otherBtn) {
-                otherBtn.classList.add('inactive');
-                otherBtn.classList.remove('active');
+                otherBtn.classList.toggle('active', otherIndex === index);
+                otherBtn.classList.toggle('inactive', otherIndex !== index);
             }
 
         });
 
-    }
+        activeModelIndex = index;
 
-    activeModelIndex = index;
+        setStatusText(
+            (buttonConfig[index] && buttonConfig[index].statusText) ? buttonConfig[index].statusText : entry.name
+        ); // <-- edit buttonConfig at the top to customize this per model
 
-    if (btn) {
-        btn.classList.remove('inactive');
-        btn.classList.add('active');
-    }
+        // Reveal on the next frame, so the browser paints the fully-covered
+        // state at least once before starting the fade-out transition.
+        requestAnimationFrame(() => {
+            switchOverlayEl.style.opacity = '0';
+        });
 
-    setStatusText(
-        (buttonConfig[index] && buttonConfig[index].statusText) ? buttonConfig[index].statusText : entry.name
-    ); // <-- edit buttonConfig at the top to customize this per model
+    }, switchTransitionMs);
+
+    setTimeout(() => {
+        switchInProgress = false;
+    }, switchTransitionMs * 2);
+
+}
+
+function initSwitchOverlay() {
+
+    switchOverlayEl = document.getElementById('model-switch-overlay');
 
 }
 
@@ -927,45 +831,6 @@ function initToggleButtons() {
         });
 
     });
-
-}
-
-function updateModelFades(delta) {
-
-    let anyStillFading = false;
-
-    toggleableModels.forEach((entry) => {
-
-        if (!entry || !entry.fading) return;
-
-        anyStillFading = true;
-
-        const fadeStep = delta / fadeDuration;
-
-        if (entry.currentOpacity < entry.targetOpacity) {
-            entry.currentOpacity = Math.min(entry.targetOpacity, entry.currentOpacity + fadeStep);
-        } else if (entry.currentOpacity > entry.targetOpacity) {
-            entry.currentOpacity = Math.max(entry.targetOpacity, entry.currentOpacity - fadeStep);
-        }
-
-        // No traverse() here anymore — just loop the cached flat array
-        entry.materials.forEach((mat) => {
-            mat.opacity = entry.currentOpacity;
-        });
-
-        if (entry.currentOpacity === entry.targetOpacity) {
-
-            entry.fading = false;
-
-            if (entry.targetOpacity === 0) {
-                entry.object.visible = false;
-            }
-
-        }
-
-    });
-
-    isTransitioning = anyStillFading;
 
 }
 
@@ -1045,7 +910,6 @@ function updateModelRotations(delta) {
     toggleableModels.forEach((entry) => {
 
         if (!entry) return;
-        if (!entry.object.visible) return; // skip fully hidden models
 
         entry.object.rotation.y = lerpAngle(entry.object.rotation.y, targetYaw, t);
 
@@ -1360,7 +1224,6 @@ function closeDrawer() {
 function setStatusText(text) {
     statusTextEl.textContent = text;
 }
-
 
 
 function initLightControls() {

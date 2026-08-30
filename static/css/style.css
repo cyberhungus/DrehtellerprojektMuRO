@@ -484,3 +484,13 @@
     cursor: pointer;
     padding: 0 2px;
 }
+
+#model-switch-overlay {
+    position: fixed;
+    inset: 0;
+    background: #ffffff; /* match scene.background so the cover is invisible once opaque */
+    opacity: 0;
+    pointer-events: none;
+    z-index: 500; /* above the canvas, below UI like the drawer/debug overlay */
+    transition: opacity 0.3s ease;
+}
