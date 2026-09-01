@@ -6,7 +6,7 @@ import math
 marker_size_mm =    8   # Side of each marker in millimeters
 dpi = 300                    # Dots per inch for printing
 spacing_x_mm = 1             # Horizontal space between markers (mm)
-spacing_y_mm = 4           # Vertical space between markers (mm) – increase if text overlaps
+spacing_y_mm = 10           # Vertical space between markers (mm) – increase if text overlaps
 margin_mm = 5                # Margin on all sides (mm)
 
 marker_id_start = 0          # First marker ID to generate

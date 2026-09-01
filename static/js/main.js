@@ -6,8 +6,8 @@ import {DRACOLoader} from 'three/addons/loaders/DRACOLoader.js';
 import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
 
 let camera, scene, renderer, controls;
-let ambientLight, directionalLight; // hoisted so the debug-overlay light controls can reach them
-
+let ambientLight, directionalLight, directionalLight2; // hoisted so the debug-overlay light controls can reach them
+let lightVisual1, lightVisual2; // small sphere+line shown per light while the debug overlay (H) is open
 // Toggle which boat models are loaded/active — index 0 = Boot 1, index 1 = Boot 2, etc.
 // Set to false to skip loading that model entirely (useful for testing/debugging).
 const modelEnabled = [true, true, false, false, false, false];
@@ -311,6 +311,30 @@ function getSignedVolume(geometry) {
 
 }
 
+
+// Draws a texture's image onto an opaque white canvas, discarding any alpha channel
+// baked into the source file. Needed because registerToggleableModel keeps
+// mat.transparent = true, which means three.js still honors a texture's own
+// per-pixel alpha — this removes that data so a texture's alpha channel can't punch
+// holes in the model regardless of what mat.opacity is set to.
+function flattenTextureAlpha(texture) {
+
+    if (!texture || !texture.image || !texture.image.width) return;
+
+    const img = texture.image;
+    const canvas = document.createElement('canvas');
+    canvas.width = img.width;
+    canvas.height = img.height;
+
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#ffffff'; // fully-transparent source pixels become opaque white
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(img, 0, 0);
+
+    texture.image = canvas;
+    texture.needsUpdate = true;
+}
+
 // Flat/open geometry (railings, decals, thin panels) has no real "inside", so its
 // computed volume is just floating-point noise near zero — this checks whether the
 // volume is large enough relative to the mesh's size to be a meaningful signal at all.
@@ -425,7 +449,8 @@ async function init() {
     scene.add(ambientLight);
 
     directionalLight = new THREE.DirectionalLight(0xfff1d0, 10); // warm, punchy key light
-    directionalLight.position.set(6, 8, -4); // low, angled position for longer, more dramatic shadows
+    directionalLight.position.set(4, 12, 6); // low, angled position for longer, more dramatic shadows
+    directionalLight.position.set(4, 12, 6); // low, angled position for longer, more dramatic shadows
     directionalLight.castShadow = true;
 
     // Higher-res, tightly-fitted shadow camera — sharp shadow edges read as more
@@ -442,6 +467,31 @@ async function init() {
 
     scene.add(directionalLight);
 
+        directionalLight2 = new THREE.DirectionalLight(0xff00ff, 10); // warm, punchy key light
+    directionalLight2.position.set(6, 8, -4); // low, angled position for longer, more dramatic shadows
+    directionalLight2.castShadow = true;
+
+    // Higher-res, tightly-fitted shadow camera — sharp shadow edges read as more
+    // "cinematic" than the soft, low-res shadows the old wide/loose camera produced.
+    directionalLight2.shadow.mapSize.width = 1024;
+    directionalLight2.shadow.mapSize.height = 1024;
+    directionalLight2.shadow.camera.left = -4;
+    directionalLight2.shadow.camera.right = 4;
+    directionalLight2.shadow.camera.top = 4;
+    directionalLight2.shadow.camera.bottom = -4;
+    directionalLight2.shadow.camera.near = 0.5;
+    directionalLight2.shadow.camera.far = 30;
+    directionalLight2.shadow.bias = -0.0005; // reduces shadow acne at this higher resolution
+
+    scene.add(directionalLight2);
+
+    lightVisual1 = createLightVisual(0xff5555);
+    lightVisual1.group.visible = debugOverlayVisible;
+    scene.add(lightVisual1.group);
+
+    lightVisual2 = createLightVisual(0x55aaff);
+    lightVisual2.group.visible = debugOverlayVisible;
+    scene.add(lightVisual2.group);
     // Dim, cool rim/fill light from the opposite side — preserves some shadow-side
     // detail and adds a bit of separation without flattening the contrast.
     const fillLight = new THREE.DirectionalLight(0x3a5a8f, 0.3);
@@ -602,6 +652,12 @@ function animate() {
     updateCameraMovement(delta);
     updateDebugOverlay();
     updateHotspots();
+
+        if (debugOverlayVisible) {
+        updateLightVisual(lightVisual1, directionalLight);
+        updateLightVisual(lightVisual2, directionalLight2);
+    }
+
     controls.update();
     renderer.render(scene, camera);
 
@@ -692,18 +748,32 @@ function registerToggleableModel(index, name, object3D) {
             const nodeMaterials = Array.isArray(node.material) ? node.material : [node.material];
 
             nodeMaterials.forEach((mat) => {
-
+                mat.transparent = true;
+                mat.opacity = 1;
                 mat.side = THREE.DoubleSide; // FrontSide culled thin/open geometry (railings, ladders) depending on view angle
 
                 // Kill baked-in glass/physical transparency from GLTF extensions like
                 // KHR_materials_transmission — this is what made bridge "windows" see-through.
                 if ('transmission' in mat) mat.transmission = 0;
 
+                mat.alphaTest = 0; // don't let per-pixel alpha punch discard-holes independently
+                mat.blending = THREE.NormalBlending; // Additive/Subtractive would make black pixels vanish
+
+                // GLTFLoader auto-disables this for any material exported with alphaMode: BLEND
+                // (Blender's "Blend" material blend mode) — without it, this single continuous hull
+                // mesh can't correctly self-occlude, since triangles draw in export order rather than
+                // camera-distance order, letting far-side geometry paint over near-side by draw order.
+                mat.depthWrite = true;
+
+                // Strip any baked alpha channel from the diffuse texture — see comment above.
+                if (mat.map) flattenTextureAlpha(mat.map);
+
                 // ---- glass material grey ----
                 if (mat.name === 'Scheiben' || node.name === 'Glass_22') {
-                    mat.color.setHex(0xaaaaaa);  // light grey, adjust as desired
+                    mat.color.setHex(0x000000);  // light grey, adjust as desired
                     // If you want it darker: 0x888888 or 0x666666
                 }
+
                 materials.push(mat);
             });
 
@@ -731,9 +801,6 @@ function registerToggleableModel(index, name, object3D) {
     const btn = document.querySelector(`.model-toggle-btn[data-index="${index}"]`);
     if (btn) {
 
-        // Set the label text on the inner span, not the whole button —
-        // using btn.textContent here would wipe out the <img> icon element.
-        // Uses buttonConfig's override if set, otherwise falls back to the model's loaded name.
         const labelEl = btn.querySelector('.model-toggle-label');
         const configEntry = buttonConfig[index];
         if (labelEl) labelEl.textContent = (configEntry && configEntry.label) ? configEntry.label : name;
@@ -862,6 +929,8 @@ function initDebugOverlay() {
         if (event.code === 'KeyH') {
             debugOverlayVisible = !debugOverlayVisible;
             debugOverlayEl.style.display = debugOverlayVisible ? 'block' : 'none';
+                        lightVisual1.group.visible = debugOverlayVisible;
+            lightVisual2.group.visible = debugOverlayVisible;
         }
 
     });
@@ -902,6 +971,77 @@ function lerpAngle(current, target, t) {
     return current + delta * t;
 
 }
+
+// Converts a light's Cartesian position into azimuth/elevation/radius, using the
+// same atan2(x, z) convention as getCameraAngleRelativeToObject() elsewhere in this
+// file, so "azimuth" reads consistently across the app.
+function positionToSpherical(position) {
+
+    const radius = position.length();
+    if (radius === 0) return {radius: 0, azimuthDeg: 0, elevationDeg: 0};
+
+    const elevationRad = Math.asin(THREE.MathUtils.clamp(position.y / radius, -1, 1));
+    const azimuthRad = Math.atan2(position.x, position.z);
+
+    return {
+        radius,
+        azimuthDeg: THREE.MathUtils.radToDeg(azimuthRad),
+        elevationDeg: THREE.MathUtils.radToDeg(elevationRad)
+    };
+
+}
+
+// Inverse of positionToSpherical() — rebuilds a Cartesian position from a
+// radius/azimuth/elevation triple. Used so dragging "rotation" sliders orbits the
+// light around the origin at its current distance instead of moving it in a line.
+function sphericalToPosition(radius, azimuthDeg, elevationDeg) {
+
+    const azimuthRad = THREE.MathUtils.degToRad(azimuthDeg);
+    const elevationRad = THREE.MathUtils.degToRad(elevationDeg);
+    const horizontalRadius = radius * Math.cos(elevationRad);
+
+    return new THREE.Vector3(
+        horizontalRadius * Math.sin(azimuthRad),
+        radius * Math.sin(elevationRad),
+        horizontalRadius * Math.cos(azimuthRad)
+    );
+
+}
+
+// A small sphere at the light's position plus a line out to its target (the origin —
+// our directional lights never set a custom .target) — shown only while the debug
+// overlay (H) is open, so it never appears in the normal kiosk view.
+function createLightVisual(color) {
+
+    const group = new THREE.Group();
+
+    const sphere = new THREE.Mesh(
+        new THREE.SphereGeometry(0.15, 12, 12),
+        new THREE.MeshBasicMaterial({color})
+    );
+    group.add(sphere);
+
+    const line = new THREE.Line(
+        new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3()]),
+        new THREE.LineBasicMaterial({color})
+    );
+    group.add(line);
+
+    return {group, sphere, line};
+
+}
+
+function updateLightVisual(visual, light) {
+
+    visual.sphere.position.copy(light.position);
+
+    const positions = visual.line.geometry.attributes.position;
+    positions.setXYZ(0, light.position.x, light.position.y, light.position.z);
+    positions.setXYZ(1, 0, 0, 0);
+    positions.needsUpdate = true;
+
+}
+
 
 function updateModelRotations(delta) {
 
@@ -1226,14 +1366,95 @@ function setStatusText(text) {
 }
 
 
-function initLightControls() {
+function wireDirectionalLightControls(light, idSuffix) {
 
+    const intensitySlider = document.getElementById(`dir-intensity${idSuffix}`);
+    const xSlider = document.getElementById(`dir-x${idSuffix}`);
+    const ySlider = document.getElementById(`dir-y${idSuffix}`);
+    const zSlider = document.getElementById(`dir-z${idSuffix}`);
+    const colorPicker = document.getElementById(`dir-color${idSuffix}`);
+    const azimuthSlider = document.getElementById(`dir-azimuth${idSuffix}`);
+    const elevationSlider = document.getElementById(`dir-elevation${idSuffix}`);
+
+    const intensityVal = document.getElementById(`dir-intensity-val${idSuffix}`);
+    const xVal = document.getElementById(`dir-x-val${idSuffix}`);
+    const yVal = document.getElementById(`dir-y-val${idSuffix}`);
+    const zVal = document.getElementById(`dir-z-val${idSuffix}`);
+    const azimuthVal = document.getElementById(`dir-azimuth-val${idSuffix}`);
+    const elevationVal = document.getElementById(`dir-elevation-val${idSuffix}`);
+
+    // Reflects the light's current position into both the X/Y/Z sliders and the
+    // azimuth/elevation sliders — called after either representation changes it,
+    // so the two always agree.
+    function syncSlidersFromPosition() {
+
+        xSlider.value = light.position.x;
+        xVal.textContent = light.position.x.toFixed(1);
+        ySlider.value = light.position.y;
+        yVal.textContent = light.position.y.toFixed(1);
+        zSlider.value = light.position.z;
+        zVal.textContent = light.position.z.toFixed(1);
+
+        const {azimuthDeg, elevationDeg} = positionToSpherical(light.position);
+        azimuthSlider.value = azimuthDeg;
+        azimuthVal.textContent = azimuthDeg.toFixed(0);
+        elevationSlider.value = elevationDeg;
+        elevationVal.textContent = elevationDeg.toFixed(0);
+
+    }
+
+    intensitySlider.value = light.intensity;
+    intensityVal.textContent = light.intensity.toFixed(1);
+    colorPicker.value = '#' + light.color.getHexString();
+    syncSlidersFromPosition();
+
+    intensitySlider.addEventListener('input', () => {
+        const val = parseFloat(intensitySlider.value);
+        light.intensity = val;
+        intensityVal.textContent = val.toFixed(1);
+    });
+
+    colorPicker.addEventListener('input', () => {
+        light.color.copy(new THREE.Color(colorPicker.value));
+    });
+
+    // Dragging X/Y/Z moves the light directly and keeps azimuth/elevation in sync.
+    xSlider.addEventListener('input', () => {
+        light.position.x = parseFloat(xSlider.value);
+        syncSlidersFromPosition();
+    });
+    ySlider.addEventListener('input', () => {
+        light.position.y = parseFloat(ySlider.value);
+        syncSlidersFromPosition();
+    });
+    zSlider.addEventListener('input', () => {
+        light.position.z = parseFloat(zSlider.value);
+        syncSlidersFromPosition();
+    });
+
+    // Dragging azimuth/elevation orbits the light around the origin at its current
+    // distance and keeps X/Y/Z in sync.
+    function applyRotation() {
+        const {radius} = positionToSpherical(light.position);
+        light.position.copy(sphericalToPosition(
+            radius || 1,
+            parseFloat(azimuthSlider.value),
+            parseFloat(elevationSlider.value)
+        ));
+        syncSlidersFromPosition();
+    }
+
+    azimuthSlider.addEventListener('input', applyRotation);
+    elevationSlider.addEventListener('input', applyRotation);
+
+}
+
+function initLightControls() {
 
     const ambintensitySlider = document.getElementById('ambient-intensity');
     const ambcolorPicker = document.getElementById('ambient-color');
     const ambintensityVal = document.getElementById('ambient-intensity-val');
 
-    // Set initial values
     ambintensitySlider.value = ambientLight.intensity;
     ambintensityVal.textContent = ambientLight.intensity.toFixed(2);
     ambcolorPicker.value = '#' + ambientLight.color.getHexString();
@@ -1249,56 +1470,11 @@ function initLightControls() {
         ambientLight.color.copy(color);
     });
 
+    wireDirectionalLightControls(directionalLight, '');
+    wireDirectionalLightControls(directionalLight2, '-2');
 
-    const intensitySlider = document.getElementById('dir-intensity');
-    const xSlider = document.getElementById('dir-x');
-    const ySlider = document.getElementById('dir-y');
-    const zSlider = document.getElementById('dir-z');
-    const colorPicker = document.getElementById('dir-color');
-    const intensityVal = document.getElementById('dir-intensity-val');
-    const xVal = document.getElementById('dir-x-val');
-    const yVal = document.getElementById('dir-y-val');
-    const zVal = document.getElementById('dir-z-val');
-
-    // Set initial values
-    intensitySlider.value = directionalLight.intensity;
-    intensityVal.textContent = directionalLight.intensity.toFixed(1);
-    xSlider.value = directionalLight.position.x;
-    xVal.textContent = directionalLight.position.x.toFixed(1);
-    ySlider.value = directionalLight.position.y;
-    yVal.textContent = directionalLight.position.y.toFixed(1);
-    zSlider.value = directionalLight.position.z;
-    zVal.textContent = directionalLight.position.z.toFixed(1);
-    colorPicker.value = '#' + directionalLight.color.getHexString();
-
-    // Listeners
-    intensitySlider.addEventListener('input', () => {
-        const val = parseFloat(intensitySlider.value);
-        directionalLight.intensity = val;
-        intensityVal.textContent = val.toFixed(1);
-    });
-
-    xSlider.addEventListener('input', () => {
-        const val = parseFloat(xSlider.value);
-        directionalLight.position.x = val;
-        xVal.textContent = val.toFixed(1);
-    });
-    ySlider.addEventListener('input', () => {
-        const val = parseFloat(ySlider.value);
-        directionalLight.position.y = val;
-        yVal.textContent = val.toFixed(1);
-    });
-    zSlider.addEventListener('input', () => {
-        const val = parseFloat(zSlider.value);
-        directionalLight.position.z = val;
-        zVal.textContent = val.toFixed(1);
-    });
-
-    colorPicker.addEventListener('input', () => {
-        const color = new THREE.Color(colorPicker.value);
-        directionalLight.color.copy(color);
-    });
 }
+
 
 function initConnectionWarning() {
 
@@ -1355,3 +1531,4 @@ function updateConnectionWarning(cameraActive, serialConnected) {
     connectionWarningEl.classList.add('visible');
 
 }
+

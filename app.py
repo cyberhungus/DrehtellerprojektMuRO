@@ -5,6 +5,7 @@ import threading
 import time
 import serial
 import serial.tools.list_ports
+import math  # NEW for angular computations
 
 from flask import Flask, render_template, Response, jsonify, request
 from flask_cors import CORS
@@ -12,7 +13,6 @@ from flask_cors import CORS
 
 # ---- Serial / encoder configuration ----
 SERIAL_BAUD = 115200
-
 
 MARKER_STALE_AFTER = 0.2
 SERIAL_PORT_FILTER = None
@@ -22,14 +22,12 @@ HEARTBEAT_INTERVAL = 0.5
 CAMERA_INDEX = 0
 CAMERA_WIDTH = 1600
 CAMERA_HEIGHT = 1200
-CAMERA_EXPOSURE = -9
-CAMERA_GAIN = 100
 
 
 
 ENCODER_PPR = 600                      # from encoder datasheet — verify counts vs pulses distinction
-FRICTION_WHEEL_DIAMETER_MM = 20        # diameter of the wheel touching the rotating plane
-CONTACT_RADIUS_MM = 150                # distance from plane's center to where the wheel touches its edge
+FRICTION_WHEEL_DIAMETER_MM = 80        # diameter of the wheel touching the rotating plane
+CONTACT_RADIUS_MM = 450                # distance from plane's center to where the wheel touches its edge
 
 DEGREES_PER_STEP = (FRICTION_WHEEL_DIAMETER_MM / (2 * CONTACT_RADIUS_MM)) * (360 / ENCODER_PPR)
 
@@ -38,21 +36,86 @@ DEGREES_PER_STEP = (FRICTION_WHEEL_DIAMETER_MM / (2 * CONTACT_RADIUS_MM)) * (360
 # spaced on a 360-degree circle. Marker IDs are expected to run 0..N-1 in
 # angular order (marker 0 at 0 degrees, marker 1 at 360/N degrees, etc.).
 # Live-tunable via /api/settings, same as ROTATION_MULTIPLIER.
-TOTAL_MARKERS = 360
+TOTAL_MARKERS = 303
 
+# ---- Anticipation buffer (derived from marker spacing) ----
+# The encoder‑driven yaw estimate is clamped to stop this fraction of the
+# gap before the next marker boundary, capped at an absolute maximum.
+# Both are live‑tunable via /api/settings.
+ANTICIPATION_BUFFER_FRACTION = 0.15    # fraction of degrees_per_marker
+ANTICIPATION_BUFFER_MAX_DEG = 2.0      # absolute ceiling, regardless of spacing
+
+
+# Set to -1 if the AprilTag markers are physically mounted in the opposite angular
+# order from what marker_id_to_angle() assumes (marker 0 at 0°, increasing IDs
+# going the same way as positive yaw) — e.g. the marker strip was glued on
+# upside-down or mirrored. This also flips how the encoder's DIR field is
+# interpreted, so camera-based and encoder-based tracking stay consistent with
+# each other rather than fighting in opposite directions between marker reads.
+ROTATION_DIRECTION = -1
 
 def marker_id_to_angle(marker_id, total_markers):
     """Map a marker ID to its absolute position on a 360-degree circle.
 
     Assumes markers are evenly spaced and numbered sequentially in angular
-    order starting at 0 degrees. Returns None if total_markers is invalid.
+    order starting at 0 degrees, adjusted by ROTATION_DIRECTION to match the
+    physical mounting orientation. Returns None if total_markers is invalid.
     """
     if not total_markers or total_markers <= 0:
         return None
 
     degrees_per_marker = 360.0 / total_markers
-    return (marker_id % total_markers) * degrees_per_marker
+    raw_angle = (marker_id % total_markers) * degrees_per_marker
+    return (ROTATION_DIRECTION * raw_angle) % 360.0
 
+# ---- New helper functions for the anticipation logic ----
+def angular_delta(from_deg, to_deg):
+    """Shortest signed distance (degrees) to rotate from from_deg to to_deg, in (-180, 180]."""
+    return (to_deg - from_deg + 180.0) % 360.0 - 180.0
+
+
+def next_marker_boundary(yaw, direction_sign, degrees_per_marker):
+    """Angle (0-360) of the nearest marker grid line strictly ahead of `yaw` in the
+    direction of travel. Markers are assumed evenly spaced starting at 0 degrees,
+    matching marker_id_to_angle()."""
+    if not degrees_per_marker or degrees_per_marker <= 0:
+        return None
+
+    grid_pos = yaw / degrees_per_marker
+
+    if direction_sign >= 0:
+        next_index = math.floor(grid_pos + 1e-6) + 1
+    else:
+        next_index = math.ceil(grid_pos - 1e-6) - 1
+
+    return (next_index * degrees_per_marker) % 360.0
+
+
+def choose_best_marker(candidate_ids, total_markers, current_yaw):
+    """When more than one marker is stable in the same detection window (e.g. two
+    physically adjacent markers straddling the 360°/0° seam are both visible at
+    once), pick whichever candidate's angle is angularly closest to where we
+    currently are — rather than an arbitrary list-order pick that can flip-flop
+    between "near 0°" and "near 360°" representations of the same physical spot."""
+    if not candidate_ids:
+        return None
+
+    if len(candidate_ids) == 1:
+        return candidate_ids[0]
+
+    best_id = None
+    best_distance = None
+
+    for marker_id in candidate_ids:
+        angle = marker_id_to_angle(marker_id, total_markers)
+        if angle is None:
+            continue
+        distance = abs(angular_delta(current_yaw, angle))
+        if best_distance is None or distance < best_distance:
+            best_distance = distance
+            best_id = marker_id
+
+    return best_id if best_id is not None else candidate_ids[0]
 
 class MarkerBuffer:
     def __init__(self, size=10):
@@ -99,8 +162,6 @@ debug_state = {
     "camera_active": False,
     "camera_index": CAMERA_INDEX,
     "camera_resolution": None,       # set once known from cap.get(...)
-    "camera_exposure_requested": CAMERA_EXPOSURE,
-    "camera_gain_requested": CAMERA_GAIN,
     "camera_exposure_actual": None,
     "camera_gain_actual": None,
     "last_markers": [],
@@ -114,8 +175,12 @@ debug_state = {
     "total_markers": TOTAL_MARKERS,
     "degrees_per_marker": 360.0 / TOTAL_MARKERS if TOTAL_MARKERS else None,
     "last_marker_id": None,
+    # New anticipation buffer fields
+    "anticipation_buffer_fraction": ANTICIPATION_BUFFER_FRACTION,
+    "anticipation_buffer_max_deg": ANTICIPATION_BUFFER_MAX_DEG,
+    "anticipation_buffer_deg_effective": None,
+    "tracking_mode": "camera",        # initial mode
 }
-
 
 
 encoder_activity_lock = threading.Lock()
@@ -160,59 +225,58 @@ def detect_markers(image):
     global detected_markers, current_yaw, last_marker_time
 
     if ids is not None:
-        detected_ids = ids.flatten().tolist()
-        marker_buffer.add(detected_ids)
-        detected_markers = marker_buffer.get_average_ids()
+
+        detected_markers = ids.flatten().tolist()
         print("Detected markers:", detected_markers)
 
-        if detected_markers:
-            with settings_lock:
-                total_markers = TOTAL_MARKERS
+        with settings_lock:
+            total_markers = TOTAL_MARKERS
 
-            marker_id = detected_markers[0]
-            angle = marker_id_to_angle(marker_id, total_markers)
+        with yaw_lock:
+            reference_yaw = current_yaw
 
-            if angle is not None:
-                with yaw_lock:
-                    current_yaw = angle
-                    last_marker_time = time.time()
+        marker_id = choose_best_marker(detected_markers, total_markers, reference_yaw)
+        angle = marker_id_to_angle(marker_id, total_markers)
 
-                update_debug(
-                    last_markers=detected_markers,
-                    last_marker_time=last_marker_time,
-                    current_yaw=current_yaw,
-                    last_marker_id=marker_id,
-                )
-            else:
-                # total_markers not configured (<=0) — fall back to raw id
-                # so the system still produces *some* signal.
-                with yaw_lock:
-                    current_yaw = float(marker_id)
-                    last_marker_time = time.time()
+        if angle is not None:
+            with yaw_lock:
+                current_yaw = angle
+                last_marker_time = time.time()
 
-                update_debug(
-                    last_markers=detected_markers,
-                    last_marker_time=last_marker_time,
-                    current_yaw=current_yaw,
-                    last_marker_id=marker_id,
-                )
+            update_debug(
+                last_markers=detected_markers,
+                last_marker_time=last_marker_time,
+                current_yaw=current_yaw,
+                last_marker_id=marker_id,
+                tracking_mode="camera",
+            )
+        else:
+            # total_markers not configured (<=0) — fall back to raw id
+            with yaw_lock:
+                current_yaw = float(marker_id)
+                last_marker_time = time.time()
+
+            update_debug(
+                last_markers=detected_markers,
+                last_marker_time=last_marker_time,
+                current_yaw=current_yaw,
+                last_marker_id=marker_id,
+                tracking_mode="camera",
+            )
 
     else:
         detected_markers = []
-        marker_buffer.add([])
         update_debug(last_markers=[])
 
     if ids is not None:
         aruco.drawDetectedMarkers(image, corners, ids)
-
 
 def camera_thread():
     cap = cv2.VideoCapture(CAMERA_INDEX)
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, CAMERA_WIDTH)
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, CAMERA_HEIGHT)
     cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, 1)
-    cap.set(cv2.CAP_PROP_EXPOSURE, CAMERA_EXPOSURE)
-    cap.set(cv2.CAP_PROP_GAIN, CAMERA_GAIN)
+
 
     if not cap.isOpened():
         print("Error: Could not open camera.")
@@ -269,7 +333,7 @@ def parse_encoder_line(line):
 
 
 def serial_thread():
-    global current_yaw
+    global current_yaw, last_encoder_activity_time
 
     while True:
         port = find_serial_port()
@@ -311,17 +375,59 @@ def serial_thread():
                     with encoder_activity_lock:
                         last_encoder_activity_time = time.time()
 
+                # ---- NEW: fetch settings and compute spacing-aware buffer ----
                 with settings_lock:
                     multiplier = ROTATION_MULTIPLIER
+                    total_markers = TOTAL_MARKERS
+                    buffer_fraction = ANTICIPATION_BUFFER_FRACTION
+                    buffer_max = ANTICIPATION_BUFFER_MAX_DEG
+
+                degrees_per_marker = (360.0 / total_markers) if total_markers > 0 else None
+                anticipation_buffer = (
+                    min(buffer_max, degrees_per_marker * buffer_fraction)
+                    if degrees_per_marker else buffer_max
+                )
 
                 with yaw_lock:
                     markers_stale = (time.time() - last_marker_time) > MARKER_STALE_AFTER
 
                     if markers_stale:
-                        sign = 1 if direction >= 1 else -1
-                        current_yaw = (current_yaw + sign * steps * DEGREES_PER_STEP * multiplier) % 360
+                        direction_sign = (1 if direction >= 1 else -1) * ROTATION_DIRECTION
+                        raw_delta = direction_sign * steps * DEGREES_PER_STEP * multiplier
+                        proposed_yaw = (current_yaw + raw_delta) % 360.0
 
-                update_debug(current_yaw=current_yaw)
+                        if degrees_per_marker:
+                            boundary = next_marker_boundary(current_yaw, direction_sign, degrees_per_marker)
+                            limit = (boundary - direction_sign * anticipation_buffer) % 360.0
+
+                            # How far, in the direction of travel, the raw proposal and the
+                            # clamp point each are from where we sit right now — compared
+                            # this way (rather than as raw angles) so it's correct across
+                            # the 0°/360° wraparound and regardless of travel direction.
+                            progress_to_proposed = direction_sign * angular_delta(current_yaw, proposed_yaw)
+                            progress_to_limit = direction_sign * angular_delta(current_yaw, limit)
+
+                            if progress_to_limit <= 0:
+                                # Already sitting inside the buffer zone — hold here
+                                # instead of creeping closer to the anticipated marker.
+                                proposed_yaw = current_yaw
+                            elif progress_to_proposed > progress_to_limit:
+                                # This step's raw estimate would cross into (or past) the
+                                # buffer zone — clamp instead of overshooting.
+                                proposed_yaw = limit
+
+                        current_yaw = proposed_yaw
+                        update_debug(
+                            current_yaw=current_yaw,
+                            tracking_mode="encoder_anticipating",
+                            anticipation_buffer_deg_effective=anticipation_buffer,  # NEW
+                        )
+                    else:
+                        # Camera has the lead, just report the current yaw with camera mode
+                        update_debug(
+                            current_yaw=current_yaw,
+                            tracking_mode="camera",
+                        )
 
         except serial.SerialException as e:
             print(f"Serial error on {port} ({e}), rescanning in 2s...")
@@ -354,13 +460,11 @@ def api_state():
 def api_settings():
     """
     Accepts JSON like {"rotation_multiplier": 2.5, "total_markers": 6} and
-    applies both live. total_markers is how many AprilTag markers are
-    mounted around the object (evenly spaced on a 360-degree circle,
-    numbered sequentially in angular order starting at ID 0).
-    Extend this if you want to push other tunables (exposure/gain would
-    need the camera thread to expose its `cap` object — see note below).
+    applies both live. Also accepts "anticipation_buffer_fraction" and
+    "anticipation_buffer_max_deg" to tune the buffer dynamically.
     """
     global ROTATION_MULTIPLIER, TOTAL_MARKERS
+    global ANTICIPATION_BUFFER_FRACTION, ANTICIPATION_BUFFER_MAX_DEG
 
     data = request.get_json(silent=True) or {}
 
@@ -392,16 +496,45 @@ def api_settings():
             degrees_per_marker=360.0 / TOTAL_MARKERS,
         )
 
+    # ---- NEW: handle anticipation buffer knobs ----
+    if "anticipation_buffer_fraction" in data:
+        try:
+            value = float(data["anticipation_buffer_fraction"])
+        except (TypeError, ValueError):
+            return jsonify({"error": "anticipation_buffer_fraction must be a number"}), 400
+
+        if not (0 <= value < 0.5):
+            return jsonify({"error": "anticipation_buffer_fraction must be between 0 and 0.5"}), 400
+
+        with settings_lock:
+            ANTICIPATION_BUFFER_FRACTION = value
+
+        update_debug(anticipation_buffer_fraction=ANTICIPATION_BUFFER_FRACTION)
+
+    if "anticipation_buffer_max_deg" in data:
+        try:
+            value = float(data["anticipation_buffer_max_deg"])
+        except (TypeError, ValueError):
+            return jsonify({"error": "anticipation_buffer_max_deg must be a number"}), 400
+
+        if value < 0:
+            return jsonify({"error": "anticipation_buffer_max_deg must be >= 0"}), 400
+
+        with settings_lock:
+            ANTICIPATION_BUFFER_MAX_DEG = value
+
+        update_debug(anticipation_buffer_max_deg=ANTICIPATION_BUFFER_MAX_DEG)
+
     with debug_lock:
         state_copy = dict(debug_state)
 
     return jsonify(state_copy)
 
 
-
 @app.route('/photobooth')
 def photobooth():
     return render_template('photobooth.html')
+
 
 @app.route('/stream')
 def stream():
@@ -427,6 +560,7 @@ def stream():
             threading.Event().wait(0.02)
 
     return Response(event_stream(), mimetype="text/event-stream")
+
 
 def run_flask():
     app.run(port=5000, debug=False, use_reloader=False)
