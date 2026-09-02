@@ -714,10 +714,26 @@ def is_server_running(host='localhost', port=5000, timeout=1):
         return False
 
 
+import tempfile
+import uuid
+
 def open_browser_kiosk(url):
-    """Launch Chrome/Edge in restrictive full‑screen (kiosk) mode on Windows."""
+    """Launch Chrome/Edge in restrictive kiosk with a fresh temporary profile."""
+    if platform.system() != 'Windows':
+        webbrowser.open(url)
+        return
+
+    # Create a unique temporary profile directory
+    # This ensures Chrome doesn't attach to an existing session
+    temp_profile = os.path.join(
+        tempfile.gettempdir(),
+        f"chrome_kiosk_{uuid.uuid4().hex[:8]}"
+    )
+
     extra_flags = [
         '--kiosk',
+        '--new-window',                     # force a new window
+        f'--user-data-dir={temp_profile}',  # ISOLATED PROFILE – this is the key fix
         '--disable-infobars',
         '--disable-session-crashed-bubble',
         '--disable-pinch',
@@ -725,37 +741,34 @@ def open_browser_kiosk(url):
         '--no-first-run',
         '--no-default-browser-check',
         '--disable-features=TranslateUI',
+        '--disable-notifications',
+        '--disable-save-password-bubble',
         '--disable-background-timer-throttling',
         '--disable-backgrounding-occluded-windows',
         '--disable-renderer-backgrounding',
-        '--disable-notifications',          # no pop‑ups
-        '--disable-popup-blocking',         # (keeps kiosk from being interrupted)
-        '--disable-save-password-bubble',
-        '--disable-autofill-keyboard-access',
-        '--disable-file-system',
-        '--disable-web-security',           # only if you need cross‑origin
+        '--disable-popup-blocking',
     ]
 
-    chrome_paths = [
+    # All common Windows install locations
+    browser_paths = [
         r'C:\Program Files\Google\Chrome\Application\chrome.exe',
         r'C:\Program Files (x86)\Google\Chrome\Application\chrome.exe',
-    ]
-    edge_paths = [
+        os.path.expandvars(r'%LOCALAPPDATA%\Programs\Google\Chrome\Application\chrome.exe'),
         r'C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe',
         r'C:\Program Files\Microsoft\Edge\Application\msedge.exe',
+        os.path.expandvars(r'%LOCALAPPDATA%\Programs\Microsoft\Edge\Application\msedge.exe'),
     ]
 
-    for path in chrome_paths + edge_paths:
+    for path in browser_paths:
         if os.path.exists(path):
+            print(f"Launching kiosk with fresh profile: {path}")
+            print(f"Profile: {temp_profile}")
             subprocess.Popen([path] + extra_flags + [url])
-            print(f"Opened browser in kiosk mode: {path}")
             return
 
-    # Fallback – regular window (no kiosk)
+    # Fallback
+    print("No Chrome/Edge found. Opening default browser (no kiosk).")
     webbrowser.open(url)
-    print("No Chrome/Edge found, opened default browser (not kiosk).")
-# ----------------------------------------------------------------------
-
 
 def main():
     flask_thread = threading.Thread(target=run_flask, daemon=True)
