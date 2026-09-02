@@ -17,7 +17,7 @@ const modelEnabled = [true, true, false, false, false, false];
 // "label" overrides the button's text — leave as null to just use the model's loaded name instead.
 // "statusText" is what appears top-right on click — leave as null to fall back to the model's name.
 const buttonConfig = [
-    {label: "Standard", statusText: "Standard"}, // Model 1
+    {label: "Standard", statusText: "Basic Features"}, // Model 1
     {label: "Kran", statusText: "Greifer"}, // Model 2
     {label: "Spezial", statusText: "Spezial"}, // Model 3
     {label: null, statusText: null}, // Model 4

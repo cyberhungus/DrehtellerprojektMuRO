@@ -1,5 +1,5 @@
 @echo off
-title Rotary Encoder Display
+title DO-Exponat-Software
 
 :: Change to the directory where this batch file resides
 cd /d "%~dp0"
@@ -13,7 +13,7 @@ if errorlevel 1 (
 )
 
 :: Run the main script
-echo Launching main.py ...
+echo Launching app.py ...
 python app.py
 
 :: If the script exits, keep the window open to see any errors

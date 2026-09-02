@@ -1,17 +1,64 @@
-html, body {
+/* ── Local Montserrat font (Flask static path) ── */
+@font-face {
+    font-family: 'Montserrat';
+    src: url('/static/fonts/Montserrat-Light.ttf') format('truetype');
+    font-weight: 300;
+    font-style: normal;
+}
+@font-face {
+    font-family: 'Montserrat';
+    src: url('/static/fonts/Montserrat-Regular.ttf') format('truetype');
+    font-weight: 400;
+    font-style: normal;
+}
+@font-face {
+    font-family: 'Montserrat';
+    src: url('/static/fonts/Montserrat-SemiBold.ttf') format('truetype');
+    font-weight: 600;
+    font-style: normal;
+}
+@font-face {
+    font-family: 'Montserrat';
+    src: url('/static/fonts/Montserrat-Bold.ttf') format('truetype');
+    font-weight: 700;
+    font-style: normal;
+}
+
+/* ── Global text reset ── */
+* {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 300;
+}
+/* ... rest of your CSS ... */
+html,
+body {
     margin: 0;
     padding: 0;
     width: 100%;
     height: 100%;
-    overflow: hidden; /* the app has no scrollable content — every panel is
-                          position: fixed and sized to the viewport, so page-level
-                          scrolling should never be possible */
+    overflow: hidden;
+    /* the app has no scrollable content — every panel is
+    position: fixed and sized to the viewport, so page-level
+    scrolling should never be possible */
 }
 
 canvas {
-    display: block; /* removes the few px of baseline gap inline <canvas> elements
-                        get by default, which was enough on its own to trigger a
-                        vertical scrollbar on a full-viewport renderer */
+    display: block;
+    /* removes the few px of baseline gap inline <canvas> elements
+    get by default, which was enough on its own to trigger a
+    vertical scrollbar on a full-viewport renderer */
+}
+
+
+
+.logo-image {
+    position: fixed;   /* Pins it to the viewport, stays on top while scrolling */
+    top: 30px;         /* Distance from the top edge */
+    left: 20px;        /* Distance from the left edge */
+    z-index: 900;
+    width: 250px;       /* Adjust size as needed */
+    height: auto;
+
 }
 
 #screensaver {
@@ -34,48 +81,81 @@ canvas {
     object-fit: contain;
 }
 
+
 /* Drawer toggle handle */
 #drawer-toggle {
     position: fixed;
     bottom: 0;
     left: 50%;
     transform: translateX(-50%);
-    width: 140px;
-    height: 56px;
-    border-radius: 16px 16px 0 0;
-    border: none;
-    background-color: #e0e0e0;
-    color: #888;
-    font-size: 1.4rem;
-    font-weight: 700;
+    width: auto;
+    min-width: 170px;
+    height: 58px;
+    padding: 0 28px;
+    border-radius: 20px 20px 0 0;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-bottom: none;
+    background-color: #ffffff;
+    color: #555555;
+    font-size: 24px;
+    font-weight: 500;
     display: flex;
     align-items: center;
     justify-content: center;
+    gap: 12px;
     cursor: pointer;
+    box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.08);
     z-index: 20;
-    transition: background 0.2s ease, transform 0.15s ease;
+    transition: background 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
 }
 
 #drawer-toggle:hover {
-    background-color: #9f9f9f;
+    background-color: #f6f6f6;
+    box-shadow: 0 -4px 14px rgba(0, 0, 0, 0.12);
     transform: translateX(-50%) translateY(-4px);
+}
+
+/* 4x2 dot-grid icon, sits left of the label */
+.drawer-toggle-icon {
+    display: grid;
+    grid-template-columns: repeat(4, 7px);
+    grid-template-rows: repeat(2, 7px);
+    gap: 4px;
+    flex-shrink: 0;
+}
+
+.drawer-toggle-icon span {
+    width: 7px;
+    height: 7px;
+    border-radius: 1px;
+    background-color: #9a9a9a;
+}
+
+.drawer-toggle-label {
+    line-height: 1;
+    white-space: nowrap;
+}
+
+.drawer-toggle-label {
+    line-height: 1;
+    white-space: nowrap;
 }
 
 /* Status text, top right */
 #status-text {
     position: fixed;
-    top: 24px;
-    right: 28px;
+    top: 150px;
+    left: 20px;
     background: transparent;
-    color: #b0b0b0;
-    font-family: 'Segoe UI', sans-serif;
+    color: #515151;
     font-weight: 300;
     font-size: 22px;
     letter-spacing: 0.3px;
     z-index: 900;
     max-width: 40vw;
     text-align: right;
-    pointer-events: none; /* purely informational, never blocks clicks */
+    pointer-events: none;
+    /* purely informational, never blocks clicks */
 }
 
 /* Drawer panel — fills width, 15% viewport height, slides up from bottom */
@@ -91,9 +171,11 @@ canvas {
     gap: 14px;
     padding: 14px;
     box-sizing: border-box;
-    z-index: 1000; /* above the three.js canvas */
+    z-index: 1000;
+    /* above the three.js canvas */
     background: transparent;
-    transform: translateY(100%); /* hidden below the viewport by default */
+    transform: translateY(100%);
+    /* hidden below the viewport by default */
     transition: transform 0.3s ease;
 }
 
@@ -107,21 +189,19 @@ canvas {
 
 .model-toggle-btn {
     position: relative;
-    flex: 1 1 0; /* fill horizontally, all buttons equal width */
+    flex: 1 1 0;
+    /* fill horizontally, all buttons equal width */
     overflow: hidden;
-    background: rgba(90, 90, 90, 0.55);
-    border: 2px solid transparent;
-    border-radius: 14px;
-    /* Notch cut on the left edge; coordinates outside 0–100% let the
-       box's own border-radius show through on the other corners. */
-    clip-path: polygon(-6% -6%, 106% -6%, 106% 106%, -6% 106%,
-    -6% 63%, 13% 50%, -6% 37%);
+    background: #888888;
+    border: none;
+    border-radius: 0 0 16px 0;
+    /* square on three corners, rounded only bottom-right, matching the tile mockup */
     cursor: pointer;
-    transition: border-color 0.2s, background 0.2s;
+    transition: background 0.2s, border-radius 0.2s;
 }
 
 .model-toggle-btn:hover {
-    background: rgba(110, 110, 222, 0.6);
+    background: #999999;
 }
 
 .model-toggle-btn.inactive {
@@ -129,10 +209,9 @@ canvas {
 }
 
 .model-toggle-btn.active {
-    border-color: #22c55e;
-    box-shadow: 0 0 14px rgba(34, 197, 94, 0.5);
+    background: #7a7a7a;
+    box-shadow: inset 0 0 0 2px #22c55e;
 }
-
 .model-toggle-icon {
     position: absolute;
     inset: 0;
@@ -141,7 +220,8 @@ canvas {
     object-fit: cover;
     filter: grayscale(100%) brightness(0.55);
     opacity: 0.8;
-    pointer-events: none; /* clicks pass through to the button */
+    pointer-events: none;
+    /* clicks pass through to the button */
 }
 
 .model-toggle-label {
@@ -152,9 +232,8 @@ canvas {
     align-items: center;
     gap: 8px;
     color: #fff;
-    font-family: sans-serif;
     font-size: 15px;
-    font-weight: 600;
+    font-weight: 300;
     text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
     pointer-events: none;
 }
@@ -183,8 +262,8 @@ canvas {
     left: 20px;
     background: rgba(0, 0, 0, 0.75);
     color: #0f0;
-    font-family: monospace;
     font-size: 13px;
+    font-weight: 300;
     padding: 12px 16px;
     border-radius: 6px;
     line-height: 1.6;
@@ -192,17 +271,23 @@ canvas {
     display: none;
     pointer-events: none;
     white-space: pre;
-    max-height: 80vh; /* maximale Höhe auf 80% der Viewport-Höhe begrenzen */
-    overflow-y: auto; /* vertikalen Scrollbalken bei Überlauf aktivieren */
-    pointer-events: auto; /* Mausereignisse zulassen (sonst funktioniert das Scrollen nicht) */
+    max-height: 80vh;
+    /* maximale Höhe auf 80% der Viewport-Höhe begrenzen */
+    overflow-y: auto;
+    /* vertikalen Scrollbalken bei Überlauf aktivieren */
+    pointer-events: auto;
+    /* Mausereignisse zulassen (sonst funktioniert das Scrollen nicht) */
 }
 
 #debug-overlay strong {
     color: #fff;
+    font-weight: 600;
+    /* keep some emphasis for strong tags */
 }
 
 #light-controls {
-    pointer-events: auto; /* overlay itself is click-through, but the controls need to be usable */
+    pointer-events: auto;
+    /* overlay itself is click-through, but the controls need to be usable */
     margin-top: 4px;
     padding-top: 2px;
     border-top: 1px solid rgba(255, 255, 255, 0.25);
@@ -217,6 +302,7 @@ canvas {
     align-items: center;
     gap: 6px;
     margin: 2px 0;
+    font-weight: 300;
 }
 
 #light-controls input[type="range"] {
@@ -238,6 +324,7 @@ canvas {
     text-align: right;
     color: #4ade80;
     font-variant-numeric: tabular-nums;
+    font-weight: 300;
 }
 
 #hotspot-layer {
@@ -246,7 +333,8 @@ canvas {
     left: 0;
     width: 100vw;
     height: 100vh;
-    pointer-events: none; /* layer itself is click-through */
+    pointer-events: none;
+    /* layer itself is click-through */
     z-index: 500;
 }
 
@@ -256,8 +344,10 @@ canvas {
     width: 44px;
     height: 44px;
     border-radius: 50%;
-    background: #ffffff; /* White ring between the green border and inner circle */
-    border: 4px solid #22c55e; /* Outer bright green ring */
+    background: #ffffff;
+    /* White ring between the green border and inner circle */
+    border: 4px solid #22c55e;
+    /* Outer bright green ring */
     transform: translate(-50%, -50%);
     pointer-events: auto;
     cursor: pointer;
@@ -269,7 +359,8 @@ canvas {
     align-items: center;
     justify-content: center;
     z-index: 500;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15); /* Adds a subtle drop shadow for depth */
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    /* Adds a subtle drop shadow for depth */
 }
 
 /* Inner solid green circle */
@@ -287,11 +378,12 @@ canvas {
     content: '+';
     color: #ffffff;
     font-size: 24px;
-    font-weight: 700;
-    font-family: Arial, sans-serif;
+    font-weight: 300;
+    font-family: 'Montserrat', sans-serif;
     position: relative;
     line-height: 0;
-    top: 1px; /* Slight optical adjustment for perfect centering */
+    top: 1px;
+    /* Slight optical adjustment for perfect centering */
     z-index: 2;
 }
 
@@ -309,8 +401,8 @@ canvas {
     white-space: nowrap;
     background: rgba(0, 0, 0, 0.75);
     color: #fff;
-    font-family: sans-serif;
     font-size: 12px;
+    font-weight: 300;
     padding: 3px 8px;
     border-radius: 4px;
     pointer-events: none;
@@ -337,7 +429,7 @@ canvas {
     overflow-y: auto;
     border-radius: 10px;
     padding: 40px;
-    font-family: sans-serif;
+    font-weight: 300;
 }
 
 #hotspot-overlay-close {
@@ -350,11 +442,13 @@ canvas {
     line-height: 1;
     cursor: pointer;
     color: #333;
+    font-weight: 300;
 }
 
 #hotspot-overlay-title {
     margin: 0 0 16px 0;
     font-size: 26px;
+    font-weight: 300;
 }
 
 #hotspot-overlay-text {
@@ -363,6 +457,7 @@ canvas {
     color: #333;
     margin-bottom: 20px;
     white-space: pre-line;
+    font-weight: 300;
 }
 
 #hotspot-overlay-images {
@@ -394,14 +489,15 @@ canvas {
 #loading-content {
     width: 400px;
     max-width: 80vw;
-    font-family: sans-serif;
     color: #fff;
     text-align: center;
+    font-weight: 300;
 }
 
 #loading-title {
     font-size: 20px;
     margin-bottom: 8px;
+    font-weight: 300;
 }
 
 #loading-current-file {
@@ -410,6 +506,7 @@ canvas {
     margin-bottom: 16px;
     min-height: 18px;
     word-break: break-word;
+    font-weight: 300;
 }
 
 #loading-bar-track {
@@ -431,12 +528,14 @@ canvas {
     font-size: 13px;
     color: #ccc;
     margin-top: 8px;
+    font-weight: 300;
 }
 
 #loading-overall-text {
     font-size: 12px;
     color: #777;
     margin-top: 4px;
+    font-weight: 300;
 }
 
 .rotate-controls {
@@ -449,8 +548,8 @@ canvas {
     flex: 1;
     padding: 6px 12px;
     font-size: 13px;
-    font-family: inherit;
     color: #f0f0f0;
+    font-weight: 300;
     background: rgba(255, 255, 255, 0.08);
     border: 1px solid rgba(255, 255, 255, 0.25);
     border-radius: 6px;
@@ -479,7 +578,7 @@ canvas {
     max-width: 320px;
     padding: 10px 14px;
     font-size: 13px;
-    font-family: inherit;
+    font-weight: 300;
     color: #fff;
     background: rgba(180, 40, 40, 0.92);
     border: 1px solid rgba(255, 255, 255, 0.25);
@@ -499,14 +598,17 @@ canvas {
     line-height: 1;
     cursor: pointer;
     padding: 0 2px;
+    font-weight: 300;
 }
 
 #model-switch-overlay {
     position: fixed;
     inset: 0;
-    background: #ffffff; /* match scene.background so the cover is invisible once opaque */
+    background: #ffffff;
+    /* match scene.background so the cover is invisible once opaque */
     opacity: 0;
     pointer-events: none;
-    z-index: 500; /* above the canvas, below UI like the drawer/debug overlay */
+    z-index: 500;
+    /* above the canvas, below UI like the drawer/debug overlay */
     transition: opacity 0.3s ease;
 }
