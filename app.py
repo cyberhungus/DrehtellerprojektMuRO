@@ -28,7 +28,7 @@ CAMERA_INDEX = 0
 CAMERA_WIDTH = 1600
 CAMERA_HEIGHT = 1200
 
-
+#configure the rotation
 
 ENCODER_PPR = 20                      # from encoder datasheet — verify counts vs pulses distinction
 FRICTION_WHEEL_DIAMETER_MM = 80        # diameter of the wheel touching the rotating plane
@@ -165,8 +165,8 @@ CORS(app)
 # genuinely large error (startup, a slip, a missed sequence of markers) still snaps
 # immediately rather than crawling back over many frames. Both live-tunable via
 # /api/settings.
-MARKER_CORRECTION_ALPHA = 0.1    # fraction of camera-vs-estimate error corrected per detection
-MARKER_SNAP_THRESHOLD_DEG = 15.0  # error beyond this snaps immediately instead of blending
+MARKER_CORRECTION_ALPHA = 0.2    # fraction of camera-vs-estimate error corrected per detection
+MARKER_SNAP_THRESHOLD_DEG = 45.0  # error beyond this snaps immediately instead of blending
 
 
 # Marker correction is only applied on genuinely new information (a different marker

@@ -29,7 +29,7 @@ const buttonConfig = [
 
 // For Aruco Based Detection
 let targetYaw = 0; // degrees, updated by SSE
-let rotationLerpSpeed = 2.0; // higher = snappier turn, tune to taste
+let rotationLerpSpeed = 4.5; // higher = snappier turn, tune to taste
 
 // For Keyboard Movement (DEBUG)
 const moveState = {forward: false, backward: false, left: false, right: false, up: false, down: false};
