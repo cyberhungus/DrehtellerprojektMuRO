@@ -672,9 +672,6 @@ def api_settings():
     return jsonify(state_copy)
 
 
-@app.route('/photobooth')
-def photobooth():
-    return render_template('photobooth.html')
 
 
 @app.route('/stream')
@@ -781,7 +778,7 @@ def main():
 
     print("The Browser will open soon. Visit 127.0.0.1 for the interface. /debug can show you additional values for debugging.")
     # Open the browser in kiosk mode (or fallback)
-    #open_browser_kiosk('http://localhost:5000/')
+    open_browser_kiosk('http://localhost:5000/')
 
     # Keep the main thread alive (threads are daemon, so this prevents exit)
     cam_thread.join()
