@@ -1514,7 +1514,6 @@ async function pollConnectionState() {
     }
 
 }
-
 function updateConnectionWarning(cameraActive, serialConnected) {
 
     const problems = [];
@@ -1523,19 +1522,26 @@ function updateConnectionWarning(cameraActive, serialConnected) {
 
     if (problems.length === 0) {
         connectionWarningEl.classList.remove('visible');
-        connectionWarningDismissedFor = null; // clear so a future problem always shows again
+        connectionWarningDismissedFor = null;
         return;
     }
 
-    const message = `${problems.join(' & ')} nicht verbunden`;
+    let message = '';
+    if (problems.length === 2) {
+        // Both missing – combine with a generic cable check
+        message = 'Kamera & Encoder nicht verbunden,Warten und Kabel prüfen';
+    } else if (problems.includes('Kamera')) {
+        message = 'Kamera nicht verbunden, Warten oder Kabel prüfen';
+    } else if (problems.includes('Encoder')) {
+        message = 'Encoder nicht verbunden, Kabel prüfen';
+    }
+
     connectionWarningTextEl.textContent = message;
 
-    // Only stay hidden if the user dismissed exactly this message — if the problem
-    // changes (e.g. serial also drops after camera alone was flagged), show again.
+    // Only stay hidden if the user dismissed exactly this message
     if (message === connectionWarningDismissedFor) return;
 
     connectionWarningEl.classList.add('visible');
-
 }
 
 let trackingSettingsTimer = null;
