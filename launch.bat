@@ -14,7 +14,7 @@ if errorlevel 1 (
 
 :: Run the main script
 echo Launching main.py ...
-python main.py
+python app.py
 
 :: If the script exits, keep the window open to see any errors
 pause

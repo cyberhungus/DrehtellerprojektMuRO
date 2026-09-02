@@ -16,6 +16,18 @@ from flask import Flask, render_template, Response, jsonify, request
 from flask_cors import CORS
 
 
+from flask import Flask
+import flask.cli
+import logging
+
+app = Flask(__name__)
+
+# 1. Suppress the "Serving Flask app..." startup banner
+flask.cli.show_server_banner = lambda *args: None
+
+# 2. Disable all Werkzeug (request) logging
+logging.getLogger('werkzeug').disabled = True
+
 # ---- Serial / encoder configuration ----
 SERIAL_BAUD = 115200
 
@@ -256,7 +268,7 @@ def detect_markers(image):
     if ids is not None:
 
         detected_markers = ids.flatten().tolist()
-        print("Detected markers:", detected_markers)
+        #print("Detected markers:", detected_markers)
 
         with settings_lock:
             total_markers = TOTAL_MARKERS
