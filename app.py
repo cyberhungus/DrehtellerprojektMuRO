@@ -527,7 +527,7 @@ def serial_thread():
                     )
 
         except serial.SerialException as e:
-            print(f"Serial error on {port} ({e}), rescanning in 2s...")
+            print(f"Serial error on {port} (Check Cable Connection), rescanning in 2s...")
             update_debug(serial_connected=False)
             time.sleep(2)
         except Exception as e:
@@ -779,6 +779,7 @@ def main():
     else:
         print("Flask server not ready, opening browser anyway...")
 
+    print("The Browser will open soon. Visit 127.0.0.1 for the interface. /debug can show you additional values for debugging.")
     # Open the browser in kiosk mode (or fallback)
     #open_browser_kiosk('http://localhost:5000/')
 
