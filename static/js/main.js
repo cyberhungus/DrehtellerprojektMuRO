@@ -1533,7 +1533,6 @@ function updateConnectionWarning(cameraActive, serialConnected) {
 
 }
 
-
 let trackingSettingsTimer = null;
 
 // Debounced push to the backend — sliders fire an 'input' event on every pixel of
@@ -1566,6 +1565,8 @@ async function initTrackingControls() {
     const lerpVal = document.getElementById('rotation-lerp-speed-val');
     const multiplierSlider = document.getElementById('rotation-multiplier');
     const multiplierVal = document.getElementById('rotation-multiplier-val');
+    const lookaheadSlider = document.getElementById('anticipation-lookahead');
+    const lookaheadVal = document.getElementById('anticipation-lookahead-val');
 
     // rotationLerpSpeed is purely client-side — no backend round trip needed.
     lerpSlider.value = rotationLerpSpeed;
@@ -1576,8 +1577,7 @@ async function initTrackingControls() {
         lerpVal.textContent = rotationLerpSpeed.toFixed(1);
     });
 
-
-        // Declared here, at function scope, so it's guaranteed to exist below
+    // Declared here, at function scope, so it's guaranteed to exist below
     // regardless of whether the fetch succeeds — no dangling reference from a
     // try-block-local variable.
     let state = null;
@@ -1588,31 +1588,11 @@ async function initTrackingControls() {
     } catch (e) {
         // Backend unreachable at startup — state stays null, defaults below apply.
     }
-    // marker_correction_alpha / marker_snap_threshold_deg / rotation_multiplier all
-    // live on the backend — pull their current values first so the sliders start in
-    // sync with whatever app.py actually has configured, instead of defaulting to 0.
-    let initialAlpha = 0.25;
-    let initialSnapThreshold = 15.0;
-    let initialMultiplier = 1.0;
 
-    try {
-
-        const res = await fetch('/api/state');
-
-        if (res.ok) {
-
-            const state = await res.json();
-
-            if (typeof state.marker_correction_alpha === 'number') initialAlpha = state.marker_correction_alpha;
-            if (typeof state.marker_snap_threshold_deg === 'number') initialSnapThreshold = state.marker_snap_threshold_deg;
-            if (typeof state.rotation_multiplier === 'number') initialMultiplier = state.rotation_multiplier;
-
-        }
-
-    } catch (e) {
-        // Backend unreachable at startup — sliders fall back to the defaults above;
-        // the connection-warning banner already covers surfacing this to the user.
-    }
+    const initialAlpha = (state && typeof state.marker_correction_alpha === 'number') ? state.marker_correction_alpha : 0.25;
+    const initialSnapThreshold = (state && typeof state.marker_snap_threshold_deg === 'number') ? state.marker_snap_threshold_deg : 15.0;
+    const initialMultiplier = (state && typeof state.rotation_multiplier === 'number') ? state.rotation_multiplier : 1.0;
+    const initialLookahead = (state && typeof state.anticipation_lookahead_markers === 'number') ? state.anticipation_lookahead_markers : 3;
 
     alphaSlider.value = initialAlpha;
     alphaVal.textContent = initialAlpha.toFixed(2);
@@ -1620,6 +1600,8 @@ async function initTrackingControls() {
     snapVal.textContent = initialSnapThreshold.toFixed(0);
     multiplierSlider.value = initialMultiplier;
     multiplierVal.textContent = initialMultiplier.toFixed(1);
+    lookaheadSlider.value = initialLookahead;
+    lookaheadVal.textContent = initialLookahead.toFixed(0);
 
     alphaSlider.addEventListener('input', () => {
         const val = parseFloat(alphaSlider.value);
@@ -1637,6 +1619,12 @@ async function initTrackingControls() {
         const val = parseFloat(multiplierSlider.value);
         multiplierVal.textContent = val.toFixed(1);
         pushTrackingSetting('rotation_multiplier', val);
+    });
+
+    lookaheadSlider.addEventListener('input', () => {
+        const val = parseFloat(lookaheadSlider.value);
+        lookaheadVal.textContent = val.toFixed(0);
+        pushTrackingSetting('anticipation_lookahead_markers', val);
     });
 
 }

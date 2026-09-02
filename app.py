@@ -28,7 +28,7 @@ CAMERA_INDEX = 0
 CAMERA_WIDTH = 1600
 CAMERA_HEIGHT = 1200
 
-#configure the rotation
+# configure the rotation
 
 ENCODER_PPR = 20                      # from encoder datasheet — verify counts vs pulses distinction
 FRICTION_WHEEL_DIAMETER_MM = 80        # diameter of the wheel touching the rotating plane
@@ -50,6 +50,14 @@ TOTAL_MARKERS = 303
 ANTICIPATION_BUFFER_FRACTION = 0.15    # fraction of degrees_per_marker
 ANTICIPATION_BUFFER_MAX_DEG = 2.0      # absolute ceiling, regardless of spacing
 
+# How many marker-widths ahead the anticipation clamp is allowed to project before
+# it halts encoder-only motion. 1 = the original tight behavior (stop at the very
+# next marker). Higher values let the encoder coast further on its own between
+# camera confirmations — more responsive over longer unconfirmed stretches, at the
+# cost of more potential drift if DEGREES_PER_STEP is off, since more distance
+# accumulates before a real marker corrects it. Live-tunable via /api/settings.
+ANTICIPATION_LOOKAHEAD_MARKERS = 15
+
 
 # Set to -1 if the AprilTag markers are physically mounted in the opposite angular
 # order from what marker_id_to_angle() assumes (marker 0 at 0°, increasing IDs
@@ -58,6 +66,7 @@ ANTICIPATION_BUFFER_MAX_DEG = 2.0      # absolute ceiling, regardless of spacing
 # interpreted, so camera-based and encoder-based tracking stay consistent with
 # each other rather than fighting in opposite directions between marker reads.
 ROTATION_DIRECTION = -1
+
 
 def marker_id_to_angle(marker_id, total_markers):
     """Map a marker ID to its absolute position on a 360-degree circle.
@@ -73,27 +82,30 @@ def marker_id_to_angle(marker_id, total_markers):
     raw_angle = (marker_id % total_markers) * degrees_per_marker
     return (ROTATION_DIRECTION * raw_angle) % 360.0
 
-# ---- New helper functions for the anticipation logic ----
+
+# ---- Helper functions for the anticipation logic ----
 def angular_delta(from_deg, to_deg):
     """Shortest signed distance (degrees) to rotate from from_deg to to_deg, in (-180, 180]."""
     return (to_deg - from_deg + 180.0) % 360.0 - 180.0
 
 
-def next_marker_boundary(yaw, direction_sign, degrees_per_marker):
-    """Angle (0-360) of the nearest marker grid line strictly ahead of `yaw` in the
-    direction of travel. Markers are assumed evenly spaced starting at 0 degrees,
-    matching marker_id_to_angle()."""
+def next_marker_boundary(yaw, direction_sign, degrees_per_marker, lookahead_cells=1):
+    """Angle (0-360) of the marker grid line `lookahead_cells` widths ahead of `yaw`
+    in the direction of travel. Markers are assumed evenly spaced starting at 0
+    degrees, matching marker_id_to_angle(). lookahead_cells=1 reproduces the original
+    "stop at the very next marker" behavior; higher values project further ahead."""
     if not degrees_per_marker or degrees_per_marker <= 0:
         return None
 
     grid_pos = yaw / degrees_per_marker
 
     if direction_sign >= 0:
-        next_index = math.floor(grid_pos + 1e-6) + 1
+        next_index = math.floor(grid_pos + 1e-6) + lookahead_cells
     else:
-        next_index = math.ceil(grid_pos - 1e-6) - 1
+        next_index = math.ceil(grid_pos - 1e-6) - lookahead_cells
 
     return (next_index * degrees_per_marker) % 360.0
+
 
 def choose_best_marker(candidate_ids, total_markers, current_yaw, direction_sign=0, behind_penalty=1.5):
     """When more than one marker is stable in the same detection window (e.g. two
@@ -129,32 +141,6 @@ def choose_best_marker(candidate_ids, total_markers, current_yaw, direction_sign
     return best_id if best_id is not None else candidate_ids[0]
 
 
-class MarkerBuffer:
-    def __init__(self, size=10):
-        self.size = size
-        self.buffer = []
-
-    def add(self, detected_ids):
-        if len(self.buffer) >= self.size:
-            self.buffer.pop(0)
-        self.buffer.append(detected_ids)
-
-    def get_average_ids(self):
-        if not self.buffer:
-            return []
-
-        id_counts = {}
-        for ids in self.buffer:
-            for id in ids:
-                id_counts[id] = id_counts.get(id, 0) + 1
-
-        threshold = len(self.buffer) // 2
-        stable_ids = [id for id, count in id_counts.items() if count > threshold]
-
-        return stable_ids
-
-
-marker_buffer = MarkerBuffer(size=10)
 app = Flask(__name__, static_folder='static', template_folder='templates')
 CORS(app)
 
@@ -214,10 +200,10 @@ debug_state = {
     "total_markers": TOTAL_MARKERS,
     "degrees_per_marker": 360.0 / TOTAL_MARKERS if TOTAL_MARKERS else None,
     "last_marker_id": None,
-    # New anticipation buffer fields
     "anticipation_buffer_fraction": ANTICIPATION_BUFFER_FRACTION,
     "anticipation_buffer_max_deg": ANTICIPATION_BUFFER_MAX_DEG,
     "anticipation_buffer_deg_effective": None,
+    "anticipation_lookahead_markers": ANTICIPATION_LOOKAHEAD_MARKERS,
     "tracking_mode": "camera",        # initial mode
     "marker_correction_alpha": MARKER_CORRECTION_ALPHA,
     "marker_snap_threshold_deg": MARKER_SNAP_THRESHOLD_DEG,
@@ -228,7 +214,6 @@ debug_state = {
 
 encoder_activity_lock = threading.Lock()
 last_encoder_activity_time = 0.0
-
 
 
 def update_debug(**kwargs):
@@ -360,7 +345,6 @@ def camera_thread():
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, CAMERA_HEIGHT)
     cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, 1)
 
-
     if not cap.isOpened():
         print("Error: Could not open camera.")
         update_debug(camera_active=False)
@@ -416,7 +400,7 @@ def parse_encoder_line(line):
 
 
 def serial_thread():
-    global current_yaw, last_encoder_activity_time
+    global current_yaw, last_encoder_activity_time, last_known_direction_sign, last_direction_hint_time
 
     while True:
         port = find_serial_port()
@@ -463,6 +447,7 @@ def serial_thread():
                     total_markers = TOTAL_MARKERS
                     buffer_fraction = ANTICIPATION_BUFFER_FRACTION
                     buffer_max = ANTICIPATION_BUFFER_MAX_DEG
+                    lookahead_markers = ANTICIPATION_LOOKAHEAD_MARKERS
 
                 degrees_per_marker = (360.0 / total_markers) if total_markers > 0 else None
                 anticipation_buffer = (
@@ -470,11 +455,14 @@ def serial_thread():
                     if degrees_per_marker else buffer_max
                 )
 
-                direction_sign = (1 if direction >= 1 else -1) * ROTATION_DIRECTION
+                # Only the encoder's DIR reading is backward relative to physical
+                # rotation (camera-confirmed positions are correct as-is) — hence the
+                # extra * -1 on top of ROTATION_DIRECTION, which handles the separate
+                # "markers mounted mirrored" case.
+                direction_sign = (1 if direction >= 1 else -1) * ROTATION_DIRECTION * -1
 
                 if steps != 0:
                     with direction_lock:
-                        global last_known_direction_sign, last_direction_hint_time
                         last_known_direction_sign = direction_sign
                         last_direction_hint_time = time.time()
 
@@ -497,7 +485,9 @@ def serial_thread():
                         # keeps drift bounded on its own — clamping here too would just
                         # fight that correction by periodically freezing yaw at a grid
                         # boundary instead of letting it glide through smoothly.
-                        boundary = next_marker_boundary(current_yaw, direction_sign, degrees_per_marker)
+                        boundary = next_marker_boundary(
+                            current_yaw, direction_sign, degrees_per_marker, lookahead_markers
+                        )
                         limit = (boundary - direction_sign * anticipation_buffer) % 360.0
 
                         # How far, in the direction of travel, the raw proposal and the
@@ -533,6 +523,7 @@ def serial_thread():
             update_debug(serial_connected=False)
             time.sleep(2)
 
+
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -554,11 +545,14 @@ def api_state():
 def api_settings():
     """
     Accepts JSON like {"rotation_multiplier": 2.5, "total_markers": 6} and
-    applies both live. Also accepts "anticipation_buffer_fraction" and
-    "anticipation_buffer_max_deg" to tune the buffer dynamically.
+    applies both live. Also accepts:
+      - "anticipation_buffer_fraction" / "anticipation_buffer_max_deg"
+      - "anticipation_lookahead_markers"
+      - "marker_correction_alpha" / "marker_snap_threshold_deg"
+    to tune tracking behavior dynamically.
     """
     global ROTATION_MULTIPLIER, TOTAL_MARKERS, ANTICIPATION_BUFFER_FRACTION, ANTICIPATION_BUFFER_MAX_DEG
-    global MARKER_CORRECTION_ALPHA, MARKER_SNAP_THRESHOLD_DEG
+    global MARKER_CORRECTION_ALPHA, MARKER_SNAP_THRESHOLD_DEG, ANTICIPATION_LOOKAHEAD_MARKERS
 
     data = request.get_json(silent=True) or {}
 
@@ -590,7 +584,6 @@ def api_settings():
             degrees_per_marker=360.0 / TOTAL_MARKERS,
         )
 
-    # ---- NEW: handle anticipation buffer knobs ----
     if "anticipation_buffer_fraction" in data:
         try:
             value = float(data["anticipation_buffer_fraction"])
@@ -619,7 +612,20 @@ def api_settings():
 
         update_debug(anticipation_buffer_max_deg=ANTICIPATION_BUFFER_MAX_DEG)
 
-    ...
+    if "anticipation_lookahead_markers" in data:
+        try:
+            value = int(data["anticipation_lookahead_markers"])
+        except (TypeError, ValueError):
+            return jsonify({"error": "anticipation_lookahead_markers must be an integer"}), 400
+
+        if value < 1:
+            return jsonify({"error": "anticipation_lookahead_markers must be >= 1"}), 400
+
+        with settings_lock:
+            ANTICIPATION_LOOKAHEAD_MARKERS = value
+
+        update_debug(anticipation_lookahead_markers=ANTICIPATION_LOOKAHEAD_MARKERS)
+
     if "marker_correction_alpha" in data:
         try:
             value = float(data["marker_correction_alpha"])
@@ -647,6 +653,7 @@ def api_settings():
             MARKER_SNAP_THRESHOLD_DEG = value
 
         update_debug(marker_snap_threshold_deg=MARKER_SNAP_THRESHOLD_DEG)
+
     with debug_lock:
         state_copy = dict(debug_state)
 
@@ -687,7 +694,8 @@ def stream():
 def run_flask():
     app.run(port=5000, debug=False, use_reloader=False)
 
-# ---- NEW: helper functions for automatic browser opening ----
+
+# ---- Helper functions for automatic browser opening ----
 def is_server_running(host='localhost', port=5000, timeout=1):
     """Check if the Flask server is accepting connections."""
     try:
@@ -695,6 +703,7 @@ def is_server_running(host='localhost', port=5000, timeout=1):
             return True
     except OSError:
         return False
+
 
 def open_browser_kiosk(url):
     """Try to launch Chrome/Edge in kiosk mode; fallback to default browser."""
@@ -733,6 +742,7 @@ def open_browser_kiosk(url):
 
 # ----------------------------------------------------------------------
 
+
 def main():
     flask_thread = threading.Thread(target=run_flask, daemon=True)
     flask_thread.start()
@@ -753,7 +763,7 @@ def main():
         print("Flask server not ready, opening browser anyway...")
 
     # Open the browser in kiosk mode (or fallback)
-   # open_browser_kiosk('http://localhost:5000/')
+    # open_browser_kiosk('http://localhost:5000/')
 
     # Keep the main thread alive (threads are daemon, so this prevents exit)
     cam_thread.join()
