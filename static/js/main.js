@@ -446,12 +446,13 @@ async function init() {
     // a dim cool fill light so the shadow side doesn't go pure black.
     // ambientLight/directionalLight variable names are unchanged — initLightControls()
     // binds the light panel sliders to these specific variables.
-    ambientLight = new THREE.AmbientLight(0x223344, 0.025); // slightly lower than before — a bit more contrast, darker shadows
+    ambientLight = new THREE.AmbientLight(0xffffff, 1.325); // slightly lower than before — a bit more contrast, darker shadows
+    ambientLight.castShadow = true;
     scene.add(ambientLight);
 
-    directionalLight = new THREE.DirectionalLight(0xfff1d0, 10); // warm, punchy key light
-    directionalLight.position.set(4, 12, 6); // low, angled position for longer, more dramatic shadows
-    directionalLight.position.set(4, 12, 6); // low, angled position for longer, more dramatic shadows
+    directionalLight = new THREE.DirectionalLight(0xfff1d0, 5); // warm, punchy key light
+    directionalLight.position.set(6.7, 9, 8.3); // low, angled position for longer, more dramatic shadows
+
     directionalLight.castShadow = true;
 
     // Higher-res, tightly-fitted shadow camera — sharp shadow edges read as more
@@ -468,8 +469,8 @@ async function init() {
 
     scene.add(directionalLight);
 
-        directionalLight2 = new THREE.DirectionalLight(0xff00ff, 10); // warm, punchy key light
-    directionalLight2.position.set(6, 8, -4); // low, angled position for longer, more dramatic shadows
+        directionalLight2 = new THREE.DirectionalLight(0xd6d6d6, 2); // warm, punchy key light
+    directionalLight2.position.set(7.5, 5.9, -5.1); // low, angled position for longer, more dramatic shadows
     directionalLight2.castShadow = true;
 
     // Higher-res, tightly-fitted shadow camera — sharp shadow edges read as more
@@ -773,6 +774,10 @@ function registerToggleableModel(index, name, object3D) {
                 if (mat.name === 'Scheiben' || node.name === 'Glass_22') {
                     mat.color.setHex(0x000000);  // light grey, adjust as desired
                     // If you want it darker: 0x888888 or 0x666666
+                }
+                if (mat.name === 'PaintHull_PS' || mat.name === 'PaintHull_SB' ) {
+                    console.log("Found Painthull, changing scaler");
+                    mat.color.multiplyScalar(0.45);  // 0.7 = 30% darker; lower = darker still
                 }
 
                 materials.push(mat);
