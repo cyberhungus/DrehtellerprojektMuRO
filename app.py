@@ -5,7 +5,12 @@ import threading
 import time
 import serial
 import serial.tools.list_ports
-import math  # NEW for angular computations
+import math
+import webbrowser
+import subprocess
+import platform
+import os
+import socket
 
 from flask import Flask, render_template, Response, jsonify, request
 from flask_cors import CORS
@@ -25,7 +30,7 @@ CAMERA_HEIGHT = 1200
 
 
 
-ENCODER_PPR = 600                      # from encoder datasheet — verify counts vs pulses distinction
+ENCODER_PPR = 20                      # from encoder datasheet — verify counts vs pulses distinction
 FRICTION_WHEEL_DIAMETER_MM = 80        # diameter of the wheel touching the rotating plane
 CONTACT_RADIUS_MM = 450                # distance from plane's center to where the wheel touches its edge
 
@@ -90,13 +95,13 @@ def next_marker_boundary(yaw, direction_sign, degrees_per_marker):
 
     return (next_index * degrees_per_marker) % 360.0
 
-
-def choose_best_marker(candidate_ids, total_markers, current_yaw):
+def choose_best_marker(candidate_ids, total_markers, current_yaw, direction_sign=0, behind_penalty=1.5):
     """When more than one marker is stable in the same detection window (e.g. two
     physically adjacent markers straddling the 360°/0° seam are both visible at
     once), pick whichever candidate's angle is angularly closest to where we
-    currently are — rather than an arbitrary list-order pick that can flip-flop
-    between "near 0°" and "near 360°" representations of the same physical spot."""
+    currently are. If a recent encoder direction is known, candidates behind the
+    direction of travel are penalized — two markers can be nearly equidistant by raw
+    angle alone, but the one we're rotating toward is the more plausible read."""
     if not candidate_ids:
         return None
 
@@ -104,18 +109,25 @@ def choose_best_marker(candidate_ids, total_markers, current_yaw):
         return candidate_ids[0]
 
     best_id = None
-    best_distance = None
+    best_score = None
 
     for marker_id in candidate_ids:
         angle = marker_id_to_angle(marker_id, total_markers)
         if angle is None:
             continue
-        distance = abs(angular_delta(current_yaw, angle))
-        if best_distance is None or distance < best_distance:
-            best_distance = distance
+
+        delta = angular_delta(current_yaw, angle)
+        score = abs(delta)
+
+        if direction_sign != 0 and delta != 0 and (delta > 0) != (direction_sign > 0):
+            score *= behind_penalty  # candidate sits behind the direction of travel
+
+        if best_score is None or score < best_score:
+            best_score = score
             best_id = marker_id
 
     return best_id if best_id is not None else candidate_ids[0]
+
 
 class MarkerBuffer:
     def __init__(self, size=10):
@@ -145,6 +157,33 @@ class MarkerBuffer:
 marker_buffer = MarkerBuffer(size=10)
 app = Flask(__name__, static_folder='static', template_folder='templates')
 CORS(app)
+
+# Marker readings correct current_yaw toward the camera's ground truth instead of
+# overwriting it outright — this is what keeps continuous encoder motion from being
+# interrupted by a hard jump every time a new marker becomes the closest one. Only a
+# fraction of the error is corrected per detected frame (complementary filter); a
+# genuinely large error (startup, a slip, a missed sequence of markers) still snaps
+# immediately rather than crawling back over many frames. Both live-tunable via
+# /api/settings.
+MARKER_CORRECTION_ALPHA = 0.1    # fraction of camera-vs-estimate error corrected per detection
+MARKER_SNAP_THRESHOLD_DEG = 15.0  # error beyond this snaps immediately instead of blending
+
+
+# Marker correction is only applied on genuinely new information (a different marker
+# becomes visible, or the error grows large) — not on every frame the *same* marker
+# stays in view. Applying it every frame fights the encoder: it keeps tugging
+# current_yaw back toward a fixed angle even though nothing new was observed, which
+# reads as "the encoder barely moves the model."
+last_confirmed_marker_id = None
+
+# Encoder direction hint, used to bias marker selection (see choose_best_marker) when
+# more than one marker is visible in the same frame — e.g. prefer the marker ahead in
+# the direction of travel over one just left behind. Only trusted while recent (see
+# DIRECTION_HINT_STALE_AFTER); a stale hint falls back to no bias.
+direction_lock = threading.Lock()
+last_known_direction_sign = 0
+last_direction_hint_time = 0.0
+DIRECTION_HINT_STALE_AFTER = 0.5  # seconds
 
 detected_markers = []
 
@@ -180,11 +219,16 @@ debug_state = {
     "anticipation_buffer_max_deg": ANTICIPATION_BUFFER_MAX_DEG,
     "anticipation_buffer_deg_effective": None,
     "tracking_mode": "camera",        # initial mode
+    "marker_correction_alpha": MARKER_CORRECTION_ALPHA,
+    "marker_snap_threshold_deg": MARKER_SNAP_THRESHOLD_DEG,
+    "last_confirmed_marker_id": None,
+    "marker_correction_applied": None,
 }
 
 
 encoder_activity_lock = threading.Lock()
 last_encoder_activity_time = 0.0
+
 
 
 def update_debug(**kwargs):
@@ -222,7 +266,7 @@ def detect_markers(image):
     detector = aruco.ArucoDetector(aruco_dict, parameters)
 
     corners, ids, _ = detector.detectMarkers(gray)
-    global detected_markers, current_yaw, last_marker_time
+    global detected_markers, current_yaw, last_marker_time, last_confirmed_marker_id
 
     if ids is not None:
 
@@ -231,37 +275,75 @@ def detect_markers(image):
 
         with settings_lock:
             total_markers = TOTAL_MARKERS
+            correction_alpha = MARKER_CORRECTION_ALPHA
+            snap_threshold = MARKER_SNAP_THRESHOLD_DEG
 
         with yaw_lock:
             reference_yaw = current_yaw
 
-        marker_id = choose_best_marker(detected_markers, total_markers, reference_yaw)
+        with direction_lock:
+            direction_hint = (
+                last_known_direction_sign
+                if (time.time() - last_direction_hint_time) <= DIRECTION_HINT_STALE_AFTER
+                else 0
+            )
+
+        marker_id = choose_best_marker(detected_markers, total_markers, reference_yaw, direction_hint)
         angle = marker_id_to_angle(marker_id, total_markers)
 
         if angle is not None:
+
             with yaw_lock:
-                current_yaw = angle
-                last_marker_time = time.time()
+
+                error = angular_delta(current_yaw, angle)
+                is_new_marker = (marker_id != last_confirmed_marker_id)
+                should_correct = is_new_marker or abs(error) > snap_threshold
+
+                if should_correct:
+                    if abs(error) > snap_threshold:
+                        # Large desync (startup, a slip, markers missed for a while) —
+                        # snap immediately rather than blending toward it.
+                        current_yaw = angle
+                    else:
+                        # New marker confirmed, small expected error — nudge gently.
+                        current_yaw = (current_yaw + correction_alpha * error) % 360.0
+
+                    last_marker_time = time.time()
+                    last_confirmed_marker_id = marker_id
+
+                # else: same marker still in view, nothing new to report — leave
+                # current_yaw untouched so the encoder can keep driving it freely.
+                # last_marker_time is deliberately NOT refreshed here: once it goes
+                # stale (MARKER_STALE_AFTER), the anticipation clamp in serial_thread
+                # re-engages on its own, guarding against overshoot even though this
+                # marker is technically still visible.
+
+                yaw_snapshot = current_yaw
 
             update_debug(
                 last_markers=detected_markers,
                 last_marker_time=last_marker_time,
-                current_yaw=current_yaw,
+                current_yaw=yaw_snapshot,
                 last_marker_id=marker_id,
-                tracking_mode="camera",
+                tracking_mode="camera_assisted",
+                marker_correction_applied=should_correct,
             )
+
         else:
-            # total_markers not configured (<=0) — fall back to raw id
+            # total_markers not configured (<=0) — no meaningful grid to compare
+            # against, so just snap to the raw id every time, as before.
             with yaw_lock:
                 current_yaw = float(marker_id)
                 last_marker_time = time.time()
+                last_confirmed_marker_id = marker_id
 
             update_debug(
                 last_markers=detected_markers,
                 last_marker_time=last_marker_time,
                 current_yaw=current_yaw,
                 last_marker_id=marker_id,
-                tracking_mode="camera",
+                tracking_mode="camera_assisted",
+                marker_correction_applied=True,
             )
 
     else:
@@ -270,6 +352,7 @@ def detect_markers(image):
 
     if ids is not None:
         aruco.drawDetectedMarkers(image, corners, ids)
+
 
 def camera_thread():
     cap = cv2.VideoCapture(CAMERA_INDEX)
@@ -370,12 +453,11 @@ def serial_thread():
                 steps, speed, direction = parsed
 
                 # Any non-(0,0,0) reading counts as the object being touched/spun —
-                # used to suppress the screensaver, independent of yaw math below.
+                # used to suppress the screensaver, independent of the yaw math below.
                 if steps != 0 or speed != 0 or direction != 0:
                     with encoder_activity_lock:
                         last_encoder_activity_time = time.time()
 
-                # ---- NEW: fetch settings and compute spacing-aware buffer ----
                 with settings_lock:
                     multiplier = ROTATION_MULTIPLIER
                     total_markers = TOTAL_MARKERS
@@ -388,46 +470,59 @@ def serial_thread():
                     if degrees_per_marker else buffer_max
                 )
 
+                direction_sign = (1 if direction >= 1 else -1) * ROTATION_DIRECTION
+
+                if steps != 0:
+                    with direction_lock:
+                        global last_known_direction_sign, last_direction_hint_time
+                        last_known_direction_sign = direction_sign
+                        last_direction_hint_time = time.time()
+
+                raw_delta = direction_sign * steps * DEGREES_PER_STEP * multiplier
+
                 with yaw_lock:
+
                     markers_stale = (time.time() - last_marker_time) > MARKER_STALE_AFTER
 
-                    if markers_stale:
-                        direction_sign = (1 if direction >= 1 else -1) * ROTATION_DIRECTION
-                        raw_delta = direction_sign * steps * DEGREES_PER_STEP * multiplier
-                        proposed_yaw = (current_yaw + raw_delta) % 360.0
+                    # The encoder is integrated every tick regardless of camera state —
+                    # this is what makes motion continuous. detect_markers() nudges
+                    # current_yaw back toward ground truth on every frame it sees a
+                    # marker, so drift between real detections stays small on its own.
+                    proposed_yaw = (current_yaw + raw_delta) % 360.0
 
-                        if degrees_per_marker:
-                            boundary = next_marker_boundary(current_yaw, direction_sign, degrees_per_marker)
-                            limit = (boundary - direction_sign * anticipation_buffer) % 360.0
+                    if markers_stale and degrees_per_marker:
+                        # Overshoot-prevention clamp only applies while genuinely
+                        # coasting without recent camera confirmation. Once markers are
+                        # being seen regularly, detect_markers()'s gentle correction
+                        # keeps drift bounded on its own — clamping here too would just
+                        # fight that correction by periodically freezing yaw at a grid
+                        # boundary instead of letting it glide through smoothly.
+                        boundary = next_marker_boundary(current_yaw, direction_sign, degrees_per_marker)
+                        limit = (boundary - direction_sign * anticipation_buffer) % 360.0
 
-                            # How far, in the direction of travel, the raw proposal and the
-                            # clamp point each are from where we sit right now — compared
-                            # this way (rather than as raw angles) so it's correct across
-                            # the 0°/360° wraparound and regardless of travel direction.
-                            progress_to_proposed = direction_sign * angular_delta(current_yaw, proposed_yaw)
-                            progress_to_limit = direction_sign * angular_delta(current_yaw, limit)
+                        # How far, in the direction of travel, the raw proposal and the
+                        # clamp point each are from where we sit right now — compared
+                        # this way (rather than as raw angles) so it's correct across
+                        # the 0°/360° wraparound and regardless of travel direction.
+                        progress_to_proposed = direction_sign * angular_delta(current_yaw, proposed_yaw)
+                        progress_to_limit = direction_sign * angular_delta(current_yaw, limit)
 
-                            if progress_to_limit <= 0:
-                                # Already sitting inside the buffer zone — hold here
-                                # instead of creeping closer to the anticipated marker.
-                                proposed_yaw = current_yaw
-                            elif progress_to_proposed > progress_to_limit:
-                                # This step's raw estimate would cross into (or past) the
-                                # buffer zone — clamp instead of overshooting.
-                                proposed_yaw = limit
+                        if progress_to_limit <= 0:
+                            # Already sitting inside the buffer zone — hold here
+                            # instead of creeping closer to the anticipated marker.
+                            proposed_yaw = current_yaw
+                        elif progress_to_proposed > progress_to_limit:
+                            # This step's raw estimate would cross into (or past) the
+                            # buffer zone — clamp instead of overshooting.
+                            proposed_yaw = limit
 
-                        current_yaw = proposed_yaw
-                        update_debug(
-                            current_yaw=current_yaw,
-                            tracking_mode="encoder_anticipating",
-                            anticipation_buffer_deg_effective=anticipation_buffer,  # NEW
-                        )
-                    else:
-                        # Camera has the lead, just report the current yaw with camera mode
-                        update_debug(
-                            current_yaw=current_yaw,
-                            tracking_mode="camera",
-                        )
+                    current_yaw = proposed_yaw
+
+                    update_debug(
+                        current_yaw=current_yaw,
+                        tracking_mode="encoder_anticipating" if markers_stale else "camera_assisted",
+                        anticipation_buffer_deg_effective=anticipation_buffer if markers_stale else None,
+                    )
 
         except serial.SerialException as e:
             print(f"Serial error on {port} ({e}), rescanning in 2s...")
@@ -437,7 +532,6 @@ def serial_thread():
             print(f"Unexpected serial thread error: {e}")
             update_debug(serial_connected=False)
             time.sleep(2)
-
 
 @app.route('/')
 def index():
@@ -463,8 +557,8 @@ def api_settings():
     applies both live. Also accepts "anticipation_buffer_fraction" and
     "anticipation_buffer_max_deg" to tune the buffer dynamically.
     """
-    global ROTATION_MULTIPLIER, TOTAL_MARKERS
-    global ANTICIPATION_BUFFER_FRACTION, ANTICIPATION_BUFFER_MAX_DEG
+    global ROTATION_MULTIPLIER, TOTAL_MARKERS, ANTICIPATION_BUFFER_FRACTION, ANTICIPATION_BUFFER_MAX_DEG
+    global MARKER_CORRECTION_ALPHA, MARKER_SNAP_THRESHOLD_DEG
 
     data = request.get_json(silent=True) or {}
 
@@ -525,6 +619,34 @@ def api_settings():
 
         update_debug(anticipation_buffer_max_deg=ANTICIPATION_BUFFER_MAX_DEG)
 
+    ...
+    if "marker_correction_alpha" in data:
+        try:
+            value = float(data["marker_correction_alpha"])
+        except (TypeError, ValueError):
+            return jsonify({"error": "marker_correction_alpha must be a number"}), 400
+
+        if not (0 < value <= 1):
+            return jsonify({"error": "marker_correction_alpha must be between 0 and 1"}), 400
+
+        with settings_lock:
+            MARKER_CORRECTION_ALPHA = value
+
+        update_debug(marker_correction_alpha=MARKER_CORRECTION_ALPHA)
+
+    if "marker_snap_threshold_deg" in data:
+        try:
+            value = float(data["marker_snap_threshold_deg"])
+        except (TypeError, ValueError):
+            return jsonify({"error": "marker_snap_threshold_deg must be a number"}), 400
+
+        if value < 0:
+            return jsonify({"error": "marker_snap_threshold_deg must be >= 0"}), 400
+
+        with settings_lock:
+            MARKER_SNAP_THRESHOLD_DEG = value
+
+        update_debug(marker_snap_threshold_deg=MARKER_SNAP_THRESHOLD_DEG)
     with debug_lock:
         state_copy = dict(debug_state)
 
@@ -565,6 +687,51 @@ def stream():
 def run_flask():
     app.run(port=5000, debug=False, use_reloader=False)
 
+# ---- NEW: helper functions for automatic browser opening ----
+def is_server_running(host='localhost', port=5000, timeout=1):
+    """Check if the Flask server is accepting connections."""
+    try:
+        with socket.create_connection((host, port), timeout=timeout):
+            return True
+    except OSError:
+        return False
+
+def open_browser_kiosk(url):
+    """Try to launch Chrome/Edge in kiosk mode; fallback to default browser."""
+    system = platform.system()
+    if system == 'Windows':
+        chrome_paths = [
+            r'C:\Program Files\Google\Chrome\Application\chrome.exe',
+            r'C:\Program Files (x86)\Google\Chrome\Application\chrome.exe',
+        ]
+        edge_paths = [
+            r'C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe',
+            r'C:\Program Files\Microsoft\Edge\Application\msedge.exe',
+        ]
+        for path in chrome_paths + edge_paths:
+            if os.path.exists(path):
+                subprocess.Popen([path, '--kiosk', url])
+                return
+    elif system == 'Darwin':  # macOS
+        chrome_path = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
+        if os.path.exists(chrome_path):
+            subprocess.Popen([chrome_path, '--kiosk', url])
+            return
+        edge_path = '/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge'
+        if os.path.exists(edge_path):
+            subprocess.Popen([edge_path, '--kiosk', url])
+            return
+    elif system == 'Linux':
+        for cmd in ['google-chrome', 'chromium-browser', 'chromium']:
+            try:
+                subprocess.Popen([cmd, '--kiosk', url])
+                return
+            except FileNotFoundError:
+                pass
+    # Fallback: open in the default browser (not kiosk)
+    webbrowser.open(url)
+
+# ----------------------------------------------------------------------
 
 def main():
     flask_thread = threading.Thread(target=run_flask, daemon=True)
@@ -576,6 +743,19 @@ def main():
     ser_thread = threading.Thread(target=serial_thread, daemon=True)
     ser_thread.start()
 
+    # Wait for the Flask server to be ready before opening the browser
+    print("Waiting for Flask server to start...")
+    for _ in range(10):  # up to 10 seconds
+        if is_server_running():
+            break
+        time.sleep(1)
+    else:
+        print("Flask server not ready, opening browser anyway...")
+
+    # Open the browser in kiosk mode (or fallback)
+   # open_browser_kiosk('http://localhost:5000/')
+
+    # Keep the main thread alive (threads are daemon, so this prevents exit)
     cam_thread.join()
     ser_thread.join()
     flask_thread.join()

@@ -157,6 +157,14 @@
         </div>
 
         <div class="light-group">
+    <strong>Tracking Smoothing</strong>
+    <label>Marker Correction <input type="range" id="marker-correction-alpha" min="0.05" max="1" step="0.05"> <span class="light-value" id="marker-correction-alpha-val">—</span></label>
+    <label>Snap Threshold (°) <input type="range" id="marker-snap-threshold" min="1" max="45" step="1"> <span class="light-value" id="marker-snap-threshold-val">—</span></label>
+    <label>Rotation Lerp Speed <input type="range" id="rotation-lerp-speed" min="0.5" max="10" step="0.1"> <span class="light-value" id="rotation-lerp-speed-val">—</span></label>
+<label>Rotation Multiplier <input type="range" id="rotation-multiplier" min="0.2" max="8" step="0.1"> <span class="light-value" id="rotation-multiplier-val">—</span></label>
+        </div>
+
+        <div class="light-group">
             <strong>Model Rotation</strong>
             <div class="rotate-controls">
                 <button type="button" id="rotate-left-btn" class="rotate-btn">⟲ Left</button>

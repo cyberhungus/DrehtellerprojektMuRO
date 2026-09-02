@@ -29,7 +29,7 @@ const buttonConfig = [
 
 // For Aruco Based Detection
 let targetYaw = 0; // degrees, updated by SSE
-const rotationLerpSpeed = 2.0; // higher = snappier turn, tune to taste
+let rotationLerpSpeed = 2.0; // higher = snappier turn, tune to taste
 
 // For Keyboard Movement (DEBUG)
 const moveState = {forward: false, backward: false, left: false, right: false, up: false, down: false};
@@ -150,6 +150,7 @@ initHotspotEngine();
 initHotspotOverlay();
 initConnectionWarning();
 initSwitchOverlay();
+initTrackingControls();
 
 function initServerSentEvents() {
 
@@ -1532,3 +1533,110 @@ function updateConnectionWarning(cameraActive, serialConnected) {
 
 }
 
+
+let trackingSettingsTimer = null;
+
+// Debounced push to the backend — sliders fire an 'input' event on every pixel of
+// drag, and without this each drag would spam /api/settings with a request per
+// frame. Coalesces rapid changes into one request after the user pauses.
+function pushTrackingSetting(key, value) {
+
+    clearTimeout(trackingSettingsTimer);
+    trackingSettingsTimer = setTimeout(() => {
+        fetch('/api/settings', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({[key]: value})
+        }).catch(() => {
+            // Best-effort — the slider still shows the value locally either way;
+            // the backend keeps its previous setting until connectivity is
+            // restored and the slider is nudged again.
+        });
+    }, 150);
+
+}
+
+async function initTrackingControls() {
+
+    const alphaSlider = document.getElementById('marker-correction-alpha');
+    const alphaVal = document.getElementById('marker-correction-alpha-val');
+    const snapSlider = document.getElementById('marker-snap-threshold');
+    const snapVal = document.getElementById('marker-snap-threshold-val');
+    const lerpSlider = document.getElementById('rotation-lerp-speed');
+    const lerpVal = document.getElementById('rotation-lerp-speed-val');
+    const multiplierSlider = document.getElementById('rotation-multiplier');
+    const multiplierVal = document.getElementById('rotation-multiplier-val');
+
+    // rotationLerpSpeed is purely client-side — no backend round trip needed.
+    lerpSlider.value = rotationLerpSpeed;
+    lerpVal.textContent = rotationLerpSpeed.toFixed(1);
+
+    lerpSlider.addEventListener('input', () => {
+        rotationLerpSpeed = parseFloat(lerpSlider.value);
+        lerpVal.textContent = rotationLerpSpeed.toFixed(1);
+    });
+
+
+        // Declared here, at function scope, so it's guaranteed to exist below
+    // regardless of whether the fetch succeeds — no dangling reference from a
+    // try-block-local variable.
+    let state = null;
+
+    try {
+        const res = await fetch('/api/state');
+        if (res.ok) state = await res.json();
+    } catch (e) {
+        // Backend unreachable at startup — state stays null, defaults below apply.
+    }
+    // marker_correction_alpha / marker_snap_threshold_deg / rotation_multiplier all
+    // live on the backend — pull their current values first so the sliders start in
+    // sync with whatever app.py actually has configured, instead of defaulting to 0.
+    let initialAlpha = 0.25;
+    let initialSnapThreshold = 15.0;
+    let initialMultiplier = 1.0;
+
+    try {
+
+        const res = await fetch('/api/state');
+
+        if (res.ok) {
+
+            const state = await res.json();
+
+            if (typeof state.marker_correction_alpha === 'number') initialAlpha = state.marker_correction_alpha;
+            if (typeof state.marker_snap_threshold_deg === 'number') initialSnapThreshold = state.marker_snap_threshold_deg;
+            if (typeof state.rotation_multiplier === 'number') initialMultiplier = state.rotation_multiplier;
+
+        }
+
+    } catch (e) {
+        // Backend unreachable at startup — sliders fall back to the defaults above;
+        // the connection-warning banner already covers surfacing this to the user.
+    }
+
+    alphaSlider.value = initialAlpha;
+    alphaVal.textContent = initialAlpha.toFixed(2);
+    snapSlider.value = initialSnapThreshold;
+    snapVal.textContent = initialSnapThreshold.toFixed(0);
+    multiplierSlider.value = initialMultiplier;
+    multiplierVal.textContent = initialMultiplier.toFixed(1);
+
+    alphaSlider.addEventListener('input', () => {
+        const val = parseFloat(alphaSlider.value);
+        alphaVal.textContent = val.toFixed(2);
+        pushTrackingSetting('marker_correction_alpha', val);
+    });
+
+    snapSlider.addEventListener('input', () => {
+        const val = parseFloat(snapSlider.value);
+        snapVal.textContent = val.toFixed(0);
+        pushTrackingSetting('marker_snap_threshold_deg', val);
+    });
+
+    multiplierSlider.addEventListener('input', () => {
+        const val = parseFloat(multiplierSlider.value);
+        multiplierVal.textContent = val.toFixed(1);
+        pushTrackingSetting('rotation_multiplier', val);
+    });
+
+}
