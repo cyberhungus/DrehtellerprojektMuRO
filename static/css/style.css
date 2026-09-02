@@ -1,3 +1,19 @@
+html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden; /* the app has no scrollable content — every panel is
+                          position: fixed and sized to the viewport, so page-level
+                          scrolling should never be possible */
+}
+
+canvas {
+    display: block; /* removes the few px of baseline gap inline <canvas> elements
+                        get by default, which was enough on its own to trigger a
+                        vertical scrollbar on a full-viewport renderer */
+}
+
 #screensaver {
     position: fixed;
     top: 0;
