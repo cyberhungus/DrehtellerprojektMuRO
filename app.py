@@ -706,40 +706,45 @@ def is_server_running(host='localhost', port=5000, timeout=1):
 
 
 def open_browser_kiosk(url):
-    """Try to launch Chrome/Edge in kiosk mode; fallback to default browser."""
-    system = platform.system()
-    if system == 'Windows':
-        chrome_paths = [
-            r'C:\Program Files\Google\Chrome\Application\chrome.exe',
-            r'C:\Program Files (x86)\Google\Chrome\Application\chrome.exe',
-        ]
-        edge_paths = [
-            r'C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe',
-            r'C:\Program Files\Microsoft\Edge\Application\msedge.exe',
-        ]
-        for path in chrome_paths + edge_paths:
-            if os.path.exists(path):
-                subprocess.Popen([path, '--kiosk', url])
-                return
-    elif system == 'Darwin':  # macOS
-        chrome_path = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
-        if os.path.exists(chrome_path):
-            subprocess.Popen([chrome_path, '--kiosk', url])
-            return
-        edge_path = '/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge'
-        if os.path.exists(edge_path):
-            subprocess.Popen([edge_path, '--kiosk', url])
-            return
-    elif system == 'Linux':
-        for cmd in ['google-chrome', 'chromium-browser', 'chromium']:
-            try:
-                subprocess.Popen([cmd, '--kiosk', url])
-                return
-            except FileNotFoundError:
-                pass
-    # Fallback: open in the default browser (not kiosk)
-    webbrowser.open(url)
+    """Launch Chrome/Edge in restrictive full‑screen (kiosk) mode on Windows."""
+    extra_flags = [
+        '--kiosk',
+        '--disable-infobars',
+        '--disable-session-crashed-bubble',
+        '--disable-pinch',
+        '--overscroll-history-navigation=0',
+        '--no-first-run',
+        '--no-default-browser-check',
+        '--disable-features=TranslateUI',
+        '--disable-background-timer-throttling',
+        '--disable-backgrounding-occluded-windows',
+        '--disable-renderer-backgrounding',
+        '--disable-notifications',          # no pop‑ups
+        '--disable-popup-blocking',         # (keeps kiosk from being interrupted)
+        '--disable-save-password-bubble',
+        '--disable-autofill-keyboard-access',
+        '--disable-file-system',
+        '--disable-web-security',           # only if you need cross‑origin
+    ]
 
+    chrome_paths = [
+        r'C:\Program Files\Google\Chrome\Application\chrome.exe',
+        r'C:\Program Files (x86)\Google\Chrome\Application\chrome.exe',
+    ]
+    edge_paths = [
+        r'C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe',
+        r'C:\Program Files\Microsoft\Edge\Application\msedge.exe',
+    ]
+
+    for path in chrome_paths + edge_paths:
+        if os.path.exists(path):
+            subprocess.Popen([path] + extra_flags + [url])
+            print(f"Opened browser in kiosk mode: {path}")
+            return
+
+    # Fallback – regular window (no kiosk)
+    webbrowser.open(url)
+    print("No Chrome/Edge found, opened default browser (not kiosk).")
 # ----------------------------------------------------------------------
 
 
@@ -763,7 +768,7 @@ def main():
         print("Flask server not ready, opening browser anyway...")
 
     # Open the browser in kiosk mode (or fallback)
-    # open_browser_kiosk('http://localhost:5000/')
+    #open_browser_kiosk('http://localhost:5000/')
 
     # Keep the main thread alive (threads are daemon, so this prevents exit)
     cam_thread.join()

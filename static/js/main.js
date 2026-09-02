@@ -447,7 +447,7 @@ async function init() {
     // ambientLight/directionalLight variable names are unchanged — initLightControls()
     // binds the light panel sliders to these specific variables.
     ambientLight = new THREE.AmbientLight(0xffffff, 1.325); // slightly lower than before — a bit more contrast, darker shadows
-    ambientLight.castShadow = true;
+    //ambientLight.castShadow = true;
     scene.add(ambientLight);
 
     directionalLight = new THREE.DirectionalLight(0xfff1d0, 5); // warm, punchy key light
@@ -777,7 +777,7 @@ function registerToggleableModel(index, name, object3D) {
                 }
                 if (mat.name === 'PaintHull_PS' || mat.name === 'PaintHull_SB' ) {
                     console.log("Found Painthull, changing scaler");
-                    mat.color.multiplyScalar(0.45);  // 0.7 = 30% darker; lower = darker still
+                    mat.color.multiplyScalar(0.75);  // 0.7 = 30% darker; lower = darker still
                 }
 
                 materials.push(mat);
