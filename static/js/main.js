@@ -27,6 +27,8 @@ const buttonConfig = [
     {label: null, statusText: null}  // Model 8
 ];
 
+
+
 // For Aruco Based Detection
 let targetYaw = 0; // degrees, updated by SSE
 let rotationLerpSpeed = 4.5; // higher = snappier turn, tune to taste
@@ -38,9 +40,15 @@ const moveSpeed = 5; // units per second, tune to your scene scale
 const clock = new THREE.Clock();
 
 // Screensaver
-const screensaverTimeout = 60000; // ms of inactivity before screensaver shows — adjust as needed
+const screensaverTimeout = 5000; // ms of inactivity before screensaver shows
+const screensaverImages = ['static/images/screensaver-1.png', 'static/images/screensaver-2.png'];
+const screensaverImageHoldTime = 8000;      // ms each image stays fully visible
+const screensaverCrossfadeDuration = 3000;  // ms for the blend between images
 let screensaverTimer = null;
+let screensaverCycleTimer = null; // drives the hold→crossfade loop while active
 let screensaverEl, screensaverActive = false;
+let screensaverImgA, screensaverImgB; // two stacked, crossfadable images
+
 
 // Model visibility toggling — index matches button data-index
 let toggleableModels = []; // populated once models are loaded, see below
@@ -65,7 +73,8 @@ const placementRaycaster = new THREE.Raycaster();
 const placementMouse = new THREE.Vector2();
 
 // Hotspot overlay - becomes visible when clicking a bubble in the models
-let hotspotOverlayEl, hotspotOverlayTitleEl, hotspotOverlayTextEl, hotspotOverlayImagesEl;
+let hotspotOverlayEl, hotspotOverlayContentEl, hotspotOverlayIconEl,
+    hotspotOverlayTitleEl, hotspotOverlayTextEl, hotspotOverlayImagesEl;
 
 // Loading overlay - shown during startup while models are fetched
 let loadingOverlayEl, loadingTitleEl, loadingCurrentFileEl, loadingBarFillEl, loadingProgressTextEl,
@@ -88,6 +97,15 @@ const switchTransitionMs = 300;
 let drawerToggleEl, toggleBarEl, statusTextEl;
 let drawerOpen = false;
 
+// Valid hotspot color variants — used to validate hotspot definitions and to build
+// the CSS class / overlay class names (hotspot-btn--<variant>, hotspot-overlay--<variant>).
+const HOTSPOT_VARIANTS = ['green', 'blue', 'pink'];
+
+// Pixel size the hotspot PNG icons are rendered at — set inline (not left to CSS/the
+// image's natural size) so a hotspot never balloons to its source PNG's full
+// resolution. Adjust to taste.
+const HOTSPOT_ICON_SIZE = 40;
+
 
 const hotspotDefinitions = {
 
@@ -97,9 +115,11 @@ const hotspotDefinitions = {
             localPosition: new THREE.Vector3(0, 0, 0),
             minAngle: 315, // degrees — hotspot shows only while the camera sits within this arc
             maxAngle: 45,  // wraps through 0°, e.g. 315°→360°/0°→45°
+            variant: 'green', // green | blue | pink — controls icon color and popup theme
+            icon: 'static/images/icons/hotspot-icon-green.png', // clickable icon shown on the model
             content: {
                 title: 'Motor',
-                text: 'Der Motor liefert 150 PS und ermöglicht eine Höchstgeschwindigkeit von 45 km/h.',
+                text: 'PLATZHALTER Der Motor liefert 150 PS und ermöglicht eine Höchstgeschwindigkeit von 45 km/h. PLATZHALTER',
                 images: ['static/images/hotspots/engine-1.jpg']
             }
         },
@@ -108,9 +128,11 @@ const hotspotDefinitions = {
             localPosition: new THREE.Vector3(1.5, 0, 0),
             minAngle: 0, // degrees — hotspot shows only while the camera sits within this arc
             maxAngle: 358,  // wraps through 0°, e.g. 315°→360°/0°→45°
+            variant: 'blue',
+            icon: 'static/images/icons/hotspot-icon-blue.png',
             content: {
                 title: 'Pipe',
-                text: 'Fat smokestack remove all bad air ',
+                text: ' PLATZHALTER Großer Schornstein für Abluft PLATZHALTER ',
                 images: ['static/images/hotspots/engine-1.jpg']
             }
         }
@@ -122,9 +144,11 @@ const hotspotDefinitions = {
             localPosition: new THREE.Vector3(0, 0.8, 0.3),
             minAngle: 135,
             maxAngle: 225,
+            variant: 'pink',
+            icon: 'static/images/icons/hotspot-icon-pink.png',
             content: {
                 title: 'Kabine',
-                text: 'Die Kabine bietet Platz für bis zu 4 Personen inklusive Navigationssystem.',
+                text: 'PLATZHALTER Die Kabine bietet Platz für bis zu 4 Personen inklusive Navigationssystem. PLATZHALTER',
                 images: ['static/images/hotspots/cabin-1.jpg']
             }
         }
@@ -664,15 +688,34 @@ function animate() {
     renderer.render(scene, camera);
 
 }
-
-
 function initScreensaver() {
 
     screensaverEl = document.getElementById('screensaver');
 
+    // Build the two stacked images once on startup — reused every time the
+    // screensaver shows rather than recreated per show/hide cycle.
+    screensaverImgA = document.createElement('img');
+    screensaverImgB = document.createElement('img');
+
+    [screensaverImgA, screensaverImgB].forEach((img) => {
+        img.style.position = 'absolute';
+        img.style.top = '0';
+        img.style.left = '0';
+        img.style.width = '100%';
+        img.style.height = '100%';
+        img.style.objectFit = 'cover';
+        img.style.transition = `opacity ${screensaverCrossfadeDuration}ms ease-in-out`;
+        img.draggable = false;
+        screensaverEl.appendChild(img);
+    });
+
+    screensaverImgA.src = screensaverImages[0];
+    screensaverImgB.src = screensaverImages[1];
+    screensaverImgA.style.opacity = '1';
+    screensaverImgB.style.opacity = '0';
+
     resetScreensaverTimer();
 
-    // Any interaction resets the idle timer and dismisses the screensaver
     window.addEventListener('mousemove', resetScreensaverTimer);
     window.addEventListener('mousedown', resetScreensaverTimer);
     window.addEventListener('touchstart', resetScreensaverTimer);
@@ -696,15 +739,45 @@ function showScreensaver() {
     screensaverActive = true;
     screensaverEl.style.display = 'flex';
 
+    // Always start on image 1, fully opaque, before beginning the hold/crossfade
+    // loop — snap instantly (no transition) so re-triggering never shows a stray
+    // fade from wherever the images were left last time.
+    screensaverImgA.style.transition = 'none';
+    screensaverImgB.style.transition = 'none';
+    screensaverImgA.style.opacity = '1';
+    screensaverImgB.style.opacity = '0';
+    void screensaverImgA.offsetHeight; // force layout so the transition removal "sticks" before re-enabling it
+    screensaverImgA.style.transition = `opacity ${screensaverCrossfadeDuration}ms ease-in-out`;
+    screensaverImgB.style.transition = `opacity ${screensaverCrossfadeDuration}ms ease-in-out`;
+
+    runScreensaverCycle(true); // true = currently showing image A
+
     closeDrawer();
     drawerToggleEl.classList.add('hidden');
 
+}
+
+// Alternates: hold current image → crossfade to the other → hold → crossfade back, etc.
+function runScreensaverCycle(showingA) {
+    clearTimeout(screensaverCycleTimer);
+
+    screensaverCycleTimer = setTimeout(() => {
+        if (!screensaverActive) return;
+
+        // Toggle opacities: if showingA is true, show B; otherwise show A
+        screensaverImgA.style.opacity = showingA ? '0' : '1';
+        screensaverImgB.style.opacity = showingA ? '1' : '0';
+
+        // No recursive call → cycle stops after this single transition
+    }, screensaverImageHoldTime);
 }
 
 function hideScreensaver() {
 
     screensaverActive = false;
     screensaverEl.style.display = 'none';
+
+    clearTimeout(screensaverCycleTimer);
 
     drawerToggleEl.classList.remove('hidden');
 
@@ -1069,11 +1142,53 @@ function initHotspotEngine() {
 
 }
 
-function registerHotspot({id, object, localPosition, minAngle, maxAngle, label, onClick}) {
+// `variant` selects the hotspot's color theme (must be one of HOTSPOT_VARIANTS) and
+// `iconSrc` is the PNG shown as the hotspot's clickable icon instead of the plain
+// dot/label button. Falls back to the old plain-label look if no variant/icon is given.
+function registerHotspot({id, object, localPosition, minAngle, maxAngle, label, variant, iconSrc, onClick}) {
 
     const el = document.createElement('button');
     el.className = 'hotspot-btn';
     el.dataset.id = id;
+
+    // updateHotspots() sets el.style.left/top to the exact projected screen point,
+    // so the element itself needs to be centered ON that point rather than having
+    // the point sit at its top-left corner — otherwise a hotspot (especially once
+    // it's holding a PNG icon) visibly drifts away from the spot it's meant to mark.
+    el.style.position = 'absolute';
+    el.style.transform = 'translate(-50%, -50%)';
+
+    if (variant) {
+
+        if (!HOTSPOT_VARIANTS.includes(variant)) {
+            console.warn(`Hotspot "${id}" has unknown variant "${variant}" — falling back to default styling. Expected one of: ${HOTSPOT_VARIANTS.join(', ')}`);
+        } else {
+            el.classList.add(`hotspot-btn--${variant}`);
+            el.dataset.variant = variant;
+        }
+
+    }
+
+    if (iconSrc) {
+
+        const iconEl = document.createElement('img');
+        iconEl.className = 'hotspot-icon';
+        iconEl.src = iconSrc;
+        iconEl.alt = label || '';
+        iconEl.draggable = false;
+
+        // Force a fixed on-screen size regardless of the source PNG's actual
+        // resolution — without this, icons rendered at their raw pixel dimensions
+        // (which can be huge) and looked oversized.
+        iconEl.style.width = `${HOTSPOT_ICON_SIZE}px`;
+        iconEl.style.height = `${HOTSPOT_ICON_SIZE}px`;
+        iconEl.style.objectFit = 'contain';
+        iconEl.style.display = 'block';
+        iconEl.style.pointerEvents = 'none'; // clicks should hit the button, not the <img>
+
+        el.appendChild(iconEl);
+
+    }
 
     if (label) {
 
@@ -1249,9 +1364,30 @@ function initHotspotPlacementMode() {
 function initHotspotOverlay() {
 
     hotspotOverlayEl = document.getElementById('hotspot-overlay');
+    hotspotOverlayContentEl = document.getElementById('hotspot-overlay-content');
     hotspotOverlayTitleEl = document.getElementById('hotspot-overlay-title');
     hotspotOverlayTextEl = document.getElementById('hotspot-overlay-text');
     hotspotOverlayImagesEl = document.getElementById('hotspot-overlay-images');
+
+    // Everything except the badge/close button moves into a scrollable inner
+    // wrapper. The content box itself now stays overflow: visible so the badge
+    // (positioned with negative top/left, overlapping the top-left corner) isn't
+    // clipped by the box's own scroll container.
+    const scrollWrapper = document.createElement('div');
+    scrollWrapper.className = 'hotspot-overlay-scroll';
+    hotspotOverlayContentEl.insertBefore(scrollWrapper, hotspotOverlayTitleEl);
+    scrollWrapper.appendChild(hotspotOverlayTitleEl);
+    scrollWrapper.appendChild(hotspotOverlayTextEl);
+    scrollWrapper.appendChild(hotspotOverlayImagesEl);
+
+    // Badge icon, top-left — mirrors whichever hotspot icon was clicked, colored
+    // to match via CSS (see .hotspot-overlay-icon / hotspot-overlay--<variant>).
+    hotspotOverlayIconEl = document.createElement('img');
+    hotspotOverlayIconEl.className = 'hotspot-overlay-icon';
+    hotspotOverlayIconEl.alt = '';
+    hotspotOverlayIconEl.draggable = false;
+    hotspotOverlayIconEl.style.display = 'none'; // shown once openHotspotOverlay sets a src
+    hotspotOverlayContentEl.insertBefore(hotspotOverlayIconEl, hotspotOverlayContentEl.firstChild);
 
     document.getElementById('hotspot-overlay-close').addEventListener('click', closeHotspotOverlay);
 
@@ -1266,7 +1402,11 @@ function initHotspotOverlay() {
 
 }
 
-function openHotspotOverlay(content) {
+// `variant` (green | blue | pink) themes the popup box (border + close button)
+// to match the hotspot that was clicked — applied as a hotspot-overlay--<variant>
+// class on the backdrop so index.html/CSS can style each color independently.
+// `iconSrc` reuses that same hotspot's own icon as the badge shown top-left.
+function openHotspotOverlay(content, variant, iconSrc) {
 
     hotspotOverlayTitleEl.textContent = content.title || '';
     hotspotOverlayTextEl.textContent = content.text || '';
@@ -1277,6 +1417,19 @@ function openHotspotOverlay(content) {
         img.src = src;
         hotspotOverlayImagesEl.appendChild(img);
     });
+
+    // Clear any previously-applied variant class, then apply the new one
+    HOTSPOT_VARIANTS.forEach((v) => hotspotOverlayEl.classList.remove(`hotspot-overlay--${v}`));
+    if (variant && HOTSPOT_VARIANTS.includes(variant)) {
+        hotspotOverlayEl.classList.add(`hotspot-overlay--${variant}`);
+    }
+
+    if (iconSrc) {
+        hotspotOverlayIconEl.src = iconSrc;
+        hotspotOverlayIconEl.style.display = 'block';
+    } else {
+        hotspotOverlayIconEl.style.display = 'none';
+    }
 
     hotspotOverlayEl.style.display = 'flex';
 
@@ -1302,7 +1455,9 @@ function registerHotspotsForModel(modelIndex, object3D) {
             minAngle: def.minAngle,
             maxAngle: def.maxAngle,
             label: def.content.title,
-            onClick: () => openHotspotOverlay(def.content)
+            variant: def.variant,
+            iconSrc: def.icon,
+            onClick: () => openHotspotOverlay(def.content, def.variant, def.icon)
         });
 
     });

@@ -81,6 +81,8 @@ canvas {
     object-fit: contain;
 }
 
+.hotspot-btn--green .hotspot-icon { /* or just use the PNG's own color */ }
+
 
 /* Drawer toggle handle */
 #drawer-toggle {
@@ -337,65 +339,76 @@ canvas {
     /* layer itself is click-through */
     z-index: 500;
 }
-
 /* --- Updated Hotspot Button --- */
 .hotspot-btn {
     position: absolute;
-    width: 44px;
-    height: 44px;
+    width: 40px;
+    height: 40px;
     border-radius: 50%;
-    background: #ffffff;
-    /* White ring between the green border and inner circle */
-    border: 4px solid #22c55e;
-    /* Outer bright green ring */
+    /* keeps the box-shadow (and any future background) following a circle
+    instead of the button's square box, which was showing as a faint light
+    square/halo behind the round icon */
     transform: translate(-50%, -50%);
     pointer-events: auto;
     cursor: pointer;
-    display: none;
-    transition: all 0.15s ease;
-    padding: 0;
-    box-sizing: border-box;
     display: flex;
     align-items: center;
     justify-content: center;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    padding: 0;
+    box-sizing: border-box;
     z-index: 500;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-    /* Adds a subtle drop shadow for depth */
+    background: transparent;
+    border: none;
+    outline: none;
+    appearance: none;
+    -webkit-appearance: none;
 }
 
-/* Inner solid green circle */
-.hotspot-btn::before {
-    content: '';
-    width: 66%;
-    height: 66%;
-    border-radius: 50%;
-    background: #22c55e;
-    position: absolute;
+/* ::before and ::after removed — they drew the old circle + plus-sign
+   placeholder, now replaced by the real PNG icon (see .hotspot-icon) */
+
+.hotspot-btn--green {
+    box-shadow: 0 2px 10px rgba(34, 197, 94, 0.55);
+}
+.hotspot-btn--blue {
+    box-shadow: 0 2px 10px rgba(59, 130, 246, 0.55);
+}
+.hotspot-btn--pink {
+    box-shadow: 0 2px 10px rgba(236, 72, 153, 0.55);
 }
 
-/* White Plus Sign */
-.hotspot-btn::after {
-    content: '+';
-    color: #ffffff;
-    font-size: 24px;
-    font-weight: 300;
-    font-family: 'Montserrat', sans-serif;
-    position: relative;
-    line-height: 0;
-    top: 1px;
-    /* Slight optical adjustment for perfect centering */
-    z-index: 2;
-}
-
-/* Hover effect: slight scale up and a green glow */
+/* Hover: grow */
 .hotspot-btn:hover {
     transform: translate(-50%, -50%) scale(1.12);
-    box-shadow: 0 0 16px rgba(34, 197, 94, 0.5);
+}
+.hotspot-btn--green:hover {
+    box-shadow: 0 0 18px rgba(34, 197, 94, 0.75);
+}
+.hotspot-btn--blue:hover {
+    box-shadow: 0 0 18px rgba(59, 130, 246, 0.75);
+}
+.hotspot-btn--pink:hover {
+    box-shadow: 0 0 18px rgba(236, 72, 153, 0.75);
+}
+
+/* Active/click: grow further, briefly */
+.hotspot-btn:active {
+    transform: translate(-50%, -50%) scale(1.22);
+}
+.hotspot-btn--green:active {
+    box-shadow: 0 0 22px rgba(34, 197, 94, 0.85);
+}
+.hotspot-btn--blue:active {
+    box-shadow: 0 0 22px rgba(59, 130, 246, 0.85);
+}
+.hotspot-btn--pink:active {
+    box-shadow: 0 0 22px rgba(236, 72, 153, 0.85);
 }
 
 .hotspot-label {
     position: absolute;
-    top: 28px;
+    top: 48px; /* was 34px — pushed further down below the icon */
     left: 50%;
     transform: translateX(-50%);
     white-space: nowrap;
@@ -407,7 +420,6 @@ canvas {
     border-radius: 4px;
     pointer-events: none;
 }
-
 #hotspot-overlay {
     position: fixed;
     top: 0;
@@ -426,24 +438,74 @@ canvas {
     background: #fff;
     max-width: 70vw;
     max-height: 80vh;
-    overflow-y: auto;
+    overflow: visible;
+    /* lets the badge icon (positioned to overlap the top-left corner) poke
+    outside the box without being clipped — scrolling now happens on the
+    inner .hotspot-overlay-scroll wrapper instead */
+    display: flex;
+    flex-direction: column;
     border-radius: 10px;
+    border: 2px solid transparent;
+    /* colored per-variant below */
+    box-sizing: border-box;
     padding: 40px;
     font-weight: 300;
 }
 
+.hotspot-overlay-scroll {
+    overflow-y: auto;
+    flex: 1 1 auto;
+    min-height: 0;
+    /* required so a flex child can actually shrink and scroll instead of
+    forcing the box to grow past max-height */
+}
+
+/* Border color per variant, matching whichever hotspot was clicked */
+.hotspot-overlay--green #hotspot-overlay-content { border-color: #2ecc71; }
+.hotspot-overlay--blue  #hotspot-overlay-content { border-color: #3498db; }
+.hotspot-overlay--pink  #hotspot-overlay-content { border-color: #e84393; }
+
+/* Badge icon, top-left — mirrors the hotspot's own PNG icon, sitting half
+   outside the popup box like the mockup */
+.hotspot-overlay-icon {
+    position: absolute;
+    top: -28px;
+    left: -28px;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: #fff;
+    padding: 8px;
+    box-sizing: border-box;
+    object-fit: contain;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    border: 3px solid transparent;
+    /* colored per-variant below */
+    z-index: 2;
+}
+
+.hotspot-overlay--green .hotspot-overlay-icon { border-color: #2ecc71; }
+.hotspot-overlay--blue  .hotspot-overlay-icon { border-color: #3498db; }
+.hotspot-overlay--pink  .hotspot-overlay-icon { border-color: #e84393; }
+
+
 #hotspot-overlay-close {
     position: absolute;
-    top: 14px;
-    right: 18px;
+    top: 15px;
+    right: 15px;
     background: none;
     border: none;
-    font-size: 28px;
+    font-size: 60px;
     line-height: 1;
     cursor: pointer;
     color: #333;
     font-weight: 300;
 }
+
+/* Close button color per variant, matching whichever hotspot was clicked */
+.hotspot-overlay--green #hotspot-overlay-close { color: #2ecc71; }
+.hotspot-overlay--blue  #hotspot-overlay-close { color: #3498db; }
+.hotspot-overlay--pink  #hotspot-overlay-close { color: #e84393; }
 
 #hotspot-overlay-title {
     margin: 0 0 16px 0;
