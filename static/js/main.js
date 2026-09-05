@@ -40,7 +40,7 @@ const moveSpeed = 5; // units per second, tune to your scene scale
 const clock = new THREE.Clock();
 
 // Screensaver
-const screensaverTimeout = 5000; // ms of inactivity before screensaver shows
+const screensaverTimeout = 60000; // ms of inactivity before screensaver shows
 const screensaverImages = ['static/images/screensaver-1.png', 'static/images/screensaver-2.png'];
 const screensaverImageHoldTime = 8000;      // ms each image stays fully visible
 const screensaverCrossfadeDuration = 3000;  // ms for the blend between images
