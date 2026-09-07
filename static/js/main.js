@@ -458,9 +458,9 @@ async function loadBoatModel({gltfLoader, folderPath, folderAndFile, onProgress}
 async function init() {
 // Set the camera position above the model and pointing downwards to center on the model
     camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 2000);
-    camera.position.set(-1.94 , 1.05, -1.67); // Set above the model (adjust height based on scale and size)
-    camera.rotation.set(-160.7, 43.3, -166.5); // Ensures it's looking at the center; adjust to the middle of your scene if needed
-
+    camera.position.set(-2. , 1, -1.62); // Set above the model (adjust height based on scale and size)
+    //camera.rotation.set(-161.3, 43.3, -166.5); // Ensures it's looking at the center; adjust to the middle of your scene if needed
+    camera.lookAt(0,0,0)
 // Scene setup
     scene = new THREE.Scene();
     scene.background = new THREE.Color(0xffffff); // white background — must match #model-switch-overlay's background in index.html
