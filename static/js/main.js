@@ -12,6 +12,9 @@ let lightVisual1, lightVisual2; // small sphere+line shown per light while the d
 // Initial camera settings (edit these to change the starting view)
 const initialCameraPosition = new THREE.Vector3(-2.35, 1, 0);
 let initialTargetY = 0.45; // desired initial look height (controls.target.y)
+// Initial camera settings (edit these to change the starting view)
+
+let initialTargetZ = 0;   // <-- desired initial look depth (controls.target.z)
 
 // Toggle which boat models are loaded/active — index 0 = Boot 1, index 1 = Boot 2, etc.
 // Set to false to skip loading that model entirely (useful for testing/debugging).
@@ -655,7 +658,7 @@ async function init() {
     controls.maxDistance = 10;
     controls.target.set(0, 0, 0); // Ensure the orbit control target is centered at the model
     controls.update();
-// ----- CAMERA CONTROLS (X position, Y position, Target Y) -----
+// ----- CAMERA CONTROLS (X position, Y position, Target Y, Target Z) -----
 const camXSlider = document.getElementById('cam-pos-x');
 const camYSlider = document.getElementById('cam-pos-y');
 const camXVal = document.getElementById('cam-pos-x-val');
@@ -663,6 +666,8 @@ const camYVal = document.getElementById('cam-pos-y-val');
 
 const camTargetYSlider = document.getElementById('cam-target-y');
 const camTargetYVal = document.getElementById('cam-target-y-val');
+const camTargetZSlider = document.getElementById('cam-target-z');
+const camTargetZVal = document.getElementById('cam-target-z-val');
 
 // ----- Helper functions -----
 
@@ -690,6 +695,16 @@ function setTargetY(y) {
     updateSliders();
 }
 
+function setTargetZ(z) {
+    if (!controls) return;
+    const deltaZ = z - controls.target.z;
+    controls.target.z += deltaZ;
+    // Move camera by the same delta so the relative position stays the same
+    camera.position.z += deltaZ;
+    controls.update();
+    updateSliders();
+}
+
 function updateSliders() {
     if (!controls) return;
 
@@ -699,14 +714,17 @@ function updateSliders() {
     camYSlider.value = camera.position.y;
     camYVal.textContent = camera.position.y.toFixed(2);
 
-    // Update target Y slider
+    // Update target sliders
     camTargetYSlider.value = controls.target.y;
     camTargetYVal.textContent = controls.target.y.toFixed(2);
+    camTargetZSlider.value = controls.target.z;
+    camTargetZVal.textContent = controls.target.z.toFixed(2);
 }
 
 // Initial sync – using top‑level variables
 camera.position.copy(initialCameraPosition);
 controls.target.y = initialTargetY;
+controls.target.z = initialTargetZ;
 controls.update();
 updateSliders();
 
@@ -726,6 +744,12 @@ camYSlider.addEventListener('input', () => {
 camTargetYSlider.addEventListener('input', () => {
     const y = parseFloat(camTargetYSlider.value);
     setTargetY(y);
+});
+
+// ----- Target Z event -----
+camTargetZSlider.addEventListener('input', () => {
+    const z = parseFloat(camTargetZSlider.value);
+    setTargetZ(z);
 });
 
 // Keep sliders in sync when orbiting or panning with the mouse
