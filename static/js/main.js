@@ -116,34 +116,99 @@ const HOTSPOT_VARIANTS = ['green', 'blue', 'pink'];
 // resolution. Adjust to taste.
 const HOTSPOT_ICON_SIZE = 40;
 
+// Green hotspots toggle state and button reference (will be assigned in initGreenToggle)
+let greenHotspotsVisible = true;   // true = visible
+let greenToggleBtn;                // will be assigned in initGreenToggle()
 
+
+// --------------------------------------------
+// MODIFY the existing updateHotspots() function
+// --------------------------------------------
+// Find the original updateHotspots() and replace it with this version,
+// which adds a check for green hotspots and the global flag.
+function updateHotspots() {
+  if (hotspots.length === 0) return;
+
+  const activeEntry = getActiveModelEntry();
+  if (!activeEntry || !activeEntry.object) return;
+
+  const cameraAngle = getCameraAngleRelativeToObject(activeEntry.object);
+
+  hotspots.forEach((hotspot) => {
+    if (hotspot.object !== activeEntry.object) {
+      hotspot.el.style.display = 'none';
+      return;
+    }
+
+    // ---- GREEN HOTSPOT TOGGLE ----
+    const isGreen = hotspot.el.dataset.variant === 'green';
+    if (isGreen && !greenHotspotsVisible) {
+      hotspot.el.style.display = 'none';
+      return;
+    }
+
+    if (!isAngleInRange(cameraAngle, hotspot.minAngle, hotspot.maxAngle)) {
+      hotspot.el.style.display = 'none';
+      return;
+    }
+
+    _worldPos.copy(hotspot.localPosition).applyMatrix4(hotspot.object.matrixWorld);
+    _projected.copy(_worldPos).project(camera);
+
+    if (_projected.z > 1) {
+      hotspot.el.style.display = 'none';
+      return;
+    }
+
+    const screenX = (_projected.x * 0.5 + 0.5) * window.innerWidth;
+    const screenY = (-_projected.y * 0.5 + 0.5) * window.innerHeight;
+
+    hotspot.el.style.display = 'block';
+    hotspot.el.style.left = `${screenX}px`;
+    hotspot.el.style.top = `${screenY}px`;
+  });
+}
 const hotspotDefinitions = {
 
     0: [ // Boot 1
         {
             id: 'boot1-engine',
             localPosition: new THREE.Vector3(0, 0, 0),
-            minAngle: 315, // degrees — hotspot shows only while the camera sits within this arc
-            maxAngle: 45,  // wraps through 0°, e.g. 315°→360°/0°→45°
-            variant: 'green', // green | blue | pink — controls icon color and popup theme
-            icon: 'static/images/icons/hotspot-icon-green.png', // clickable icon shown on the model
+            minAngle: 315,
+            maxAngle: 45,
+            variant: 'green',
+            icon: 'static/images/icons/hotspot-icon-green.png',
             content: {
                 title: 'Motor',
                 text: 'PLATZHALTER Der Motor liefert 150 PS und ermöglicht eine Höchstgeschwindigkeit von 45 km/h. PLATZHALTER',
-                images: ['static/images/hotspots/engine-1.jpg']
+                images: ['static/images/boat.jpg']
             }
         },
         {
             id: 'boot1-pipe',
             localPosition: new THREE.Vector3(1.5, 0, 0),
-            minAngle: 0, // degrees — hotspot shows only while the camera sits within this arc
-            maxAngle: 358,  // wraps through 0°, e.g. 315°→360°/0°→45°
+            minAngle: 0,
+            maxAngle: 358,
             variant: 'blue',
             icon: 'static/images/icons/hotspot-icon-blue.png',
             content: {
                 title: 'Pipe',
                 text: ' PLATZHALTER Großer Schornstein für Abluft PLATZHALTER ',
                 images: ['static/images/hotspots/engine-1.jpg']
+            }
+        },
+        // --- Added green hotspot for Boot 1 ---
+        {
+            id: 'boot1-propeller',
+            localPosition: new THREE.Vector3(-0.8, -0.3, 1.2),
+            minAngle: 180,
+            maxAngle: 270,
+            variant: 'green',
+            icon: 'static/images/icons/hotspot-icon-green.png',
+            content: {
+                title: 'Propeller',
+                text: 'PLATZHALTER 3‑Flügel‑Propeller aus Edelstahl. PLATZHALTER',
+                images: ['static/images/hotspots/propeller.jpg']
             }
         }
     ],
@@ -161,16 +226,192 @@ const hotspotDefinitions = {
                 text: 'PLATZHALTER Die Kabine bietet Platz für bis zu 4 Personen inklusive Navigationssystem. PLATZHALTER',
                 images: ['static/images/hotspots/cabin-1.jpg']
             }
+        },
+        // --- Added green hotspot for Boot 2 ---
+        {
+            id: 'boot2-decklight',
+            localPosition: new THREE.Vector3(0.5, 0.8, 0.2),
+            minAngle: 90,
+            maxAngle: 180,
+            variant: 'green',
+            icon: 'static/images/icons/hotspot-icon-green.png',
+            content: {
+                title: 'Deckbeleuchtung',
+                text: 'PLATZHALTER LED‑Leuchten für nächtliche Manöver. PLATZHALTER',
+                images: ['static/images/hotspots/light.jpg']
+            }
+        }
+    ],
+
+    2: [ // Boot 3 (new)
+        {
+            id: 'boot3-hull',
+            localPosition: new THREE.Vector3(0, -0.5, 0),
+            minAngle: 0,
+            maxAngle: 360,
+            variant: 'green',
+            icon: 'static/images/icons/hotspot-icon-green.png',
+            content: {
+                title: 'Rumpf',
+                text: 'PLATZHALTER GFK‑Rumpf mit Antifouling‑Beschichtung. PLATZHALTER',
+                images: ['static/images/hotspots/hull.jpg']
+            }
+        },
+        {
+            id: 'boot3-antenna',
+            localPosition: new THREE.Vector3(0.2, 1.5, -0.3),
+            minAngle: 45,
+            maxAngle: 135,
+            variant: 'blue',
+            icon: 'static/images/icons/hotspot-icon-blue.png',
+            content: {
+                title: 'Antenne',
+                text: 'PLATZHALTER VHF‑Antenne mit 2 m Reichweite. PLATZHALTER',
+                images: ['static/images/hotspots/antenna.jpg']
+            }
+        },
+        {
+            id: 'boot3-anchor',
+            localPosition: new THREE.Vector3(-1.0, -0.2, 1.8),
+            minAngle: 200,
+            maxAngle: 300,
+            variant: 'green',
+            icon: 'static/images/icons/hotspot-icon-green.png',
+            content: {
+                title: 'Anker',
+                text: 'PLATZHALTER Edelstahl‑Anker, 15 kg, mit Kette. PLATZHALTER',
+                images: ['static/images/hotspots/anchor.jpg']
+            }
+        }
+    ],
+
+    3: [ // Boot 4 (new)
+        {
+            id: 'boot4-steering',
+            localPosition: new THREE.Vector3(0.3, 0.2, -1.0),
+            minAngle: 270,
+            maxAngle: 350,
+            variant: 'green',
+            icon: 'static/images/icons/hotspot-icon-green.png',
+            content: {
+                title: 'Steuerrad',
+                text: 'PLATZHALTER Hydraulisches Lenksystem mit Servounterstützung. PLATZHALTER',
+                images: ['static/images/hotspots/steering.jpg']
+            }
+        },
+        {
+            id: 'boot4-fender',
+            localPosition: new THREE.Vector3(1.2, 0.0, 1.5),
+            minAngle: 10,
+            maxAngle: 100,
+            variant: 'pink',
+            icon: 'static/images/icons/hotspot-icon-pink.png',
+            content: {
+                title: 'Fender',
+                text: 'PLATZHALTER Gummi‑Fender zum Schutz beim Anlegen. PLATZHALTER',
+                images: ['static/images/hotspots/fender.jpg']
+            }
+        },
+        {
+            id: 'boot4-vent',
+            localPosition: new THREE.Vector3(-0.6, 0.4, -0.8),
+            minAngle: 120,
+            maxAngle: 220,
+            variant: 'green',
+            icon: 'static/images/icons/hotspot-icon-green.png',
+            content: {
+                title: 'Belüftung',
+                text: 'PLATZHALTER Entlüftungsöffnung für den Maschinenraum. PLATZHALTER',
+                images: ['static/images/hotspots/vent.jpg']
+            }
+        }
+    ],
+
+    4: [ // Boot 5 (new)
+        {
+            id: 'boot5-radio',
+            localPosition: new THREE.Vector3(-0.2, 0.6, -0.5),
+            minAngle: 0,
+            maxAngle: 359,
+            variant: 'green',
+            icon: 'static/images/icons/hotspot-icon-green.png',
+            content: {
+                title: 'Funkgerät',
+                text: 'PLATZHALTER Digitales UKW‑Funkgerät mit DSC. PLATZHALTER',
+                images: ['static/images/hotspots/radio.jpg']
+            }
+        },
+        {
+            id: 'boot5-bilge',
+            localPosition: new THREE.Vector3(0.0, -0.7, 0.8),
+            minAngle: 180,
+            maxAngle: 270,
+            variant: 'blue',
+            icon: 'static/images/icons/hotspot-icon-blue.png',
+            content: {
+                title: 'Bilgenpumpe',
+                text: 'PLATZHALTER Automatische Bilgenpumpe 2000 l/h. PLATZHALTER',
+                images: ['static/images/hotspots/bilge.jpg']
+            }
+        },
+        {
+            id: 'boot5-windlass',
+            localPosition: new THREE.Vector3(-1.2, -0.1, 1.2),
+            minAngle: 300,
+            maxAngle: 30,
+            variant: 'green',
+            icon: 'static/images/icons/hotspot-icon-green.png',
+            content: {
+                title: 'Ankerwinde',
+                text: 'PLATZHALTER Elektrische Ankerwinde mit Fernbedienung. PLATZHALTER',
+                images: ['static/images/hotspots/windlass.jpg']
+            }
+        }
+    ],
+
+    5: [ // Boot 6 (new)
+        {
+            id: 'boot6-sail',
+            localPosition: new THREE.Vector3(0, 1.2, 0),
+            minAngle: 0,
+            maxAngle: 360,
+            variant: 'green',
+            icon: 'static/images/icons/hotspot-icon-green.png',
+            content: {
+                title: 'Segel',
+                text: 'PLATZHALTER Großsegel aus Dacron, 25 m². PLATZHALTER',
+                images: ['static/images/hotspots/sail.jpg']
+            }
+        },
+        {
+            id: 'boot6-rudder',
+            localPosition: new THREE.Vector3(0.0, -0.4, 1.8),
+            minAngle: 135,
+            maxAngle: 225,
+            variant: 'pink',
+            icon: 'static/images/icons/hotspot-icon-pink.png',
+            content: {
+                title: 'Ruder',
+                text: 'PLATZHALTER Ausgewogenes Ruder mit Edelstahlschaft. PLATZHALTER',
+                images: ['static/images/hotspots/rudder.jpg']
+            }
+        },
+        {
+            id: 'boot6-cleat',
+            localPosition: new THREE.Vector3(1.0, 0.1, -1.0),
+            minAngle: 60,
+            maxAngle: 150,
+            variant: 'green',
+            icon: 'static/images/icons/hotspot-icon-green.png',
+            content: {
+                title: 'Klampe',
+                text: 'PLATZHALTER Edelstahl‑Klampe für Festmacherleinen. PLATZHALTER',
+                images: ['static/images/hotspots/cleat.jpg']
+            }
         }
     ]
 
-    // 2: [ ... Boot 3 hotspots ... ],
-    // 3: [ ... Boot 4 hotspots ... ],
-    // 4: [ ... Boot 5 hotspots ... ],
-    // 5: [ ... Boot 6 hotspots ... ],
-
 };
-
 // -------------------------------------------------------------------
 // The camera controls code has been moved inside init() (see below)
 // to ensure `controls` exists before we attach event listeners.
@@ -190,6 +431,7 @@ initHotspotOverlay();
 initConnectionWarning();
 initSwitchOverlay();
 initTrackingControls();
+initGreenToggle();   // <-- added: initialise the green toggle button
 
 
 // ============================================================================
@@ -494,22 +736,24 @@ async function init() {
     //ambientLight.castShadow = true;
     scene.add(ambientLight);
 
-    directionalLight = new THREE.DirectionalLight(0xfff1d0, 5); // warm, punchy key light
-    directionalLight.position.set(6.7, 9, 8.3); // low, angled position for longer, more dramatic shadows
+    directionalLight = new THREE.DirectionalLight(0xfff1d0, 4); // warm, punchy key light
+    directionalLight.position.set(5.5, 7.5, -3.5); // low, angled position for longer, more dramatic shadows
 
     directionalLight.castShadow = true;
 
     // Higher-res, tightly-fitted shadow camera — sharp shadow edges read as more
     // "cinematic" than the soft, low-res shadows the old wide/loose camera produced.
-    directionalLight.shadow.mapSize.width = 1024;
-    directionalLight.shadow.mapSize.height = 1024;
+    directionalLight.shadow.mapSize.width = 4096;
+    directionalLight.shadow.mapSize.height = 4096;
     directionalLight.shadow.camera.left = -4;
     directionalLight.shadow.camera.right = 4;
     directionalLight.shadow.camera.top = 4;
     directionalLight.shadow.camera.bottom = -4;
     directionalLight.shadow.camera.near = 0.5;
     directionalLight.shadow.camera.far = 30;
-    directionalLight.shadow.bias = -0.0005; // reduces shadow acne at this higher resolution
+    directionalLight.shadow.bias = -0.0005;
+directionalLight.shadow.normalBias = 0.02;
+// reduces shadow acne at this higher resolution
 
     scene.add(directionalLight);
 
@@ -519,8 +763,8 @@ async function init() {
 
     // Higher-res, tightly-fitted shadow camera — sharp shadow edges read as more
     // "cinematic" than the soft, low-res shadows the old wide/loose camera produced.
-    directionalLight2.shadow.mapSize.width = 1024;
-    directionalLight2.shadow.mapSize.height = 1024;
+    directionalLight2.shadow.mapSize.width = 4096;
+    directionalLight2.shadow.mapSize.height = 4096;
     directionalLight2.shadow.camera.left = -4;
     directionalLight2.shadow.camera.right = 4;
     directionalLight2.shadow.camera.top = 4;
@@ -528,7 +772,7 @@ async function init() {
     directionalLight2.shadow.camera.near = 0.5;
     directionalLight2.shadow.camera.far = 30;
     directionalLight2.shadow.bias = -0.0005; // reduces shadow acne at this higher resolution
-
+directionalLight2.shadow.normalBias = 0.02;
     scene.add(directionalLight2);
 
     lightVisual1 = createLightVisual(0xff5555);
@@ -642,15 +886,15 @@ async function init() {
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.shadowMap.enabled = true; // Enable shadow maps
 
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.shadowMap.type = THREE.PCFShadowMap;
 
     renderer.toneMapping = THREE.ACESFilmicToneMapping; // filmic contrast curve — supports the moody look better than the flat linear default
     renderer.toneMappingExposure = 0.9;
 
     document.body.appendChild(renderer.domElement);
 
-    const pmremGenerator = new THREE.PMREMGenerator(renderer);
-    scene.environment = pmremGenerator.fromScene(new RoomEnvironment(), 0.04).texture;
+   // const pmremGenerator = new THREE.PMREMGenerator(renderer);
+  //  scene.environment = pmremGenerator.fromScene(new RoomEnvironment(), 0.04).texture;
 
 
 // Setup controls
@@ -974,7 +1218,7 @@ function registerToggleableModel(index, name, object3D) {
                 }
                 if (mat.name === 'PaintHull_PS' || mat.name === 'PaintHull_SB' ) {
                     console.log("Found Painthull, changing scaler");
-                    mat.color.multiplyScalar(0.75);  // 0.7 = 30% darker; lower = darker still
+                   // mat.color.multiplyScalar(0.75);  // 0.7 = 30% darker; lower = darker still
                 }
 
                 materials.push(mat);
@@ -1272,6 +1516,25 @@ function initHotspotEngine() {
 
 }
 
+// Initialise the green toggle button – called after DOM is ready
+function initGreenToggle() {
+    greenToggleBtn = document.getElementById('green-hotspots-toggle');
+    if (!greenToggleBtn) {
+        console.warn('Green toggle button not found in DOM');
+        return;
+    }
+
+    // Set initial state (visible → green)
+    greenToggleBtn.classList.remove('inactive');
+
+    // Click handler
+    greenToggleBtn.addEventListener('click', () => {
+        greenHotspotsVisible = !greenHotspotsVisible;
+        greenToggleBtn.classList.toggle('inactive', !greenHotspotsVisible);
+        updateHotspots(); // apply immediately
+    });
+}
+
 // `variant` selects the hotspot's color theme (must be one of HOTSPOT_VARIANTS) and
 // `iconSrc` is the PNG shown as the hotspot's clickable icon instead of the plain
 // dot/label button. Falls back to the old plain-label look if no variant/icon is given.
@@ -1379,48 +1642,6 @@ function isAngleInRange(angle, min, max) {
 
 }
 
-function updateHotspots() {
-
-    if (hotspots.length === 0) return;
-
-    const activeEntry = getActiveModelEntry();
-    if (!activeEntry || !activeEntry.object) return; // bail safely instead of crashing on undefined
-
-    const cameraAngle = getCameraAngleRelativeToObject(activeEntry.object);
-
-    hotspots.forEach((hotspot) => {
-
-        // Skip hotspots belonging to any model that isn't currently active
-        if (hotspot.object !== activeEntry.object) {
-            hotspot.el.style.display = 'none';
-            return;
-        }
-
-        // Show only while the camera sits within this hotspot's configured angle range
-        if (!isAngleInRange(cameraAngle, hotspot.minAngle, hotspot.maxAngle)) {
-            hotspot.el.style.display = 'none';
-            return;
-        }
-
-        // Project the hotspot's 3D position to 2D screen space
-        _worldPos.copy(hotspot.localPosition).applyMatrix4(hotspot.object.matrixWorld);
-        _projected.copy(_worldPos).project(camera);
-
-        if (_projected.z > 1) { // behind the camera
-            hotspot.el.style.display = 'none';
-            return;
-        }
-
-        const screenX = (_projected.x * 0.5 + 0.5) * window.innerWidth;
-        const screenY = (-_projected.y * 0.5 + 0.5) * window.innerHeight;
-
-        hotspot.el.style.display = 'block';
-        hotspot.el.style.left = `${screenX}px`;
-        hotspot.el.style.top = `${screenY}px`;
-
-    });
-
-}
 
 function initHotspotPlacementMode() {
 
@@ -1509,6 +1730,19 @@ function initHotspotOverlay() {
     scrollWrapper.appendChild(hotspotOverlayTitleEl);
     scrollWrapper.appendChild(hotspotOverlayTextEl);
     scrollWrapper.appendChild(hotspotOverlayImagesEl);
+
+    // ... inside initHotspotOverlay() ...
+
+// Create the Deep Dive element
+const deepDiveEl = document.createElement('div');
+deepDiveEl.className = 'hotspot-deep-dive';
+deepDiveEl.textContent = 'Deep Dive Option';
+scrollWrapper.appendChild(deepDiveEl);
+
+// (Optional) Add a click event if it should do something
+deepDiveEl.addEventListener('click', () => {
+    console.log('Deep dive clicked!');
+});
 
     // Badge icon, top-left — mirrors whichever hotspot icon was clicked, colored
     // to match via CSS (see .hotspot-overlay-icon / hotspot-overlay--<variant>).
@@ -1642,12 +1876,14 @@ function openDrawer() {
     drawerOpen = true;
     toggleBarEl.classList.add('open');
     drawerToggleEl.classList.add('hidden');
+    if (greenToggleBtn) greenToggleBtn.classList.add('hidden');   // hide circular button
 }
 
 function closeDrawer() {
     drawerOpen = false;
     toggleBarEl.classList.remove('open');
     drawerToggleEl.classList.remove('hidden');
+    if (greenToggleBtn) greenToggleBtn.classList.remove('hidden');   // show circular button
 }
 
 // Put a custom string in the top-right status text — call this from anywhere

@@ -29,7 +29,6 @@
     font-family: 'Montserrat', sans-serif;
     font-weight: 300;
 }
-/* ... rest of your CSS ... */
 html,
 body {
     margin: 0;
@@ -37,28 +36,29 @@ body {
     width: 100%;
     height: 100%;
     overflow: hidden;
-    /* the app has no scrollable content — every panel is
-    position: fixed and sized to the viewport, so page-level
-    scrolling should never be possible */
 }
 
 canvas {
     display: block;
-    /* removes the few px of baseline gap inline <canvas> elements
-    get by default, which was enough on its own to trigger a
-    vertical scrollbar on a full-viewport renderer */
 }
 
+/* ─── Customizable Popup Margins (Edit these values) ─── */
+:root {
+    --hotspot-margin-top: 40px;    /* Distance from top edge */
+    --hotspot-margin-right: 40px;  /* Distance from right edge */
+    --hotspot-margin-bottom: 40px; /* Distance from bottom edge */
+    --hotspot-margin-left: 40px;   /* Distance from left edge */
+}
 
+/* ─── Rest of your original CSS ─── */
 
 .logo-image {
-    position: fixed;   /* Pins it to the viewport, stays on top while scrolling */
-    top: 30px;         /* Distance from the top edge */
-    left: 20px;        /* Distance from the left edge */
+    position: fixed;
+    top: 30px;
+    left: 20px;
     z-index: 900;
-    width: 250px;       /* Adjust size as needed */
+    width: 300px;
     height: auto;
-
 }
 
 #screensaver {
@@ -82,7 +82,6 @@ canvas {
 }
 
 .hotspot-btn--green .hotspot-icon { /* or just use the PNG's own color */ }
-
 
 /* Drawer toggle handle */
 #drawer-toggle {
@@ -117,7 +116,6 @@ canvas {
     transform: translateX(-50%) translateY(-4px);
 }
 
-/* 4x2 dot-grid icon, sits left of the label */
 .drawer-toggle-icon {
     display: grid;
     grid-template-columns: repeat(4, 7px);
@@ -138,29 +136,21 @@ canvas {
     white-space: nowrap;
 }
 
-.drawer-toggle-label {
-    line-height: 1;
-    white-space: nowrap;
-}
-
-/* Status text, top right */
 #status-text {
     position: fixed;
-    top: 150px;
+    top: 180px;
     left: 20px;
     background: transparent;
     color: #515151;
     font-weight: 300;
-    font-size: 22px;
+    font-size: 26px;
     letter-spacing: 0.3px;
     z-index: 900;
     max-width: 40vw;
     text-align: right;
     pointer-events: none;
-    /* purely informational, never blocks clicks */
 }
 
-/* Drawer panel — fills width, 15% viewport height, slides up from bottom */
 #toggle-bar {
     position: fixed;
     bottom: 0;
@@ -174,10 +164,8 @@ canvas {
     padding: 14px;
     box-sizing: border-box;
     z-index: 1000;
-    /* above the three.js canvas */
     background: transparent;
     transform: translateY(100%);
-    /* hidden below the viewport by default */
     transition: transform 0.3s ease;
 }
 
@@ -192,12 +180,10 @@ canvas {
 .model-toggle-btn {
     position: relative;
     flex: 1 1 0;
-    /* fill horizontally, all buttons equal width */
     overflow: hidden;
     background: #888888;
     border: none;
     border-radius: 0 0 16px 0;
-    /* square on three corners, rounded only bottom-right, matching the tile mockup */
     cursor: pointer;
     transition: background 0.2s, border-radius 0.2s;
 }
@@ -214,6 +200,7 @@ canvas {
     background: #7a7a7a;
     box-shadow: inset 0 0 0 2px #22c55e;
 }
+
 .model-toggle-icon {
     position: absolute;
     inset: 0;
@@ -223,7 +210,6 @@ canvas {
     filter: grayscale(100%) brightness(0.55);
     opacity: 0.8;
     pointer-events: none;
-    /* clicks pass through to the button */
 }
 
 .model-toggle-label {
@@ -257,7 +243,6 @@ canvas {
     border-left-color: #4ade80;
 }
 
-
 #debug-overlay {
     position: fixed;
     top: 20px;
@@ -269,27 +254,22 @@ canvas {
     padding: 12px 16px;
     border-radius: 6px;
     line-height: 1.6;
-    z-index: 999;
+    z-index: 499;
     display: none;
     pointer-events: none;
     white-space: pre;
     max-height: 80vh;
-    /* maximale Höhe auf 80% der Viewport-Höhe begrenzen */
     overflow-y: auto;
-    /* vertikalen Scrollbalken bei Überlauf aktivieren */
     pointer-events: auto;
-    /* Mausereignisse zulassen (sonst funktioniert das Scrollen nicht) */
 }
 
 #debug-overlay strong {
     color: #fff;
     font-weight: 600;
-    /* keep some emphasis for strong tags */
 }
 
 #light-controls {
     pointer-events: auto;
-    /* overlay itself is click-through, but the controls need to be usable */
     margin-top: 4px;
     padding-top: 2px;
     border-top: 1px solid rgba(255, 255, 255, 0.25);
@@ -336,18 +316,15 @@ canvas {
     width: 100vw;
     height: 100vh;
     pointer-events: none;
-    /* layer itself is click-through */
     z-index: 500;
 }
+
 /* --- Updated Hotspot Button --- */
 .hotspot-btn {
     position: absolute;
     width: 40px;
     height: 40px;
     border-radius: 50%;
-    /* keeps the box-shadow (and any future background) following a circle
-    instead of the button's square box, which was showing as a faint light
-    square/halo behind the round icon */
     transform: translate(-50%, -50%);
     pointer-events: auto;
     cursor: pointer;
@@ -365,9 +342,6 @@ canvas {
     -webkit-appearance: none;
 }
 
-/* ::before and ::after removed — they drew the old circle + plus-sign
-   placeholder, now replaced by the real PNG icon (see .hotspot-icon) */
-
 .hotspot-btn--green {
     box-shadow: 0 2px 10px rgba(34, 197, 94, 0.55);
 }
@@ -378,7 +352,6 @@ canvas {
     box-shadow: 0 2px 10px rgba(236, 72, 153, 0.55);
 }
 
-/* Hover: grow */
 .hotspot-btn:hover {
     transform: translate(-50%, -50%) scale(1.12);
 }
@@ -392,7 +365,6 @@ canvas {
     box-shadow: 0 0 18px rgba(236, 72, 153, 0.75);
 }
 
-/* Active/click: grow further, briefly */
 .hotspot-btn:active {
     transform: translate(-50%, -50%) scale(1.22);
 }
@@ -408,7 +380,7 @@ canvas {
 
 .hotspot-label {
     position: absolute;
-    top: 48px; /* was 34px — pushed further down below the icon */
+    top: 48px;
     left: 50%;
     transform: translateX(-50%);
     white-space: nowrap;
@@ -419,120 +391,6 @@ canvas {
     padding: 3px 8px;
     border-radius: 4px;
     pointer-events: none;
-}
-#hotspot-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background: rgba(0, 0, 0, 0.75);
-    display: none;
-    align-items: center;
-    justify-content: center;
-    z-index: 2000;
-}
-
-#hotspot-overlay-content {
-    position: relative;
-    background: #fff;
-    max-width: 70vw;
-    max-height: 80vh;
-    overflow: visible;
-    /* lets the badge icon (positioned to overlap the top-left corner) poke
-    outside the box without being clipped — scrolling now happens on the
-    inner .hotspot-overlay-scroll wrapper instead */
-    display: flex;
-    flex-direction: column;
-    border-radius: 10px;
-    border: 2px solid transparent;
-    /* colored per-variant below */
-    box-sizing: border-box;
-    padding: 40px;
-    font-weight: 300;
-}
-
-.hotspot-overlay-scroll {
-    overflow-y: auto;
-    flex: 1 1 auto;
-    min-height: 0;
-    /* required so a flex child can actually shrink and scroll instead of
-    forcing the box to grow past max-height */
-}
-
-/* Border color per variant, matching whichever hotspot was clicked */
-.hotspot-overlay--green #hotspot-overlay-content { border-color: #2ecc71; }
-.hotspot-overlay--blue  #hotspot-overlay-content { border-color: #3498db; }
-.hotspot-overlay--pink  #hotspot-overlay-content { border-color: #e84393; }
-
-/* Badge icon, top-left — mirrors the hotspot's own PNG icon, sitting half
-   outside the popup box like the mockup */
-.hotspot-overlay-icon {
-    position: absolute;
-    top: -28px;
-    left: -28px;
-    width: 56px;
-    height: 56px;
-    border-radius: 50%;
-    background: #fff;
-    padding: 8px;
-    box-sizing: border-box;
-    object-fit: contain;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-    border: 3px solid transparent;
-    /* colored per-variant below */
-    z-index: 2;
-}
-
-.hotspot-overlay--green .hotspot-overlay-icon { border-color: #2ecc71; }
-.hotspot-overlay--blue  .hotspot-overlay-icon { border-color: #3498db; }
-.hotspot-overlay--pink  .hotspot-overlay-icon { border-color: #e84393; }
-
-
-#hotspot-overlay-close {
-    position: absolute;
-    top: 15px;
-    right: 15px;
-    background: none;
-    border: none;
-    font-size: 60px;
-    line-height: 1;
-    cursor: pointer;
-    color: #333;
-    font-weight: 300;
-}
-
-/* Close button color per variant, matching whichever hotspot was clicked */
-.hotspot-overlay--green #hotspot-overlay-close { color: #2ecc71; }
-.hotspot-overlay--blue  #hotspot-overlay-close { color: #3498db; }
-.hotspot-overlay--pink  #hotspot-overlay-close { color: #e84393; }
-
-#hotspot-overlay-title {
-    margin: 0 0 16px 0;
-    font-size: 26px;
-    font-weight: 300;
-}
-
-#hotspot-overlay-text {
-    font-size: 15px;
-    line-height: 1.6;
-    color: #333;
-    margin-bottom: 20px;
-    white-space: pre-line;
-    font-weight: 300;
-}
-
-#hotspot-overlay-images {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
-}
-
-#hotspot-overlay-images img {
-    max-width: 260px;
-    max-height: 180px;
-    object-fit: cover;
-    border-radius: 6px;
 }
 
 #loading-overlay {
@@ -667,10 +525,210 @@ canvas {
     position: fixed;
     inset: 0;
     background: #ffffff;
-    /* match scene.background so the cover is invisible once opaque */
     opacity: 0;
     pointer-events: none;
     z-index: 500;
-    /* above the canvas, below UI like the drawer/debug overlay */
     transition: opacity 0.3s ease;
+}
+
+/* The fullscreen backdrop uses your custom margins */
+#hotspot-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.5);
+    display: none; /* Initially invisible - JS will set to 'flex' when opened */
+    align-items: stretch;
+    justify-content: stretch;
+    z-index: 2000;
+
+    /* Apply the separate edges here */
+    padding: var(--hotspot-margin-top) var(--hotspot-margin-right) var(--hotspot-margin-bottom) var(--hotspot-margin-left);
+    box-sizing: border-box;
+}
+
+#hotspot-overlay-content {
+    position: relative;
+    background: #fff;
+
+    /* Fills the space inside the margins */
+    width: 100%;
+    height: 100%;
+
+    border-radius: 20px;
+    border: 2px solid #22c55e;
+    box-sizing: border-box;
+    padding: 30px 40px;
+    font-weight: 300;
+
+    display: flex;
+    flex-direction: column;
+
+    /* CHANGE: Allow the icon to stick out without being cut off */
+    overflow: visible;
+}
+
+
+
+/* The scrollable inner wrapper (Text left, Image right) */
+.hotspot-overlay-scroll {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* Both columns grow equally */
+    column-gap: 30px;
+    align-items: stretch; /* Stretch columns to fill height */
+}
+
+/* Title and Text (Left Column) */
+#hotspot-overlay-title {
+    grid-column: 1;
+    margin: 0 0 12px 0;
+    font-size: 26px;
+    font-weight: 600;
+    color: #333333;
+}
+
+#hotspot-overlay-text {
+    grid-column: 1;
+    font-size: 15px;
+    line-height: 1.6;
+    color: #777777;
+    margin-bottom: 20px;
+    white-space: pre-line;
+    align-self: start; /* Keeps text at top, but the column itself stretches */
+}
+
+/* Images (Right Column) - Fills the entire height */
+#hotspot-overlay-images {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    display: flex;
+    flex-direction: column;
+    margin-top: 50px;
+    gap: 12px;
+    width: 100%;
+    height: 100%; /* Fill available height */
+    min-height: 0;
+}
+
+#hotspot-overlay-images img {
+    width: 100%;
+    flex: 1 1 auto; /* Each image stretches to fill available vertical space */
+    min-height: 0;
+    object-fit: cover; /* Crops image to fill the space */
+    border-radius: 12px;
+}
+
+/* Deep Dive Option (Bottom Left) */
+.hotspot-deep-dive {
+    grid-column: 1;
+    margin-top: 10px;
+    color: #22c55e;
+    font-weight: 600;
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.hotspot-deep-dive::before {
+    content: '>';
+    font-size: 18px;
+    font-weight: 600;
+}
+
+/* Badge Icon (Top Left) */
+
+.hotspot-overlay-icon {
+    position: absolute;
+    top: -35px;
+    left: -35px;
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    background: #ffffff;
+
+    box-sizing: border-box;
+    object-fit: contain;
+
+
+
+    /* CHANGE: Ensure it sits above the white box */
+    z-index: 10;
+}
+
+/* Close Button */
+#hotspot-overlay-close {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: none;
+    border: none;
+    font-size: 80px;
+    line-height: 1;
+    cursor: pointer;
+    color: #aaaaaa;
+    font-weight: 300;
+}
+
+/* Variant Colors */
+.hotspot-overlay--green #hotspot-overlay-content { border-color: #22c55e; }
+.hotspot-overlay--blue  #hotspot-overlay-content { border-color: #3498db; }
+.hotspot-overlay--pink  #hotspot-overlay-content { border-color: #e84393; }
+
+.hotspot-overlay--green .hotspot-overlay-icon { border-color: #22c55e; }
+.hotspot-overlay--blue  .hotspot-overlay-icon { border-color: #3498db; }
+.hotspot-overlay--pink  .hotspot-overlay-icon { border-color: #e84393; }
+
+.hotspot-overlay--green #hotspot-overlay-close { color: #22c55e; }
+.hotspot-overlay--blue  #hotspot-overlay-close { color: #3498db; }
+.hotspot-overlay--pink  #hotspot-overlay-close { color: #e84393; }
+
+
+/* Circular toggle button – bottom-left */
+#green-hotspots-toggle {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 100;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: none;
+  background: #4caf50;            /* active = green */
+  color: white;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  transition: background 0.25s ease, transform 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+}
+
+#green-hotspots-toggle:hover {
+  transform: scale(1.08);
+}
+
+/* Hidden when drawer is open */
+#green-hotspots-toggle.hidden {
+  display: none !important;
+}
+
+/* Inactive state (hotspots hidden) – grey */
+#green-hotspots-toggle.inactive {
+  background: #888;
+}
+
+/* Optionally add a subtle shadow change on inactive */
+#green-hotspots-toggle.inactive:hover {
+  background: #777;
 }
