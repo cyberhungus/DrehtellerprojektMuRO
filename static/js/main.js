@@ -42,8 +42,8 @@ const clock = new THREE.Clock();
 // Screensaver
 const screensaverTimeout = 60000; // ms of inactivity before screensaver shows
 const screensaverImages = ['static/images/screensaver-1.png', 'static/images/screensaver-2.png'];
-const screensaverImageHoldTime = 3000;
-const screensaverCrossfadeDuration = 2000;
+const screensaverImageHoldTime = 2000;
+const screensaverCrossfadeDuration = 4000;
 let screensaverTimer = null;
 let screensaverCycleTimer = null; // drives the hold→crossfade loop while active
 let screensaverEl, screensaverActive = false;
@@ -458,8 +458,8 @@ async function loadBoatModel({gltfLoader, folderPath, folderAndFile, onProgress}
 async function init() {
 // Set the camera position above the model and pointing downwards to center on the model
     camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 2000);
-    camera.position.set(-2.42, 1.08, 1.06); // Set above the model (adjust height based on scale and size)
-    camera.rotation.set(57, 52.2, 50.5); // Ensures it's looking at the center; adjust to the middle of your scene if needed
+    camera.position.set(-1.94 , 1.05, -1.67); // Set above the model (adjust height based on scale and size)
+    camera.rotation.set(-160.7, 43.3, -166.5); // Ensures it's looking at the center; adjust to the middle of your scene if needed
 
 // Scene setup
     scene = new THREE.Scene();
