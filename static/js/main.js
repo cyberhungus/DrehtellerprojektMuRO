@@ -42,8 +42,8 @@ const clock = new THREE.Clock();
 // Screensaver
 const screensaverTimeout = 60000; // ms of inactivity before screensaver shows
 const screensaverImages = ['static/images/screensaver-1.png', 'static/images/screensaver-2.png'];
-const screensaverImageHoldTime = 8000;      // ms each image stays fully visible
-const screensaverCrossfadeDuration = 3000;  // ms for the blend between images
+const screensaverImageHoldTime = 3000;
+const screensaverCrossfadeDuration = 2000;
 let screensaverTimer = null;
 let screensaverCycleTimer = null; // drives the hold→crossfade loop while active
 let screensaverEl, screensaverActive = false;
