@@ -16,7 +16,7 @@ let initialTargetY = 0.45; // desired initial look height (controls.target.y)
 
 let initialTargetZ = 0;   // <-- desired initial look depth (controls.target.z)
 let initialModelZ = 0; // initial Z offset for the active model
-
+let currentModelZ = 0;
 
 // Toggle which boat models are loaded/active — index 0 = Boot 1, index 1 = Boot 2, etc.
 // Set to false to skip loading that model entirely (useful for testing/debugging).
