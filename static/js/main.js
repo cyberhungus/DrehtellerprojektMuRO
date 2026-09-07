@@ -146,9 +146,9 @@ const hotspotDefinitions = {
     1: [ // Boot 2
         {
             id: 'boot2-cabin',
-            localPosition: new THREE.Vector3(0, 0.8, 0.3),
-            minAngle: 135,
-            maxAngle: 225,
+            localPosition: new THREE.Vector3(0, 0, 0),
+            minAngle: 0,
+            maxAngle: 359,
             variant: 'pink',
             icon: 'static/images/icons/hotspot-icon-pink.png',
             content: {
