@@ -10,7 +10,7 @@ let ambientLight, directionalLight, directionalLight2; // hoisted so the debug-o
 let lightVisual1, lightVisual2; // small sphere+line shown per light while the debug overlay (H) is open
 // Toggle which boat models are loaded/active — index 0 = Boot 1, index 1 = Boot 2, etc.
 // Set to false to skip loading that model entirely (useful for testing/debugging).
-const modelEnabled = [true, true, false, false, false, false];
+const modelEnabled = [true, true, true, true, true, true];
 
 // Edit this to customize what each button shows and what the top-right status text
 // says when that button is clicked. Index matches modelEnabled / data-index (0 = button 1, etc).
