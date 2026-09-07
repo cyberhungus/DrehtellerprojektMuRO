@@ -135,7 +135,11 @@
     <div><strong>Model Position:</strong> <span id="debug-model-pos">—</span></div>
     <div><strong>Model Rotation:</strong> <span id="debug-model-rot">—</span></div>
 
-    <div class="light-group" style="margin-top:8px;">
+
+    <div id="camera-controls">
+    <strong>Camera Controls</strong>
+
+ <div class="light-group" style="margin-top:8px;">
     <label>Position X
         <input type="range" id="cam-pos-x" min="-10" max="10" step="0.05" value="0">
         <span class="light-value" id="cam-pos-x-val">0.00</span>
@@ -144,28 +148,14 @@
         <input type="range" id="cam-pos-y" min="-10" max="10" step="0.05" value="0">
         <span class="light-value" id="cam-pos-y-val">0.00</span>
     </label>
-    <label>Position Z
-        <input type="range" id="cam-pos-z" min="-10" max="10" step="0.05" value="0">
-        <span class="light-value" id="cam-pos-z-val">0.00</span>
-    </label>
 </div>
 
-    <div id="camera-controls">
-    <strong>Camera Controls</strong>
+    <!-- Target Y slider -->
     <div class="light-group">
-        <label>Azimuth
-            <input type="range" id="cam-azimuth" min="-180" max="180" step="1" value="0">
-            <span class="light-value" id="cam-azimuth-val">0</span>
+        <label>Look Height (Target Y)
+            <input type="range" id="cam-target-y" min="-5" max="5" step="0.05" value="0">
+            <span class="light-value" id="cam-target-y-val">0.00</span>
         </label>
-        <label>Elevation
-            <input type="range" id="cam-elevation" min="-89" max="89" step="1" value="0">
-            <span class="light-value" id="cam-elevation-val">0</span>
-        </label>
-        <label>Distance
-            <input type="range" id="cam-distance" min="0.5" max="10" step="0.1" value="3">
-            <span class="light-value" id="cam-distance-val">3.0</span>
-        </label>
-        <button type="button" id="cam-reset-btn" class="rotate-btn" style="margin-top:6px;">Reset View</button>
     </div>
 </div>
 

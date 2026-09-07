@@ -8,6 +8,11 @@ import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
 let camera, scene, renderer, controls;
 let ambientLight, directionalLight, directionalLight2; // hoisted so the debug-overlay light controls can reach them
 let lightVisual1, lightVisual2; // small sphere+line shown per light while the debug overlay (H) is open
+
+// Initial camera settings (edit these to change the starting view)
+const initialCameraPosition = new THREE.Vector3(-2, 1, 0);
+let initialTargetY = 0.0; // desired initial look height (controls.target.y)
+
 // Toggle which boat models are loaded/active — index 0 = Boot 1, index 1 = Boot 2, etc.
 // Set to false to skip loading that model entirely (useful for testing/debugging).
 const modelEnabled = [true, true, true, false, false, false];
@@ -468,7 +473,7 @@ async function loadBoatModel({gltfLoader, folderPath, folderAndFile, onProgress}
 async function init() {
 // Set the camera position above the model and pointing downwards to center on the model
     camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 2000);
-    camera.position.set(-2. , 1, -1.62); // Set above the model (adjust height based on scale and size)
+    camera.position.copy(initialCameraPosition); // Set above the model (adjust height based on scale and size)
     camera.rotation.set(-161.3, 43.3, -166.5); // Ensures it's looking at the center; adjust to the middle of your scene if needed
     //camera.lookAt(0,0,0)
 // Scene setup
@@ -650,140 +655,82 @@ async function init() {
     controls.maxDistance = 10;
     controls.target.set(0, 0, 0); // Ensure the orbit control target is centered at the model
     controls.update();
+// ----- CAMERA CONTROLS (X position, Y position, Target Y) -----
+const camXSlider = document.getElementById('cam-pos-x');
+const camYSlider = document.getElementById('cam-pos-y');
+const camXVal = document.getElementById('cam-pos-x-val');
+const camYVal = document.getElementById('cam-pos-y-val');
 
-    // ----- CAMERA CONTROLS (spherical + XYZ sliders) -----
-    // All DOM references and helpers are defined here, after `controls` exists.
-    const camAzimuthSlider = document.getElementById('cam-azimuth');
-    const camElevationSlider = document.getElementById('cam-elevation');
-    const camDistanceSlider = document.getElementById('cam-distance');
-    const camAzimuthVal = document.getElementById('cam-azimuth-val');
-    const camElevationVal = document.getElementById('cam-elevation-val');
-    const camDistanceVal = document.getElementById('cam-distance-val');
-    const camResetBtn = document.getElementById('cam-reset-btn');
+const camTargetYSlider = document.getElementById('cam-target-y');
+const camTargetYVal = document.getElementById('cam-target-y-val');
 
-    const camXSlider = document.getElementById('cam-pos-x');
-    const camYSlider = document.getElementById('cam-pos-y');
-    const camZSlider = document.getElementById('cam-pos-z');
-    const camXVal = document.getElementById('cam-pos-x-val');
-    const camYVal = document.getElementById('cam-pos-y-val');
-    const camZVal = document.getElementById('cam-pos-z-val');
+// ----- Helper functions -----
 
-    function getSphericalFromCamera() {
-        if (!controls || !controls.target) {
-            return { radius: 1, azimuthDeg: 0, elevationDeg: 0 };
-        }
-        const rel = new THREE.Vector3().copy(camera.position).sub(controls.target);
-        const radius = rel.length();
-        if (radius === 0) return { radius: 0, azimuthDeg: 0, elevationDeg: 0 };
-        const elevationRad = Math.asin(THREE.MathUtils.clamp(rel.y / radius, -1, 1));
-        const azimuthRad = Math.atan2(rel.x, rel.z);
-        return {
-            radius,
-            azimuthDeg: THREE.MathUtils.radToDeg(azimuthRad),
-            elevationDeg: THREE.MathUtils.radToDeg(elevationRad)
-        };
-    }
+function setCameraX(x) {
+    if (!controls) return;
+    camera.position.x = x;
+    controls.update();
+    updateSliders();
+}
 
-    function setCameraFromSpherical(azimuthDeg, elevationDeg, distance) {
-        if (!controls) return;
-        const azimuthRad = THREE.MathUtils.degToRad(azimuthDeg);
-        const elevationRad = THREE.MathUtils.degToRad(elevationDeg);
-        const horizontal = distance * Math.cos(elevationRad);
-        const x = horizontal * Math.sin(azimuthRad);
-        const y = distance * Math.sin(elevationRad);
-        const z = horizontal * Math.cos(azimuthRad);
-        camera.position.set(x, y, z).add(controls.target);
-        controls.update();
-        updateCameraSliders();
-    }
+function setCameraY(y) {
+    if (!controls) return;
+    camera.position.y = y;
+    controls.update();
+    updateSliders();
+}
 
-    function setCameraFromXYZ(x, y, z) {
-        if (!controls) return;
-        camera.position.set(x, y, z);
-        controls.update();
-        updateCameraSliders();
-    }
+function setTargetY(y) {
+    if (!controls) return;
+    const deltaY = y - controls.target.y;
+    controls.target.y += deltaY;
+    // Move camera by the same delta so the relative position stays the same
+    camera.position.y += deltaY;
+    controls.update();
+    updateSliders();
+}
 
-    function updateCameraSliders() {
-        if (!controls) return;
-        const { radius, azimuthDeg, elevationDeg } = getSphericalFromCamera();
-        camAzimuthSlider.value = azimuthDeg;
-        camAzimuthVal.textContent = azimuthDeg.toFixed(0);
-        camElevationSlider.value = elevationDeg;
-        camElevationVal.textContent = elevationDeg.toFixed(0);
-        camDistanceSlider.value = radius;
-        camDistanceVal.textContent = radius.toFixed(2);
+function updateSliders() {
+    if (!controls) return;
 
-        camXSlider.value = camera.position.x;
-        camYSlider.value = camera.position.y;
-        camZSlider.value = camera.position.z;
-        camXVal.textContent = camera.position.x.toFixed(2);
-        camYVal.textContent = camera.position.y.toFixed(2);
-        camZVal.textContent = camera.position.z.toFixed(2);
-    }
+    // Update position sliders
+    camXSlider.value = camera.position.x;
+    camXVal.textContent = camera.position.x.toFixed(2);
+    camYSlider.value = camera.position.y;
+    camYVal.textContent = camera.position.y.toFixed(2);
 
-    // Initial sync
-    updateCameraSliders();
+    // Update target Y slider
+    camTargetYSlider.value = controls.target.y;
+    camTargetYVal.textContent = controls.target.y.toFixed(2);
+}
 
-    // Spherical events
-    camAzimuthSlider.addEventListener('input', () => {
-        const az = parseFloat(camAzimuthSlider.value);
-        const el = parseFloat(camElevationSlider.value);
-        const dist = parseFloat(camDistanceSlider.value);
-        setCameraFromSpherical(az, el, dist);
-    });
+// Initial sync – using top‑level variables
+camera.position.copy(initialCameraPosition);
+controls.target.y = initialTargetY;
+controls.update();
+updateSliders();
 
-    camElevationSlider.addEventListener('input', () => {
-        const az = parseFloat(camAzimuthSlider.value);
-        const el = parseFloat(camElevationSlider.value);
-        const dist = parseFloat(camDistanceSlider.value);
-        setCameraFromSpherical(az, el, dist);
-    });
+// ----- X position event -----
+camXSlider.addEventListener('input', () => {
+    const x = parseFloat(camXSlider.value);
+    setCameraX(x);
+});
 
-    camDistanceSlider.addEventListener('input', () => {
-        const az = parseFloat(camAzimuthSlider.value);
-        const el = parseFloat(camElevationSlider.value);
-        const dist = parseFloat(camDistanceSlider.value);
-        setCameraFromSpherical(az, el, dist);
-    });
+// ----- Y position event -----
+camYSlider.addEventListener('input', () => {
+    const y = parseFloat(camYSlider.value);
+    setCameraY(y);
+});
 
-    // XYZ events
-    camXSlider.addEventListener('input', () => {
-        const x = parseFloat(camXSlider.value);
-        const y = parseFloat(camYSlider.value);
-        const z = parseFloat(camZSlider.value);
-        setCameraFromXYZ(x, y, z);
-    });
+// ----- Target Y event -----
+camTargetYSlider.addEventListener('input', () => {
+    const y = parseFloat(camTargetYSlider.value);
+    setTargetY(y);
+});
 
-    camYSlider.addEventListener('input', () => {
-        const x = parseFloat(camXSlider.value);
-        const y = parseFloat(camYSlider.value);
-        const z = parseFloat(camZSlider.value);
-        setCameraFromXYZ(x, y, z);
-    });
-
-    camZSlider.addEventListener('input', () => {
-        const x = parseFloat(camXSlider.value);
-        const y = parseFloat(camYSlider.value);
-        const z = parseFloat(camZSlider.value);
-        setCameraFromXYZ(x, y, z);
-    });
-
-    // Reset
-    camResetBtn.addEventListener('click', () => {
-        const defaultAz = 45;
-        const defaultEl = 30;
-        const defaultDist = 3.5;
-        camAzimuthSlider.value = defaultAz;
-        camElevationSlider.value = defaultEl;
-        camDistanceSlider.value = defaultDist;
-        setCameraFromSpherical(defaultAz, defaultEl, defaultDist);
-    });
-
-    // Keep sliders in sync when orbiting with the mouse
-    controls.addEventListener('change', updateCameraSliders);
-    // --------------------------------------------------------------
-
+// Keep sliders in sync when orbiting or panning with the mouse
+controls.addEventListener('change', updateSliders);
+// --------------------------------------------------------------
     // Adjust with window resize
     window.addEventListener('resize', onWindowResize);
 
