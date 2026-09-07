@@ -15,6 +15,8 @@ let initialTargetY = 0.45; // desired initial look height (controls.target.y)
 // Initial camera settings (edit these to change the starting view)
 
 let initialTargetZ = 0;   // <-- desired initial look depth (controls.target.z)
+let initialModelZ = 0; // initial Z offset for the active model
+
 
 // Toggle which boat models are loaded/active — index 0 = Boot 1, index 1 = Boot 2, etc.
 // Set to false to skip loading that model entirely (useful for testing/debugging).
@@ -658,7 +660,8 @@ async function init() {
     controls.maxDistance = 10;
     controls.target.set(0, 0, 0); // Ensure the orbit control target is centered at the model
     controls.update();
-// ----- CAMERA CONTROLS (X position, Y position, Target Y, Target Z) -----
+
+    // ----- CAMERA CONTROLS (X, Y, Target Y, Model Z) -----
 const camXSlider = document.getElementById('cam-pos-x');
 const camYSlider = document.getElementById('cam-pos-y');
 const camXVal = document.getElementById('cam-pos-x-val');
@@ -666,8 +669,12 @@ const camYVal = document.getElementById('cam-pos-y-val');
 
 const camTargetYSlider = document.getElementById('cam-target-y');
 const camTargetYVal = document.getElementById('cam-target-y-val');
-const camTargetZSlider = document.getElementById('cam-target-z');
-const camTargetZVal = document.getElementById('cam-target-z-val');
+
+const camModelZSlider = document.getElementById('cam-model-z');
+const camModelZVal = document.getElementById('cam-model-z-val');
+
+// Global variable to track model Z offset
+let currentModelZ = initialModelZ;
 
 // ----- Helper functions -----
 
@@ -689,42 +696,44 @@ function setTargetY(y) {
     if (!controls) return;
     const deltaY = y - controls.target.y;
     controls.target.y += deltaY;
-    // Move camera by the same delta so the relative position stays the same
     camera.position.y += deltaY;
     controls.update();
     updateSliders();
 }
 
-function setTargetZ(z) {
-    if (!controls) return;
-    const deltaZ = z - controls.target.z;
-    controls.target.z += deltaZ;
-    // Move camera by the same delta so the relative position stays the same
-    camera.position.z += deltaZ;
-    controls.update();
+function setModelZ(z) {
+    currentModelZ = z;
+    const activeEntry = getActiveModelEntry();
+    if (activeEntry && activeEntry.object) {
+        activeEntry.object.position.z = z;
+    }
     updateSliders();
 }
 
 function updateSliders() {
     if (!controls) return;
 
-    // Update position sliders
+    // Position sliders
     camXSlider.value = camera.position.x;
     camXVal.textContent = camera.position.x.toFixed(2);
     camYSlider.value = camera.position.y;
     camYVal.textContent = camera.position.y.toFixed(2);
 
-    // Update target sliders
+    // Target Y slider
     camTargetYSlider.value = controls.target.y;
     camTargetYVal.textContent = controls.target.y.toFixed(2);
-    camTargetZSlider.value = controls.target.z;
-    camTargetZVal.textContent = controls.target.z.toFixed(2);
+
+    // Model Z slider – read from the active model if available
+    const activeEntry = getActiveModelEntry();
+    const modelZ = (activeEntry && activeEntry.object) ? activeEntry.object.position.z : currentModelZ;
+    camModelZSlider.value = modelZ;
+    camModelZVal.textContent = modelZ.toFixed(2);
 }
 
 // Initial sync – using top‑level variables
 camera.position.copy(initialCameraPosition);
 controls.target.y = initialTargetY;
-controls.target.z = initialTargetZ;
+controls.target.z = 0; // not used, but keep it 0
 controls.update();
 updateSliders();
 
@@ -746,15 +755,16 @@ camTargetYSlider.addEventListener('input', () => {
     setTargetY(y);
 });
 
-// ----- Target Z event -----
-camTargetZSlider.addEventListener('input', () => {
-    const z = parseFloat(camTargetZSlider.value);
-    setTargetZ(z);
+// ----- Model Z event -----
+camModelZSlider.addEventListener('input', () => {
+    const z = parseFloat(camModelZSlider.value);
+    setModelZ(z);
 });
 
 // Keep sliders in sync when orbiting or panning with the mouse
 controls.addEventListener('change', updateSliders);
 // --------------------------------------------------------------
+
     // Adjust with window resize
     window.addEventListener('resize', onWindowResize);
 
@@ -1051,7 +1061,13 @@ function selectModel(index) {
 
         });
 
-        activeModelIndex = index;
+       activeModelIndex = index;
+
+// Apply the current model Z offset to the newly active model
+const newEntry = toggleableModels[index];
+if (newEntry && newEntry.object) {
+    newEntry.object.position.z = currentModelZ;
+}
 
         setStatusText(
             (buttonConfig[index] && buttonConfig[index].statusText) ? buttonConfig[index].statusText : entry.name
