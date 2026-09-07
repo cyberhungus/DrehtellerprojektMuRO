@@ -10,8 +10,8 @@ let ambientLight, directionalLight, directionalLight2; // hoisted so the debug-o
 let lightVisual1, lightVisual2; // small sphere+line shown per light while the debug overlay (H) is open
 
 // Initial camera settings (edit these to change the starting view)
-const initialCameraPosition = new THREE.Vector3(-2, 1, 0);
-let initialTargetY = 0.0; // desired initial look height (controls.target.y)
+const initialCameraPosition = new THREE.Vector3(-2.35, 1, 0);
+let initialTargetY = 0.45; // desired initial look height (controls.target.y)
 
 // Toggle which boat models are loaded/active — index 0 = Boot 1, index 1 = Boot 2, etc.
 // Set to false to skip loading that model entirely (useful for testing/debugging).
