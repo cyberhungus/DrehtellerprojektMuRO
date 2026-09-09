@@ -20,7 +20,17 @@ let currentModelZ = 0;
 
 // Toggle which boat models are loaded/active — index 0 = Boot 1, index 1 = Boot 2, etc.
 // Set to false to skip loading that model entirely (useful for testing/debugging).
-const modelEnabled = [true, true, true, false, false, false];
+const modelEnabled = [true, true, false, true, false, false];
+
+// For top-down placement helper (Press K)
+let topDownPlacementActive = false;
+let topDownMarker;
+let topDownInfoEl;
+const topDownRaycaster = new THREE.Raycaster();
+const topDownMouse = new THREE.Vector2();
+let savedCameraState = null; // camera/controls state to restore when K is pressed again
+const topDownHeight = 8; // how high above the model the camera sits — adjust to taste
+
 
 // Edit this to customize what each button shows and what the top-right status text
 // says when that button is clicked. Index matches modelEnabled / data-index (0 = button 1, etc).
@@ -84,7 +94,11 @@ const placementMouse = new THREE.Vector2();
 
 // Hotspot overlay - becomes visible when clicking a bubble in the models
 let hotspotOverlayEl, hotspotOverlayContentEl, hotspotOverlayIconEl,
-    hotspotOverlayTitleEl, hotspotOverlayTextEl, hotspotOverlayImagesEl;
+    hotspotOverlayTitleEl, hotspotOverlayTextEl, hotspotOverlayImagesEl,
+    deepDiveEl; // <-- add this
+
+// PDF deep-dive overlay
+let pdfOverlayEl, pdfOverlayFrameEl;
 
 // Loading overlay - shown during startup while models are fetched
 let loadingOverlayEl, loadingTitleEl, loadingCurrentFileEl, loadingBarFillEl, loadingProgressTextEl,
@@ -168,6 +182,8 @@ function updateHotspots() {
     hotspot.el.style.top = `${screenY}px`;
   });
 }
+
+
 const hotspotDefinitions = {
 
     0: [ // Boot 1
@@ -182,7 +198,7 @@ const hotspotDefinitions = {
                 title: 'Motor',
                 text: 'PLATZHALTER Der Motor liefert 150 PS und ermöglicht eine Höchstgeschwindigkeit von 45 km/h. PLATZHALTER',
                 images: ['static/images/boat.jpg']
-            }
+            },
         },
         {
             id: 'boot1-pipe',
@@ -197,6 +213,7 @@ const hotspotDefinitions = {
                 images: ['static/images/hotspots/engine-1.jpg']
             }
         },
+
         // --- Added green hotspot for Boot 1 ---
         {
             id: 'boot1-propeller',
@@ -210,7 +227,21 @@ const hotspotDefinitions = {
                 text: 'PLATZHALTER 3‑Flügel‑Propeller aus Edelstahl. PLATZHALTER',
                 images: ['static/images/hotspots/propeller.jpg']
             }
-        }
+        },
+        {
+    id: 'boot1-TESTER',
+    localPosition: new THREE.Vector3(0, 1, 0),
+    minAngle: 315,
+    maxAngle: 45,
+    variant: 'green',
+    icon: 'static/images/icons/hotspot-icon-green.png',
+    content: {
+        title: 'TESTER',
+        text: 'Der Motor liefert 150 PS...',
+        video: 'static/videos/autolanding.mp4', // shown instead of images
+        pdf: 'static/pdfs/testpdf.pdf'  // Deep Dive button appears
+    }
+}
     ],
 
     1: [ // Boot 2
@@ -227,20 +258,350 @@ const hotspotDefinitions = {
                 images: ['static/images/hotspots/cabin-1.jpg']
             }
         },
-        // --- Added green hotspot for Boot 2 ---
-        {
-            id: 'boot2-decklight',
-            localPosition: new THREE.Vector3(0.5, 0.8, 0.2),
-            minAngle: 90,
-            maxAngle: 180,
-            variant: 'green',
-            icon: 'static/images/icons/hotspot-icon-green.png',
-            content: {
-                title: 'Deckbeleuchtung',
-                text: 'PLATZHALTER LED‑Leuchten für nächtliche Manöver. PLATZHALTER',
-                images: ['static/images/hotspots/light.jpg']
-            }
+// ---- Green hotspots for Boot 2 (Gruppe 1 & 4 swapped) ----
+
+{
+    id: 'tower-mittig-2',
+    localPosition: new THREE.Vector3(-0.134, 0.75, -0.24),
+    minAngle: 180,
+    maxAngle: 269,
+    variant: 'green',
+    icon: 'static/images/icons/hotspot-icon-green.png',
+    content: {
+        title: 'Tower Mittig',
+        text: 'PLATZHALTER Beschreibung für Tower Mittig PLATZHALTER',
+        images: ['static/images/hotspots/placeholder.jpg']
+    }
+},
+{
+    id: 'kran-beuge-2',
+    localPosition: new THREE.Vector3(-0.788, 0.4, -0.26),
+    minAngle: 180,
+    maxAngle: 269,
+    variant: 'green',
+    icon: 'static/images/icons/hotspot-icon-green.png',
+    content: {
+        title: 'Kran Beuge',
+        text: 'PLATZHALTER Beschreibung für Kran Beuge PLATZHALTER',
+        images: ['static/images/hotspots/placeholder.jpg']
+    }
+},
+{
+    id: 'leiter-2',
+    localPosition: new THREE.Vector3(-0.53, 0.35, -0.3),
+    minAngle: 180,
+    maxAngle: 269,
+    variant: 'green',
+    icon: 'static/images/icons/hotspot-icon-green.png',
+    content: {
+        title: 'Leiter',
+        text: 'PLATZHALTER Beschreibung für Leiter PLATZHALTER',
+        images: ['static/images/hotspots/placeholder.jpg']
+    }
+},
+{
+    id: 'heck-2',
+    localPosition: new THREE.Vector3(-1.29, 0.3, 0),
+    minAngle: 180,
+    maxAngle: 269,
+    variant: 'green',
+    icon: 'static/images/icons/hotspot-icon-green.png',
+    content: {
+        title: 'Heck',
+        text: 'PLATZHALTER Beschreibung für Heck PLATZHALTER',
+        images: ['static/images/hotspots/placeholder.jpg']
+    }
+},
+
+{
+    id: 'holz-2',
+    localPosition: new THREE.Vector3(-0.78, 0.32, 0),
+    minAngle: 270,
+    maxAngle: 359,
+    variant: 'green',
+    icon: 'static/images/icons/hotspot-icon-green.png',
+    content: {
+        title: 'Holz',
+        text: 'PLATZHALTER Beschreibung für Holz PLATZHALTER',
+        images: ['static/images/hotspots/placeholder.jpg']
+    }
+},
+{
+    id: 'propeller-heck-2',
+    localPosition: new THREE.Vector3(-1.2, 0, 0.11),
+    minAngle: 270,
+    maxAngle: 359,
+    variant: 'green',
+    icon: 'static/images/icons/hotspot-icon-green.png',
+    content: {
+        title: 'Propeller Heck',
+        text: 'PLATZHALTER Beschreibung für Propeller Heck PLATZHALTER',
+        images: ['static/images/hotspots/placeholder.jpg']
+    }
+},
+{
+    id: 'heck-l-2',
+    localPosition: new THREE.Vector3(-0.67, 0.29, 0.29),
+    minAngle: 270,
+    maxAngle: 359,
+    variant: 'green',
+    icon: 'static/images/icons/hotspot-icon-green.png',
+    content: {
+        title: 'Heck L',
+        text: 'PLATZHALTER Beschreibung für Heck L PLATZHALTER',
+        images: ['static/images/hotspots/placeholder.jpg']
+    }
+},
+{
+    id: 'bruecke-l-seite-2',
+    localPosition: new THREE.Vector3(0.285, 0.72, 0.33),
+    minAngle: 270,
+    maxAngle: 359,
+    variant: 'green',
+    icon: 'static/images/icons/hotspot-icon-green.png',
+    content: {
+        title: 'Brücke L Seite',
+        text: 'PLATZHALTER Beschreibung für Brücke L Seite PLATZHALTER',
+        images: ['static/images/hotspots/placeholder.jpg']
+    }
+},
+
+{
+    id: 'kabinen-r-2',
+    localPosition: new THREE.Vector3(0.7, 0.32, -0.29),
+    minAngle: 90,
+    maxAngle: 179,
+    variant: 'green',
+    icon: 'static/images/icons/hotspot-icon-green.png',
+    content: {
+        title: 'Kabinen R',
+        text: 'PLATZHALTER Beschreibung für Kabinen R PLATZHALTER',
+        images: ['static/images/hotspots/placeholder.jpg']
+    }
+},
+{
+    id: 'propeller-front-2',
+    localPosition: new THREE.Vector3(1.4, 0.1, 0),
+    minAngle: 90,
+    maxAngle: 179,
+    variant: 'green',
+    icon: 'static/images/icons/hotspot-icon-green.png',
+    content: {
+        title: 'Propeller Front',
+        text: 'PLATZHALTER Beschreibung für Propeller Front PLATZHALTER',
+        images: ['static/images/hotspots/placeholder.jpg']
+    }
+},
+
+{
+    id: 'beiboot-2',
+    localPosition: new THREE.Vector3(-0.295, 0.34, 0.23),
+    minAngle: 0,
+    maxAngle: 89,
+    variant: 'green',
+    icon: 'static/images/icons/hotspot-icon-green.png',
+    content: {
+        title: 'Beiboot',
+        text: 'PLATZHALTER Beschreibung für Beiboot PLATZHALTER',
+        images: ['static/images/hotspots/placeholder.jpg']
+    }
+},
+{
+    id: 'bruecke-l-front-2',
+    localPosition: new THREE.Vector3(0.45, 0.7, 0.2),
+    minAngle: 0,
+    maxAngle: 89,
+    variant: 'green',
+    icon: 'static/images/icons/hotspot-icon-green.png',
+    content: {
+        title: 'Brücke L Front',
+        text: 'PLATZHALTER Beschreibung für Brücke L Front PLATZHALTER',
+        images: ['static/images/hotspots/placeholder.jpg']
+    }
+},
+{
+    id: 'rumpf-l-mitte-2',
+    localPosition: new THREE.Vector3(0, 0.2, 0.29),
+    minAngle: 0,
+    maxAngle: 89,
+    variant: 'green',
+    icon: 'static/images/icons/hotspot-icon-green.png',
+    content: {
+        title: 'Rumpf L Mitte',
+        text: 'PLATZHALTER Beschreibung für Rumpf L Mitte PLATZHALTER',
+        images: ['static/images/hotspots/placeholder.jpg']
+    }
+},
+{
+    id: 'rumpf-l-vorner-2',
+    localPosition: new THREE.Vector3(0.54, 0.23, 0.29),
+    minAngle: 0,
+    maxAngle: 89,
+    variant: 'green',
+    icon: 'static/images/icons/hotspot-icon-green.png',
+    content: {
+        title: 'Rumpf L Vorner',
+        text: 'PLATZHALTER Beschreibung für Rumpf L Vorner PLATZHALTER',
+        images: ['static/images/hotspots/placeholder.jpg']
+    }
+},
+{
+    id: 'helipad-2',
+    localPosition: new THREE.Vector3(0.89, 0.8, 0),
+    minAngle: 0,
+    maxAngle: 89,
+    variant: 'green',
+    icon: 'static/images/icons/hotspot-icon-green.png',
+    content: {
+        title: 'Helipad',
+        text: 'PLATZHALTER Beschreibung für Helipad PLATZHALTER',
+        images: ['static/images/hotspots/placeholder.jpg']
+    }
+},
+{
+    id: 'bug-2',
+    localPosition: new THREE.Vector3(1.5, 0.477, 0),
+    minAngle: 0,
+    maxAngle: 89,
+    variant: 'green',
+    icon: 'static/images/icons/hotspot-icon-green.png',
+    content: {
+        title: 'Bug',
+        text: 'PLATZHALTER Beschreibung für Bug PLATZHALTER',
+        images: ['static/images/hotspots/placeholder.jpg']
+    }
+},
+          {
+        id: '1-1-tower-oben-2',
+        localPosition: new THREE.Vector3(-0.134, 1, -0.03),
+        minAngle: 0,
+        maxAngle: 359,
+        variant: 'blue',
+        icon: 'static/images/icons/hotspot-icon-blue.png',
+        content: {
+            title: '1.1 Tower Oben',
+            text: 'PLATZHALTER Beschreibung für 1.1 Tower Oben PLATZHALTER',
+            images: ['static/images/hotspots/placeholder.jpg']
         }
+    },
+    {
+        id: '1-2-gangway-ende-2',
+        localPosition: new THREE.Vector3(0.458, 0.85, -0.215),
+        minAngle: 0,
+        maxAngle: 359,
+        variant: 'blue',
+        icon: 'static/images/icons/hotspot-icon-blue.png',
+        content: {
+            title: '1.2 Gangway Ende',
+            text: 'PLATZHALTER Beschreibung für 1.2 Gangway Ende PLATZHALTER',
+            images: ['static/images/hotspots/placeholder.jpg']
+        }
+    },
+    {
+        id: '3-1-kran-ausleger-2',
+        localPosition: new THREE.Vector3(-0.788, 0.37, -0.255),
+        minAngle: 0,
+        maxAngle: 359,
+        variant: 'blue',
+        icon: 'static/images/icons/hotspot-icon-blue.png',
+        content: {
+            title: '3.1 Kran Ausleger',
+            text: 'PLATZHALTER Beschreibung für 3.1 Kran Ausleger PLATZHALTER',
+            images: ['static/images/hotspots/placeholder.jpg']
+        }
+    },
+    {
+        id: '4-1-holz-richtung-heck-2',
+        localPosition: new THREE.Vector3(-0.82, 0.32, 0),
+        minAngle: 0,
+        maxAngle: 359,
+        variant: 'blue',
+        icon: 'static/images/icons/hotspot-icon-blue.png',
+        content: {
+            title: '4.1 Holz Richtung Heck',
+            text: 'PLATZHALTER Beschreibung für 4.1 Holz Richtung Heck PLATZHALTER',
+            images: ['static/images/hotspots/placeholder.jpg']
+        }
+    },
+    {
+        id: '5-1-holz-richtung-r-2',
+        localPosition: new THREE.Vector3(-0.78, 0.32, 0.1),
+        minAngle: 0,
+        maxAngle: 359,
+        variant: 'blue',
+        icon: 'static/images/icons/hotspot-icon-blue.png',
+        content: {
+            title: '5.1 Holz Richtung R',
+            text: 'PLATZHALTER Beschreibung für 5.1 Holz Richtung R PLATZHALTER',
+            images: ['static/images/hotspots/placeholder.jpg']
+        }
+    },
+    {
+        id: '6-1-holz-richtung-bug-2',
+        localPosition: new THREE.Vector3(-0.7, 0.32, 0),
+        minAngle: 0,
+        maxAngle: 359,
+        variant: 'blue',
+        icon: 'static/images/icons/hotspot-icon-blue.png',
+        content: {
+            title: '6.1 Holz Richtung Bug',
+            text: 'PLATZHALTER Beschreibung für 6.1 Holz Richtung Bug PLATZHALTER',
+            images: ['static/images/hotspots/placeholder.jpg']
+        }
+    },
+    {
+        id: '7-1-beiboot-ohne-dc-2',
+        localPosition: new THREE.Vector3(-0.305, 0.34, 0.23),
+        minAngle: 0,
+        maxAngle: 359,
+        variant: 'blue',
+        icon: 'static/images/icons/hotspot-icon-blue.png',
+        content: {
+            title: '7.1 Beiboot (ohne DC)',
+            text: 'PLATZHALTER Beschreibung für 7.1 Beiboot (ohne DC) PLATZHALTER',
+            images: ['static/images/hotspots/placeholder.jpg']
+        }
+    },
+    {
+        id: '8-1-container-2',
+        localPosition: new THREE.Vector3(-1.2, 0.3, 0),
+        minAngle: 0,
+        maxAngle: 359,
+        variant: 'blue',
+        icon: 'static/images/icons/hotspot-icon-blue.png',
+        content: {
+            title: '8.1 Container',
+            text: 'PLATZHALTER Beschreibung für 8.1 Container PLATZHALTER',
+            images: ['static/images/hotspots/placeholder.jpg']
+        }
+    },
+    {
+        id: '8-2-rettungsboot-2',
+        localPosition: new THREE.Vector3(-0.295, 0.34, -0.29),
+        minAngle: 0,
+        maxAngle: 359,
+        variant: 'blue',
+        icon: 'static/images/icons/hotspot-icon-blue.png',
+        content: {
+            title: '8.2 Rettungsboot',
+            text: 'PLATZHALTER Beschreibung für 8.2 Rettungsboot PLATZHALTER',
+            images: ['static/images/hotspots/placeholder.jpg']
+        }
+    },
+    {
+        id: '9-1-reling-2',
+        localPosition: new THREE.Vector3(-0.295, 0.34, 0.29),
+        minAngle: 0,
+        maxAngle: 359,
+        variant: 'blue',
+        icon: 'static/images/icons/hotspot-icon-blue.png',
+        content: {
+            title: '9.1 Reling',
+            text: 'PLATZHALTER Beschreibung für 9.1 Reling PLATZHALTER',
+            images: ['static/images/hotspots/placeholder.jpg']
+        }
+    }
+
     ],
 
     2: [ // Boot 3 (new)
@@ -412,6 +773,9 @@ const hotspotDefinitions = {
     ]
 
 };
+
+
+
 // -------------------------------------------------------------------
 // The camera controls code has been moved inside init() (see below)
 // to ensure `controls` exists before we attach event listeners.
@@ -419,6 +783,7 @@ const hotspotDefinitions = {
 
 initLoadingOverlay();
 init();
+
 initLightControls();
 initDrawer();
 initServerSentEvents();
@@ -428,6 +793,7 @@ initToggleButtons();
 initDebugOverlay();
 initHotspotEngine();
 initHotspotOverlay();
+initPdfOverlay(); // <-- add this
 initConnectionWarning();
 initSwitchOverlay();
 initTrackingControls();
@@ -757,8 +1123,8 @@ directionalLight.shadow.normalBias = 0.02;
 
     scene.add(directionalLight);
 
-        directionalLight2 = new THREE.DirectionalLight(0xd6d6d6, 2); // warm, punchy key light
-    directionalLight2.position.set(7.5, 5.9, -5.1); // low, angled position for longer, more dramatic shadows
+        directionalLight2 = new THREE.DirectionalLight(0xd6d6d6, 6.5); // warm, punchy key light
+    directionalLight2.position.set(4.8, 5.9, 7.7); // low, angled position for longer, more dramatic shadows
     directionalLight2.castShadow = true;
 
     // Higher-res, tightly-fitted shadow camera — sharp shadow edges read as more
@@ -1014,6 +1380,8 @@ controls.addEventListener('change', updateSliders);
 
     //Initialize the placement helper here after renderer is set up
     initHotspotPlacementMode();
+
+    initTopDownPlacementHelper(); // <-- add this line
 
     // Simulate button 1 being pressed once everything is loaded and running,
     // so the first model is selected and the status text reflects it.
@@ -1733,10 +2101,10 @@ function initHotspotOverlay() {
 
     // ... inside initHotspotOverlay() ...
 
-// Create the Deep Dive element
-const deepDiveEl = document.createElement('div');
+deepDiveEl = document.createElement('div');
 deepDiveEl.className = 'hotspot-deep-dive';
-deepDiveEl.textContent = 'Deep Dive Option';
+deepDiveEl.textContent = 'Deep Dive →';
+deepDiveEl.style.display = 'none';
 scrollWrapper.appendChild(deepDiveEl);
 
 // (Optional) Add a click event if it should do something
@@ -1766,21 +2134,35 @@ deepDiveEl.addEventListener('click', () => {
 
 }
 
-// `variant` (green | blue | pink) themes the popup box (border + close button)
-// to match the hotspot that was clicked — applied as a hotspot-overlay--<variant>
-// class on the backdrop so index.html/CSS can style each color independently.
-// `iconSrc` reuses that same hotspot's own icon as the badge shown top-left.
+// `content.video` (if present) plays instead of the `content.images` gallery.
+// `content.pdf` (if present) shows the Deep Dive button, which opens that PDF
+// in a fullscreen overlay — the button stays hidden when no pdf is defined.
 function openHotspotOverlay(content, variant, iconSrc) {
 
     hotspotOverlayTitleEl.textContent = content.title || '';
     hotspotOverlayTextEl.textContent = content.text || '';
 
     hotspotOverlayImagesEl.innerHTML = '';
-    (content.images || []).forEach((src) => {
-        const img = document.createElement('img');
-        img.src = src;
-        hotspotOverlayImagesEl.appendChild(img);
-    });
+
+    if (content.video) {
+
+        const video = document.createElement('video');
+        video.src = content.video;
+        video.controls = true;
+        video.playsInline = true;
+        video.style.width = '100%';
+        video.style.display = 'block';
+        hotspotOverlayImagesEl.appendChild(video);
+
+    } else {
+
+        (content.images || []).forEach((src) => {
+            const img = document.createElement('img');
+            img.src = src;
+            hotspotOverlayImagesEl.appendChild(img);
+        });
+
+    }
 
     // Clear any previously-applied variant class, then apply the new one
     HOTSPOT_VARIANTS.forEach((v) => hotspotOverlayEl.classList.remove(`hotspot-overlay--${v}`));
@@ -1795,6 +2177,15 @@ function openHotspotOverlay(content, variant, iconSrc) {
         hotspotOverlayIconEl.style.display = 'none';
     }
 
+    // Deep dive — only shown when this hotspot defines a PDF
+    if (content.pdf) {
+        deepDiveEl.style.display = 'block';
+        deepDiveEl.onclick = () => openPdfOverlay(content.pdf);
+    } else {
+        deepDiveEl.style.display = 'none';
+        deepDiveEl.onclick = null;
+    }
+
     hotspotOverlayEl.style.display = 'flex';
 
 }
@@ -1803,7 +2194,73 @@ function closeHotspotOverlay() {
 
     hotspotOverlayEl.style.display = 'none';
 
+    // Stop any playing video so audio/motion doesn't continue in the background
+    const video = hotspotOverlayImagesEl.querySelector('video');
+    if (video) video.pause();
+
 }
+function initPdfOverlay() {
+
+    pdfOverlayEl = document.createElement('div');
+    Object.assign(pdfOverlayEl.style, {
+        position: 'fixed',
+        top: '0', left: '0', width: '100%', height: '100%',
+        background: 'rgba(0,0,0,0.85)',
+        zIndex: '10000',
+        display: 'none',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center'
+    });
+
+    const closeBtn = document.createElement('button');
+    closeBtn.textContent = '✕';
+    Object.assign(closeBtn.style, {
+        position: 'absolute',
+        top: '20px',
+        right: '20px',
+        fontSize: '24px',
+        background: 'transparent',
+        color: '#fff',
+        border: 'none',
+        cursor: 'pointer',
+        zIndex: '10001'
+    });
+    closeBtn.addEventListener('click', closePdfOverlay);
+    pdfOverlayEl.appendChild(closeBtn);
+
+    pdfOverlayFrameEl = document.createElement('iframe');
+    Object.assign(pdfOverlayFrameEl.style, {
+        width: '90%',
+        height: '90%',
+        border: 'none',
+        background: '#fff'
+    });
+    pdfOverlayEl.appendChild(pdfOverlayFrameEl);
+
+    // Click on the dark backdrop (but not the iframe/close button) also closes it
+    pdfOverlayEl.addEventListener('click', (event) => {
+        if (event.target === pdfOverlayEl) closePdfOverlay();
+    });
+
+    window.addEventListener('keydown', (event) => {
+        if (event.code === 'Escape' && pdfOverlayEl.style.display === 'flex') closePdfOverlay();
+    });
+
+    document.body.appendChild(pdfOverlayEl);
+
+}
+
+function openPdfOverlay(pdfSrc) {
+    pdfOverlayFrameEl.src = pdfSrc;
+    pdfOverlayEl.style.display = 'flex';
+}
+
+function closePdfOverlay() {
+    pdfOverlayEl.style.display = 'none';
+    pdfOverlayFrameEl.src = ''; // stop the PDF from continuing to render/hold memory in the background
+}
+
 
 function registerHotspotsForModel(modelIndex, object3D) {
 
@@ -2158,5 +2615,126 @@ async function initTrackingControls() {
         lookaheadVal.textContent = val.toFixed(0);
         pushTrackingSetting('anticipation_lookahead_markers', val);
     });
+
+}
+
+function initTopDownPlacementHelper() {
+
+    // Small marker sphere shown at the raycast hit point — depthTest off + high
+    // renderOrder so it's always visible on top of the model, not occluded by it.
+    const markerGeo = new THREE.SphereGeometry(0.03, 12, 12);
+    const markerMat = new THREE.MeshBasicMaterial({color: 0xffff00, depthTest: false});
+    topDownMarker = new THREE.Mesh(markerGeo, markerMat);
+    topDownMarker.visible = false;
+    topDownMarker.renderOrder = 999;
+    scene.add(topDownMarker);
+
+    // Coordinate readout — built here in JS so no index.html changes are needed
+    topDownInfoEl = document.createElement('div');
+    Object.assign(topDownInfoEl.style, {
+        position: 'fixed',
+        top: '16px',
+        left: '50%',
+        transform: 'translateX(-50%)',
+        padding: '6px 14px',
+        background: 'rgba(0,0,0,0.7)',
+        color: '#fff',
+        fontFamily: 'monospace',
+        fontSize: '14px',
+        borderRadius: '6px',
+        zIndex: 9999,
+        display: 'none',
+        pointerEvents: 'none'
+    });
+    topDownInfoEl.textContent = 'X: —  Z: —';
+    document.body.appendChild(topDownInfoEl);
+
+    window.addEventListener('keydown', (event) => {
+        if (event.code === 'KeyK') {
+            toggleTopDownPlacementMode();
+        }
+    });
+
+    renderer.domElement.addEventListener('mousemove', onTopDownPlacementMouseMove);
+
+}
+
+function toggleTopDownPlacementMode() {
+
+    topDownPlacementActive = !topDownPlacementActive;
+
+    if (topDownPlacementActive) {
+
+        // Save current camera + controls state so pressing K again restores it
+        savedCameraState = {
+            position: camera.position.clone(),
+            rotation: camera.rotation.clone(),
+            target: controls.target.clone(),
+            enabled: controls.enabled
+        };
+
+        const activeEntry = getActiveModelEntry();
+        const focusPoint = activeEntry ? activeEntry.object.position.clone() : new THREE.Vector3();
+
+        // Fly straight above the active model, looking straight down (-Y)
+        camera.position.set(focusPoint.x, focusPoint.y + topDownHeight, focusPoint.z);
+        camera.up.set(0, 0, -1); // avoids the gimbal flip you get looking straight down with up=(0,1,0)
+        camera.lookAt(focusPoint.x, focusPoint.y, focusPoint.z);
+
+        controls.target.copy(focusPoint);
+        controls.enableRotate = false; // keep pan/zoom for lining up the cursor, but no tilting away from top-down
+        controls.update();
+
+        topDownMarker.visible = true;
+        topDownInfoEl.style.display = 'block';
+
+        console.log('Top-down placement helper: ON — move the cursor over the model');
+
+    } else {
+
+        if (savedCameraState) {
+            camera.position.copy(savedCameraState.position);
+            camera.rotation.copy(savedCameraState.rotation);
+            camera.up.set(0, 1, 0);
+            controls.target.copy(savedCameraState.target);
+            controls.enabled = savedCameraState.enabled;
+            controls.update();
+        }
+
+        controls.enableRotate = true;
+
+        topDownMarker.visible = false;
+        topDownInfoEl.style.display = 'none';
+
+        console.log('Top-down placement helper: OFF');
+
+    }
+
+}
+
+function onTopDownPlacementMouseMove(event) {
+
+    if (!topDownPlacementActive) return;
+
+    topDownMouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+    topDownMouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+    topDownRaycaster.setFromCamera(topDownMouse, camera);
+
+    const activeEntry = getActiveModelEntry();
+    if (!activeEntry) return;
+
+    const hits = topDownRaycaster.intersectObject(activeEntry.object, true);
+
+    if (hits.length === 0) {
+        topDownInfoEl.textContent = 'X: —  Z: —';
+        return;
+    }
+
+    const hit = hits[0];
+    topDownMarker.position.copy(hit.point);
+
+    const localPos = activeEntry.object.worldToLocal(hit.point.clone());
+    topDownInfoEl.textContent = `X: ${localPos.x.toFixed(3)}  Z: ${localPos.z.toFixed(3)}  (Y: ${localPos.y.toFixed(3)})`;
 
 }

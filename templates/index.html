@@ -125,6 +125,10 @@
         <img class="model-toggle-icon" src="{{ url_for('static', filename='images/icons/boat-placeholder.png') }}" alt="">
         <span class="model-toggle-label">Model 8</span>
     </button>
+        <button class="model-toggle-btn" data-index="8">
+        <img class="model-toggle-icon" src="{{ url_for('static', filename='images/icons/boat-placeholder.png') }}" alt="">
+        <span class="model-toggle-label">Model 9</span>
+    </button>
 </div>
 
 <button id="green-hotspots-toggle" class="green-toggle-btn" aria-label="Toggle green hotspots">
@@ -138,7 +142,13 @@
     <div><strong>Camera Rotation:</strong> <span id="debug-cam-rot">—</span></div>
     <div><strong>Model Position:</strong> <span id="debug-model-pos">—</span></div>
     <div><strong>Model Rotation:</strong> <span id="debug-model-rot">—</span></div>
-
+        <div class="light-group">
+            <strong>Model Rotation</strong>
+            <div class="rotate-controls">
+                <button type="button" id="rotate-left-btn" class="rotate-btn">⟲ Left</button>
+                <button type="button" id="rotate-right-btn" class="rotate-btn">Right ⟳</button>
+            </div>
+        </div>
 
     <div id="camera-controls">
     <strong>Camera Controls</strong>
@@ -212,13 +222,7 @@
         <label>Anticipation Lookahead <input type="range" id="anticipation-lookahead" min="1" max="10" step="1"> <span class="light-value" id="anticipation-lookahead-val">—</span></label>
         </div>
 
-        <div class="light-group">
-            <strong>Model Rotation</strong>
-            <div class="rotate-controls">
-                <button type="button" id="rotate-left-btn" class="rotate-btn">⟲ Left</button>
-                <button type="button" id="rotate-right-btn" class="rotate-btn">Right ⟳</button>
-            </div>
-        </div>
+
 
     </div>
 </div>

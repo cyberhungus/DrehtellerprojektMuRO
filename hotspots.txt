@@ -1,0 +1,342 @@
+
+{
+    id: 'tower-mittig-2',
+    localPosition: new THREE.Vector3(-0.134, 0.75, -0.24),
+    minAngle: 180,
+    maxAngle: 269,
+    variant: 'green',
+    icon: 'static/images/icons/hotspot-icon-green.png',
+    content: {
+        title: 'Tower Mittig',
+        text: 'PLATZHALTER Beschreibung für Tower Mittig PLATZHALTER',
+        images: ['static/images/hotspots/placeholder.jpg']
+    }
+},
+{
+    id: 'kran-beuge-2',
+    localPosition: new THREE.Vector3(-0.788, 0.4, -0.26),
+    minAngle: 180,
+    maxAngle: 269,
+    variant: 'green',
+    icon: 'static/images/icons/hotspot-icon-green.png',
+    content: {
+        title: 'Kran Beuge',
+        text: 'PLATZHALTER Beschreibung für Kran Beuge PLATZHALTER',
+        images: ['static/images/hotspots/placeholder.jpg']
+    }
+},
+{
+    id: 'leiter-2',
+    localPosition: new THREE.Vector3(-0.53, 0.35, -0.3),
+    minAngle: 180,
+    maxAngle: 269,
+    variant: 'green',
+    icon: 'static/images/icons/hotspot-icon-green.png',
+    content: {
+        title: 'Leiter',
+        text: 'PLATZHALTER Beschreibung für Leiter PLATZHALTER',
+        images: ['static/images/hotspots/placeholder.jpg']
+    }
+},
+{
+    id: 'heck-2',
+    localPosition: new THREE.Vector3(-1.29, 0.3, 0),
+    minAngle: 180,
+    maxAngle: 269,
+    variant: 'green',
+    icon: 'static/images/icons/hotspot-icon-green.png',
+    content: {
+        title: 'Heck',
+        text: 'PLATZHALTER Beschreibung für Heck PLATZHALTER',
+        images: ['static/images/hotspots/placeholder.jpg']
+    }
+},
+
+{
+    id: 'holz-2',
+    localPosition: new THREE.Vector3(-0.78, 0.32, 0),
+    minAngle: 270,
+    maxAngle: 359,
+    variant: 'green',
+    icon: 'static/images/icons/hotspot-icon-green.png',
+    content: {
+        title: 'Holz',
+        text: 'PLATZHALTER Beschreibung für Holz PLATZHALTER',
+        images: ['static/images/hotspots/placeholder.jpg']
+    }
+},
+{
+    id: 'propeller-heck-2',
+    localPosition: new THREE.Vector3(-1.2, 0, 0.11),
+    minAngle: 270,
+    maxAngle: 359,
+    variant: 'green',
+    icon: 'static/images/icons/hotspot-icon-green.png',
+    content: {
+        title: 'Propeller Heck',
+        text: 'PLATZHALTER Beschreibung für Propeller Heck PLATZHALTER',
+        images: ['static/images/hotspots/placeholder.jpg']
+    }
+},
+{
+    id: 'heck-l-2',
+    localPosition: new THREE.Vector3(-0.67, 0.29, 0.29),
+    minAngle: 270,
+    maxAngle: 359,
+    variant: 'green',
+    icon: 'static/images/icons/hotspot-icon-green.png',
+    content: {
+        title: 'Heck L',
+        text: 'PLATZHALTER Beschreibung für Heck L PLATZHALTER',
+        images: ['static/images/hotspots/placeholder.jpg']
+    }
+},
+{
+    id: 'bruecke-l-seite-2',
+    localPosition: new THREE.Vector3(0.285, 0.72, 0.33),
+    minAngle: 270,
+    maxAngle: 359,
+    variant: 'green',
+    icon: 'static/images/icons/hotspot-icon-green.png',
+    content: {
+        title: 'Brücke L Seite',
+        text: 'PLATZHALTER Beschreibung für Brücke L Seite PLATZHALTER',
+        images: ['static/images/hotspots/placeholder.jpg']
+    }
+},
+
+{
+    id: 'kabinen-r-2',
+    localPosition: new THREE.Vector3(0.7, 0.32, -0.29),
+    minAngle: 90,
+    maxAngle: 179,
+    variant: 'green',
+    icon: 'static/images/icons/hotspot-icon-green.png',
+    content: {
+        title: 'Kabinen R',
+        text: 'PLATZHALTER Beschreibung für Kabinen R PLATZHALTER',
+        images: ['static/images/hotspots/placeholder.jpg']
+    }
+},
+{
+    id: 'propeller-front-2',
+    localPosition: new THREE.Vector3(1.4, 0.1, 0),
+    minAngle: 90,
+    maxAngle: 179,
+    variant: 'green',
+    icon: 'static/images/icons/hotspot-icon-green.png',
+    content: {
+        title: 'Propeller Front',
+        text: 'PLATZHALTER Beschreibung für Propeller Front PLATZHALTER',
+        images: ['static/images/hotspots/placeholder.jpg']
+    }
+},
+
+{
+    id: 'beiboot-2',
+    localPosition: new THREE.Vector3(-0.295, 0.34, 0.23),
+    minAngle: 0,
+    maxAngle: 89,
+    variant: 'green',
+    icon: 'static/images/icons/hotspot-icon-green.png',
+    content: {
+        title: 'Beiboot',
+        text: 'PLATZHALTER Beschreibung für Beiboot PLATZHALTER',
+        images: ['static/images/hotspots/placeholder.jpg']
+    }
+},
+{
+    id: 'bruecke-l-front-2',
+    localPosition: new THREE.Vector3(0.45, 0.7, 0.2),
+    minAngle: 0,
+    maxAngle: 89,
+    variant: 'green',
+    icon: 'static/images/icons/hotspot-icon-green.png',
+    content: {
+        title: 'Brücke L Front',
+        text: 'PLATZHALTER Beschreibung für Brücke L Front PLATZHALTER',
+        images: ['static/images/hotspots/placeholder.jpg']
+    }
+},
+{
+    id: 'rumpf-l-mitte-2',
+    localPosition: new THREE.Vector3(0, 0.2, 0.29),
+    minAngle: 0,
+    maxAngle: 89,
+    variant: 'green',
+    icon: 'static/images/icons/hotspot-icon-green.png',
+    content: {
+        title: 'Rumpf L Mitte',
+        text: 'PLATZHALTER Beschreibung für Rumpf L Mitte PLATZHALTER',
+        images: ['static/images/hotspots/placeholder.jpg']
+    }
+},
+{
+    id: 'rumpf-l-vorner-2',
+    localPosition: new THREE.Vector3(0.54, 0.23, 0.29),
+    minAngle: 0,
+    maxAngle: 89,
+    variant: 'green',
+    icon: 'static/images/icons/hotspot-icon-green.png',
+    content: {
+        title: 'Rumpf L Vorner',
+        text: 'PLATZHALTER Beschreibung für Rumpf L Vorner PLATZHALTER',
+        images: ['static/images/hotspots/placeholder.jpg']
+    }
+},
+{
+    id: 'helipad-2',
+    localPosition: new THREE.Vector3(0.89, 0.8, 0),
+    minAngle: 0,
+    maxAngle: 89,
+    variant: 'green',
+    icon: 'static/images/icons/hotspot-icon-green.png',
+    content: {
+        title: 'Helipad',
+        text: 'PLATZHALTER Beschreibung für Helipad PLATZHALTER',
+        images: ['static/images/hotspots/placeholder.jpg']
+    }
+},
+{
+    id: 'bug-2',
+    localPosition: new THREE.Vector3(1.5, 0.477, 0),
+    minAngle: 0,
+    maxAngle: 89,
+    variant: 'green',
+    icon: 'static/images/icons/hotspot-icon-green.png',
+    content: {
+        title: 'Bug',
+        text: 'PLATZHALTER Beschreibung für Bug PLATZHALTER',
+        images: ['static/images/hotspots/placeholder.jpg']
+    }
+},
+          {
+        id: '1-1-tower-oben-2',
+        localPosition: new THREE.Vector3(-0.134, 1, -0.03),
+        minAngle: 0,
+        maxAngle: 359,
+        variant: 'blue',
+        icon: 'static/images/icons/hotspot-icon-blue.png',
+        content: {
+            title: '1.1 Tower Oben',
+            text: 'PLATZHALTER Beschreibung für 1.1 Tower Oben PLATZHALTER',
+            images: ['static/images/hotspots/placeholder.jpg']
+        }
+    },
+    {
+        id: '1-2-gangway-ende-2',
+        localPosition: new THREE.Vector3(0.458, 0.85, -0.215),
+        minAngle: 0,
+        maxAngle: 359,
+        variant: 'blue',
+        icon: 'static/images/icons/hotspot-icon-blue.png',
+        content: {
+            title: '1.2 Gangway Ende',
+            text: 'PLATZHALTER Beschreibung für 1.2 Gangway Ende PLATZHALTER',
+            images: ['static/images/hotspots/placeholder.jpg']
+        }
+    },
+    {
+        id: '3-1-kran-ausleger-2',
+        localPosition: new THREE.Vector3(-0.788, 0.37, -0.255),
+        minAngle: 0,
+        maxAngle: 359,
+        variant: 'blue',
+        icon: 'static/images/icons/hotspot-icon-blue.png',
+        content: {
+            title: '3.1 Kran Ausleger',
+            text: 'PLATZHALTER Beschreibung für 3.1 Kran Ausleger PLATZHALTER',
+            images: ['static/images/hotspots/placeholder.jpg']
+        }
+    },
+    {
+        id: '4-1-holz-richtung-heck-2',
+        localPosition: new THREE.Vector3(-0.82, 0.32, 0),
+        minAngle: 0,
+        maxAngle: 359,
+        variant: 'blue',
+        icon: 'static/images/icons/hotspot-icon-blue.png',
+        content: {
+            title: '4.1 Holz Richtung Heck',
+            text: 'PLATZHALTER Beschreibung für 4.1 Holz Richtung Heck PLATZHALTER',
+            images: ['static/images/hotspots/placeholder.jpg']
+        }
+    },
+    {
+        id: '5-1-holz-richtung-r-2',
+        localPosition: new THREE.Vector3(-0.78, 0.32, 0.1),
+        minAngle: 0,
+        maxAngle: 359,
+        variant: 'blue',
+        icon: 'static/images/icons/hotspot-icon-blue.png',
+        content: {
+            title: '5.1 Holz Richtung R',
+            text: 'PLATZHALTER Beschreibung für 5.1 Holz Richtung R PLATZHALTER',
+            images: ['static/images/hotspots/placeholder.jpg']
+        }
+    },
+    {
+        id: '6-1-holz-richtung-bug-2',
+        localPosition: new THREE.Vector3(-0.7, 0.32, 0),
+        minAngle: 0,
+        maxAngle: 359,
+        variant: 'blue',
+        icon: 'static/images/icons/hotspot-icon-blue.png',
+        content: {
+            title: '6.1 Holz Richtung Bug',
+            text: 'PLATZHALTER Beschreibung für 6.1 Holz Richtung Bug PLATZHALTER',
+            images: ['static/images/hotspots/placeholder.jpg']
+        }
+    },
+    {
+        id: '7-1-beiboot-ohne-dc-2',
+        localPosition: new THREE.Vector3(-0.305, 0.34, 0.23),
+        minAngle: 0,
+        maxAngle: 359,
+        variant: 'blue',
+        icon: 'static/images/icons/hotspot-icon-blue.png',
+        content: {
+            title: '7.1 Beiboot (ohne DC)',
+            text: 'PLATZHALTER Beschreibung für 7.1 Beiboot (ohne DC) PLATZHALTER',
+            images: ['static/images/hotspots/placeholder.jpg']
+        }
+    },
+    {
+        id: '8-1-container-2',
+        localPosition: new THREE.Vector3(-1.2, 0.3, 0),
+        minAngle: 0,
+        maxAngle: 359,
+        variant: 'blue',
+        icon: 'static/images/icons/hotspot-icon-blue.png',
+        content: {
+            title: '8.1 Container',
+            text: 'PLATZHALTER Beschreibung für 8.1 Container PLATZHALTER',
+            images: ['static/images/hotspots/placeholder.jpg']
+        }
+    },
+    {
+        id: '8-2-rettungsboot-2',
+        localPosition: new THREE.Vector3(-0.295, 0.34, -0.29),
+        minAngle: 0,
+        maxAngle: 359,
+        variant: 'blue',
+        icon: 'static/images/icons/hotspot-icon-blue.png',
+        content: {
+            title: '8.2 Rettungsboot',
+            text: 'PLATZHALTER Beschreibung für 8.2 Rettungsboot PLATZHALTER',
+            images: ['static/images/hotspots/placeholder.jpg']
+        }
+    },
+    {
+        id: '9-1-reling-2',
+        localPosition: new THREE.Vector3(-0.295, 0.34, 0.29),
+        minAngle: 0,
+        maxAngle: 359,
+        variant: 'blue',
+        icon: 'static/images/icons/hotspot-icon-blue.png',
+        content: {
+            title: '9.1 Reling',
+            text: 'PLATZHALTER Beschreibung für 9.1 Reling PLATZHALTER',
+            images: ['static/images/hotspots/placeholder.jpg']
+        }
+    }
