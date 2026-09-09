@@ -2023,12 +2023,34 @@ function openHotspotOverlay(content, variant, iconSrc) {
         video.style.display = 'block';
         hotspotOverlayImagesEl.appendChild(video);
 
-    } else {
+        } else {
 
         (content.images || []).forEach((src) => {
+
             const img = document.createElement('img');
             img.src = src;
+            img.style.width = '100%';
+            img.style.display = 'block';
+
+            // PNGs in this project are almost always logos/graphics with
+            // transparency and a very different aspect ratio than the JPG photo
+            // gallery — "cover" (used for photos) crops into them. Use "contain"
+            // instead so the whole graphic is visible, with a light backdrop and
+            // a height cap so a wide/skinny logo doesn't blow out the popup.
+            const isPng = src.toLowerCase().endsWith('.png');
+
+            if (isPng) {
+                img.style.objectFit = 'contain';
+                img.style.maxHeight = '240px';
+                img.style.background = '#fff';
+                img.style.padding = '12px';
+                img.style.boxSizing = 'border-box';
+            } else {
+                img.style.objectFit = 'cover';
+            }
+
             hotspotOverlayImagesEl.appendChild(img);
+
         });
 
     }
