@@ -373,8 +373,13 @@ const hotspotDefinitions = {
     variant: 'green',
     icon: 'static/images/icons/hotspot-icon-green.png',
     content: {
-        title: 'Kabinen R',
-        text: 'PLATZHALTER Beschreibung für Kabinen R PLATZHALTER',
+        title: 'A home at sea',
+        text: 'Skilled and experienced personnel are becoming scarce across the industry. They are the single most important factor in achieving high-quality progress offshore. Crew and charterer personnel need to be well-rested to perform safely, thus the vessel is their safe haven after a hard day\'s work, the foundation for all and the reason every small detail has been considered in the design of the interior, facilities, and layout of the DO C-CSOV.\t"•  99 cabins, each over 11 sqm, with 76 daylight cabins dedicated to charterer personnel\n' +
+            '•  Flexible 1+1 cabin concept, allowing selected single cabins to be converted into doubles with a ceiling-mounted Pullman bed - without compromising comfort or space\n' +
+            '•  140 sqm dedicated office wing, comprising four offices, 17 workstations and two combinable meeting rooms accommodating up to 24 people\n' +
+            '•  Clear separation of work, recreation and private living, with the layout designed around the daily workflow of personnel\n' +
+            '•  Over 180 sqm of gym and wellness facilities across two decks, including a dedicated spa and treatment area, supporting health, mobility and recovery\n' +
+            '•  Dedicated C-Deck leisure area with library, sports bar and lounge, providing space to switch off and recharge"\n',
         images: ['static/images/hotspots/placeholder.jpg']
     }
 },
@@ -1772,19 +1777,12 @@ function initGreenToggle() {
     });
 }
 
-// `variant` selects the hotspot's color theme (must be one of HOTSPOT_VARIANTS) and
-// `iconSrc` is the PNG shown as the hotspot's clickable icon instead of the plain
-// dot/label button. Falls back to the old plain-label look if no variant/icon is given.
 function registerHotspot({id, object, localPosition, minAngle, maxAngle, label, variant, iconSrc, onClick}) {
 
     const el = document.createElement('button');
     el.className = 'hotspot-btn';
     el.dataset.id = id;
 
-    // updateHotspots() sets el.style.left/top to the exact projected screen point,
-    // so the element itself needs to be centered ON that point rather than having
-    // the point sit at its top-left corner — otherwise a hotspot (especially once
-    // it's holding a PNG icon) visibly drifts away from the spot it's meant to mark.
     el.style.position = 'absolute';
     el.style.transform = 'translate(-50%, -50%)';
 
@@ -1807,27 +1805,18 @@ function registerHotspot({id, object, localPosition, minAngle, maxAngle, label, 
         iconEl.alt = label || '';
         iconEl.draggable = false;
 
-        // Force a fixed on-screen size regardless of the source PNG's actual
-        // resolution — without this, icons rendered at their raw pixel dimensions
-        // (which can be huge) and looked oversized.
         iconEl.style.width = `${HOTSPOT_ICON_SIZE}px`;
         iconEl.style.height = `${HOTSPOT_ICON_SIZE}px`;
         iconEl.style.objectFit = 'contain';
         iconEl.style.display = 'block';
-        iconEl.style.pointerEvents = 'none'; // clicks should hit the button, not the <img>
+        iconEl.style.pointerEvents = 'none';
 
         el.appendChild(iconEl);
 
     }
 
-    if (label) {
-
-        const labelEl = document.createElement('span');
-        labelEl.className = 'hotspot-label';
-        labelEl.textContent = label;
-        el.appendChild(labelEl);
-
-    }
+    // (label is no longer rendered as a visible title beneath the hotspot —
+    // it's still used above for the icon's alt text)
 
     if (onClick) {
         el.addEventListener('click', onClick);
@@ -1837,9 +1826,9 @@ function registerHotspot({id, object, localPosition, minAngle, maxAngle, label, 
 
     hotspots.push({
         id,
-        object,                                   // the pivot/mesh this hotspot is attached to
-        localPosition: localPosition.clone(),      // position in the object's local space, for screen projection
-        minAngle: THREE.MathUtils.euclideanModulo(minAngle, 360), // degrees, in the object's own rotation frame
+        object,
+        localPosition: localPosition.clone(),
+        minAngle: THREE.MathUtils.euclideanModulo(minAngle, 360),
         maxAngle: THREE.MathUtils.euclideanModulo(maxAngle, 360),
         el
     });
