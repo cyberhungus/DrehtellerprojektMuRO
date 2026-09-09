@@ -37,10 +37,10 @@ const topDownHeight = 8; // how high above the model the camera sits — adjust 
 // "label" overrides the button's text — leave as null to just use the model's loaded name instead.
 // "statusText" is what appears top-right on click — leave as null to fall back to the model's name.
 const buttonConfig = [
-    {label: "Standard", statusText: "Basic Features"}, // Model 1
-    {label: "Kran", statusText: "Greifer"}, // Model 2
+    {label: "Walk to Work", statusText: "Walk to Work"}, // Model 1
+    {label: "Rockbag Installation", statusText: "Rockbag Installation"}, // Model 2
     {label: "Spezial", statusText: "Spezial"}, // Model 3
-    {label: null, statusText: null}, // Model 4
+    {label: "Deck Payload", statusText: "Deck Payload"}, // Model 4
     {label: null, statusText: null}, // Model 5
     {label: null, statusText: null}, // Model 6
     {label: null, statusText: null}, // Model 7
@@ -187,78 +187,47 @@ function updateHotspots() {
 const hotspotDefinitions = {
 
     0: [ // Boot 1
-        {
-            id: 'boot1-engine',
-            localPosition: new THREE.Vector3(0, 0, 0),
-            minAngle: 315,
-            maxAngle: 45,
-            variant: 'green',
-            icon: 'static/images/icons/hotspot-icon-green.png',
-            content: {
-                title: 'Motor',
-                text: 'PLATZHALTER Der Motor liefert 150 PS und ermöglicht eine Höchstgeschwindigkeit von 45 km/h. PLATZHALTER',
-                images: ['static/images/boat.jpg']
-            },
-        },
-        {
-            id: 'boot1-pipe',
-            localPosition: new THREE.Vector3(1.5, 0, 0),
-            minAngle: 0,
-            maxAngle: 358,
-            variant: 'blue',
-            icon: 'static/images/icons/hotspot-icon-blue.png',
-            content: {
-                title: 'Pipe',
-                text: ' PLATZHALTER Großer Schornstein für Abluft PLATZHALTER ',
-                images: ['static/images/hotspots/engine-1.jpg']
-            }
-        },
 
-        // --- Added green hotspot for Boot 1 ---
-        {
-            id: 'boot1-propeller',
-            localPosition: new THREE.Vector3(-0.8, -0.3, 1.2),
-            minAngle: 180,
-            maxAngle: 270,
-            variant: 'green',
-            icon: 'static/images/icons/hotspot-icon-green.png',
-            content: {
-                title: 'Propeller',
-                text: 'PLATZHALTER 3‑Flügel‑Propeller aus Edelstahl. PLATZHALTER',
-                images: ['static/images/hotspots/propeller.jpg']
-            }
-        },
-        {
-    id: 'boot1-TESTER',
-    localPosition: new THREE.Vector3(0, 1, 0),
-    minAngle: 315,
-    maxAngle: 45,
-    variant: 'green',
-    icon: 'static/images/icons/hotspot-icon-green.png',
-    content: {
-        title: 'TESTER',
-        text: 'Der Motor liefert 150 PS...',
-        video: 'static/videos/autolanding.mp4', // shown instead of images
-        pdf: 'static/pdfs/testpdf.pdf'  // Deep Dive button appears
+             {
+        id: '1-1-tower-oben-2',
+        localPosition: new THREE.Vector3(-0.134, 1, -0.03),
+        minAngle: 0,
+        maxAngle: 359,
+        variant: 'blue',
+        icon: 'static/images/icons/hotspot-icon-blue.png',
+        content: {
+            title: '1.1 Tower Oben',
+            text: 'PLATZHALTER Beschreibung für 1.1 Tower Oben PLATZHALTER',
+            images: ['static/images/hotspots/placeholder.jpg']
+        }
+    },
+    {
+        id: '1-2-gangway-ende-2',
+        localPosition: new THREE.Vector3(0.458, 0.85, -0.215),
+        minAngle: 10,
+        maxAngle: 180,
+        variant: 'blue',
+        icon: 'static/images/icons/hotspot-icon-blue.png',
+        content: {
+            title: 'Walk to Work ',
+            text: '"Beyond its core W2W and accommodation role, the DO C-CSOV is configured to support a broad range of offshore scopes with the following key capabilities:\n' +
+                '\n' +
+                '•  Motion-compensated gangway with DP2 station-keeping for safe personnel transfer\n' +
+                '•  Walk-to-Work tower, large modular deck and flexible crane for equipment handling and light construction works\n' +
+                '•  HiPAP system for subsea positioning on operations such as grouting and inspection\n' +
+                '•  Removable daughter craft to extend in-field reach\n' +
+                '•  Helideck for rapid crew changes\n' +
+                '•  Internal logistics layout linking deck, storage and gangway for efficient movement of cargo and personnel\n' +
+                '\n' +
+                'This configuration lets the vessel combine W2W, accommodation and additional offshore scopes within a single deployment, or serve as a dedicated project vessel for scopes such as grouting - creating synergies with installation vessels. Its W2W capability further provides in-field transfer capacity as project contingency when personnel transfer becomes a bottleneck for the primary W2W fleet."\n',
+            images: ['static/images/walktoworkimage.jpg']
+        }
     }
-}
+
     ],
 
     1: [ // Boot 2
-        {
-            id: 'boot2-cabin',
-            localPosition: new THREE.Vector3(0, 0, 0),
-            minAngle: 0,
-            maxAngle: 359,
-            variant: 'pink',
-            icon: 'static/images/icons/hotspot-icon-pink.png',
-            content: {
-                title: 'Kabine',
-                text: 'PLATZHALTER Die Kabine bietet Platz für bis zu 4 Personen inklusive Navigationssystem. PLATZHALTER',
-                images: ['static/images/hotspots/cabin-1.jpg']
-            }
-        },
-// ---- Green hotspots for Boot 2 (Gruppe 1 & 4 swapped) ----
+   // ---- Green hotspots for Boot 2 (Gruppe 1 & 4 swapped) ----
 
 {
     id: 'tower-mittig-2',
@@ -268,9 +237,26 @@ const hotspotDefinitions = {
     variant: 'green',
     icon: 'static/images/icons/hotspot-icon-green.png',
     content: {
-        title: 'Tower Mittig',
-        text: 'PLATZHALTER Beschreibung für Tower Mittig PLATZHALTER',
-        images: ['static/images/hotspots/placeholder.jpg']
+        title: 'Gangway',
+        text: '"The DO C-CSOV is fitted with the SMST TAB-L2 motion-compensated gangway. Behind it stands proven technology with a track record of over 86 gangway systems delivered. It is engineered for safety, reliability and operability, keeping technicians moving and operations running in tough offshore conditions. \n' +
+            '\n' +
+            '"\n' +
+            '\n' +
+            '"Technical Main Data:\n' +
+            '\n' +
+            '•  Large safety distance: >12 m safety distance between offshore structure and vessel at all times\n' +
+            '•  Deck & helideck access: independent access from both deck and helideck enables flexible personnel flow without reliance on the vessel’s elevator.\n' +
+            '•  Ship-to-fixed as well as ship-to-floating connection\n' +
+            '•  Condition monitoring: predictive maintenance capabilities help maximise system availability and operational uptime.\n' +
+            '•  Landing heights: 12 to 30 m (with luffing angle of 0°)\n' +
+            '•  Gangway inclination angle: +20°/-16.5°\n' +
+            '•  Telescoping length: 11 m\n' +
+            '•  Telescoping speed: up to 2.5 m/s\n' +
+            '•  Slewing range: 194°\n' +
+            '•  Cargo limits for gangway and winch: 1,000 kg / 3,000 kg\n' +
+            '•  ATEX prepared"\n',
+        images: ['static/images/gangwayimage.jpg'],
+        pdf: 'static/pdfs/gangwaydeepdive.pdf'
     }
 },
 {
@@ -281,14 +267,18 @@ const hotspotDefinitions = {
     variant: 'green',
     icon: 'static/images/icons/hotspot-icon-green.png',
     content: {
-        title: 'Kran Beuge',
-        text: 'PLATZHALTER Beschreibung für Kran Beuge PLATZHALTER',
-        images: ['static/images/hotspots/placeholder.jpg']
+        title: 'Switch It',
+        text: '"One crane, many missions. At the heart of the DO C-CSOV sits flexibility: The SMST KBC-M modular knuckle-boom crane is engineered around a concept that turns a single asset into many. Its knuckle configuration spear heads the modularity concept: the boom reconfigures for different tasks quickly and without external lifts. \n' +
+            '\n' +
+            'For the charterer, that means one crane that adapts to the mission at hand - higher efficiency, less downtime, and the confidence to have contingency to switch between tasks without adding vessels.\n' +
+            '\n' +
+            '"\t50 t Active heave compensation or 10 t 3D motion control deliver precise and safe load handling in live seaways. Live collision-avoidance technology enhances safety by accounting for structures and preventing interference with construction spreads. Continuous condition monitoring safeguards uptime on equipment the whole campaign depends on.\n',
+        images: ['static/images/kranimage.jpg']
     }
 },
 {
     id: 'leiter-2',
-    localPosition: new THREE.Vector3(-0.53, 0.35, -0.3),
+    localPosition: new THREE.Vector3(-0.9, 0.35, -0.3),
     minAngle: 180,
     maxAngle: 269,
     variant: 'green',
@@ -321,9 +311,18 @@ const hotspotDefinitions = {
     variant: 'green',
     icon: 'static/images/icons/hotspot-icon-green.png',
     content: {
-        title: 'Holz',
-        text: 'PLATZHALTER Beschreibung für Holz PLATZHALTER',
-        images: ['static/images/hotspots/placeholder.jpg']
+        title: 'Space to out-perform',
+        text: 'The working deck is a vast, unobstructed platform that reconfigures around whatever the job demands - from cable repair to subsea and light construction. Modular sockets and utility stations turn open deck into a purpose-built workspace, and hatches to the warehouse below puts stores and spares within immediate reach. For a charterer, this adaptability is the real advantage: one vessel that flexes across scopes, steps in when plans change, and keeps the campaign moving when risks materialize. Efficiency in every operation, contingency when it counts.\t"The DO C-CSOV working deck features payload, flexibility and multi-scope operations:\n' +
+            '\n' +
+            '•  Size: 800 sqm of open, unobstructed working area\n' +
+            '•  Deck strength: rated for 10 t/m² \n' +
+            '•  T-bars: up to 30 t/m, allowing heavy equipment mobilization\n' +
+            '•  Clean deck: free of vent heads, mooring equipment and other obstructions, maximising usable working area\n' +
+            '•  Modularity: removable infrastructure (daughter craft, boat landing, refuelling) \n' +
+            '•  Utility stations: distributed supply of water, communications, electrical power and high pressure for demanding spreads (e.g. WROV / cable repair) without temporary infrastructure\n' +
+            '•  Warehouse access: dedicated hatch enables operations at sea and effectively extends the working deck via the warehouse below\n' +
+            '•  Functional layout: 5.2 m low freeboard with removable railings for easy overboard access"\n',
+        images: ['static/images/workingdecktopview.png']
     }
 },
 {
@@ -401,9 +400,12 @@ const hotspotDefinitions = {
     variant: 'green',
     icon: 'static/images/icons/hotspot-icon-green.png',
     content: {
-        title: 'Beiboot',
-        text: 'PLATZHALTER Beschreibung für Beiboot PLATZHALTER',
-        images: ['static/images/hotspots/placeholder.jpg']
+        title: 'Pick me up ',
+        text: '"The DO C-CSOV is equipped with a Vestdavit launched Chartwell Catamaran Workboat. Its large deck space in combination with its modularity concept allows for carrying a high performance Daughter Craft without compromising on the asset\'s capabilities. The working deck remains spacious with sufficient capacity for containerized or bulk cargo. As the davit is skid mounted, quick mobilization and demobilization is catered for the event the additional space is required. \n' +
+            '"\t"Benefiting from the use of a Daughter Craft should not go along unacceptable risks. The Vestdavit PLD-15002 is DNV-ST-0498 certified, setting a baseline to deploy and retrieve Daughter Crafts safely. A telescopic painter boom ensures proper hull clearance and controlled motion at high sea states, safeguarding that a recovery can be conducted under any circumstances.\n' +
+            '"\n',
+        images: ['static/images/daughtercraft.png'],
+        pdf: 'static/pdfs/daughtercraft.pdf'
     }
 },
 {
@@ -414,9 +416,18 @@ const hotspotDefinitions = {
     variant: 'green',
     icon: 'static/images/icons/hotspot-icon-green.png',
     content: {
-        title: 'Brücke L Front',
-        text: 'PLATZHALTER Beschreibung für Brücke L Front PLATZHALTER',
-        images: ['static/images/hotspots/placeholder.jpg']
+        title: 'Control at your fingertips',
+        text: '"The DO C-CSOV is equipped with a high-performance dynamic positioning and Integrated bridge system from Marine Technologies (MT). This combines proven DP capability with advanced navigation and communications systems for safe and reliable offshore operations.\n' +
+            '\n' +
+            'DP Alert, Clear Comms, integrated HiPAP and dedicated anti-jamming and anti-spoofing technology further enhance positioning integrity, communication resilience and operational robustness.\n' +
+            '\n' +
+            'With 800+ DP2 systems delivered and more than 35 million DP operating hours, Marine Technologies brings proven technology, hardened by experience. "\t"Modern offshore assets have adopted closed-bus operations in order to reduce fuel cost and carbon emissions, turning away from traditional open-bus-tie configurations. \n' +
+            '\n' +
+            'Improved commercials and sustainability may however not come at the cost of safety. The DO C-CSOV is the first purpose-built W2W asset to adopt the DNV DYNPOS AUTR-CB notation, incorporating the latest learnings and developments for a leap forward in closed-bus safety. \n' +
+            '\n' +
+            'As such, the notation achieves the operational safety standards of conventional open-bus operation while delivering the fuel-efficiency benefits of closed-bus operation. "\n',
+        images: ['static/images/mt-logo.png'],
+        pdf: 'static/pdfs/directpositioningdeepdive.pdf'
     }
 },
 {
@@ -471,136 +482,20 @@ const hotspotDefinitions = {
         images: ['static/images/hotspots/placeholder.jpg']
     }
 },
-          {
-        id: '1-1-tower-oben-2',
-        localPosition: new THREE.Vector3(-0.134, 1, -0.03),
-        minAngle: 0,
-        maxAngle: 359,
-        variant: 'blue',
-        icon: 'static/images/icons/hotspot-icon-blue.png',
-        content: {
-            title: '1.1 Tower Oben',
-            text: 'PLATZHALTER Beschreibung für 1.1 Tower Oben PLATZHALTER',
-            images: ['static/images/hotspots/placeholder.jpg']
-        }
-    },
-    {
-        id: '1-2-gangway-ende-2',
-        localPosition: new THREE.Vector3(0.458, 0.85, -0.215),
-        minAngle: 0,
-        maxAngle: 359,
-        variant: 'blue',
-        icon: 'static/images/icons/hotspot-icon-blue.png',
-        content: {
-            title: '1.2 Gangway Ende',
-            text: 'PLATZHALTER Beschreibung für 1.2 Gangway Ende PLATZHALTER',
-            images: ['static/images/hotspots/placeholder.jpg']
-        }
-    },
-    {
+            {
         id: '3-1-kran-ausleger-2',
-        localPosition: new THREE.Vector3(-0.788, 0.37, -0.255),
+        localPosition: new THREE.Vector3(-0.81, 0.51, -0.755),
         minAngle: 0,
         maxAngle: 359,
         variant: 'blue',
         icon: 'static/images/icons/hotspot-icon-blue.png',
         content: {
-            title: '3.1 Kran Ausleger',
-            text: 'PLATZHALTER Beschreibung für 3.1 Kran Ausleger PLATZHALTER',
+            title: 'On the Rocks',
+            text: 'The DO C-CSOV extends the scope of Walk-to-Work operations by combining W2W with rock bag installation for scour and cable protection. Its large working deck and high-capacity crane enable efficient handling and installation of rock bags alongside W2W activities. Those complementary tasks reduce the need for costly short term tonnage, decreasing the total number of assets in the field and increasing overall offshore efficiency.\n',
             images: ['static/images/hotspots/placeholder.jpg']
         }
     },
-    {
-        id: '4-1-holz-richtung-heck-2',
-        localPosition: new THREE.Vector3(-0.82, 0.32, 0),
-        minAngle: 0,
-        maxAngle: 359,
-        variant: 'blue',
-        icon: 'static/images/icons/hotspot-icon-blue.png',
-        content: {
-            title: '4.1 Holz Richtung Heck',
-            text: 'PLATZHALTER Beschreibung für 4.1 Holz Richtung Heck PLATZHALTER',
-            images: ['static/images/hotspots/placeholder.jpg']
-        }
-    },
-    {
-        id: '5-1-holz-richtung-r-2',
-        localPosition: new THREE.Vector3(-0.78, 0.32, 0.1),
-        minAngle: 0,
-        maxAngle: 359,
-        variant: 'blue',
-        icon: 'static/images/icons/hotspot-icon-blue.png',
-        content: {
-            title: '5.1 Holz Richtung R',
-            text: 'PLATZHALTER Beschreibung für 5.1 Holz Richtung R PLATZHALTER',
-            images: ['static/images/hotspots/placeholder.jpg']
-        }
-    },
-    {
-        id: '6-1-holz-richtung-bug-2',
-        localPosition: new THREE.Vector3(-0.7, 0.32, 0),
-        minAngle: 0,
-        maxAngle: 359,
-        variant: 'blue',
-        icon: 'static/images/icons/hotspot-icon-blue.png',
-        content: {
-            title: '6.1 Holz Richtung Bug',
-            text: 'PLATZHALTER Beschreibung für 6.1 Holz Richtung Bug PLATZHALTER',
-            images: ['static/images/hotspots/placeholder.jpg']
-        }
-    },
-    {
-        id: '7-1-beiboot-ohne-dc-2',
-        localPosition: new THREE.Vector3(-0.305, 0.34, 0.23),
-        minAngle: 0,
-        maxAngle: 359,
-        variant: 'blue',
-        icon: 'static/images/icons/hotspot-icon-blue.png',
-        content: {
-            title: '7.1 Beiboot (ohne DC)',
-            text: 'PLATZHALTER Beschreibung für 7.1 Beiboot (ohne DC) PLATZHALTER',
-            images: ['static/images/hotspots/placeholder.jpg']
-        }
-    },
-    {
-        id: '8-1-container-2',
-        localPosition: new THREE.Vector3(-1.2, 0.3, 0),
-        minAngle: 0,
-        maxAngle: 359,
-        variant: 'blue',
-        icon: 'static/images/icons/hotspot-icon-blue.png',
-        content: {
-            title: '8.1 Container',
-            text: 'PLATZHALTER Beschreibung für 8.1 Container PLATZHALTER',
-            images: ['static/images/hotspots/placeholder.jpg']
-        }
-    },
-    {
-        id: '8-2-rettungsboot-2',
-        localPosition: new THREE.Vector3(-0.295, 0.34, -0.29),
-        minAngle: 0,
-        maxAngle: 359,
-        variant: 'blue',
-        icon: 'static/images/icons/hotspot-icon-blue.png',
-        content: {
-            title: '8.2 Rettungsboot',
-            text: 'PLATZHALTER Beschreibung für 8.2 Rettungsboot PLATZHALTER',
-            images: ['static/images/hotspots/placeholder.jpg']
-        }
-    },
-    {
-        id: '9-1-reling-2',
-        localPosition: new THREE.Vector3(-0.295, 0.34, 0.29),
-        minAngle: 0,
-        maxAngle: 359,
-        variant: 'blue',
-        icon: 'static/images/icons/hotspot-icon-blue.png',
-        content: {
-            title: '9.1 Reling',
-            text: 'PLATZHALTER Beschreibung für 9.1 Reling PLATZHALTER',
-            images: ['static/images/hotspots/placeholder.jpg']
-        }
-    }
+
 
     ],
 
@@ -647,45 +542,19 @@ const hotspotDefinitions = {
     ],
 
     3: [ // Boot 4 (new)
-        {
-            id: 'boot4-steering',
-            localPosition: new THREE.Vector3(0.3, 0.2, -1.0),
-            minAngle: 270,
-            maxAngle: 350,
-            variant: 'green',
-            icon: 'static/images/icons/hotspot-icon-green.png',
-            content: {
-                title: 'Steuerrad',
-                text: 'PLATZHALTER Hydraulisches Lenksystem mit Servounterstützung. PLATZHALTER',
-                images: ['static/images/hotspots/steering.jpg']
-            }
-        },
-        {
-            id: 'boot4-fender',
-            localPosition: new THREE.Vector3(1.2, 0.0, 1.5),
-            minAngle: 10,
-            maxAngle: 100,
-            variant: 'pink',
-            icon: 'static/images/icons/hotspot-icon-pink.png',
-            content: {
-                title: 'Fender',
-                text: 'PLATZHALTER Gummi‑Fender zum Schutz beim Anlegen. PLATZHALTER',
-                images: ['static/images/hotspots/fender.jpg']
-            }
-        },
-        {
-            id: 'boot4-vent',
-            localPosition: new THREE.Vector3(-0.6, 0.4, -0.8),
-            minAngle: 120,
-            maxAngle: 220,
-            variant: 'green',
-            icon: 'static/images/icons/hotspot-icon-green.png',
-            content: {
-                title: 'Belüftung',
-                text: 'PLATZHALTER Entlüftungsöffnung für den Maschinenraum. PLATZHALTER',
-                images: ['static/images/hotspots/vent.jpg']
-            }
+           {
+        id: 'boot4-deck-payload',
+        localPosition: new THREE.Vector3(-0.7, 0.32, 0),
+        minAngle: 260,
+        maxAngle: 80,
+        variant: 'blue',
+        icon: 'static/images/icons/hotspot-icon-blue.png',
+        content: {
+            title: 'When size matters',
+            text: 'When the job calls for size, the DO C-CSOV delivers. A vast, strengthened deck, generous payload and a powerful crane let big, bulky equipment - from generator sets with pre-filled fuel tanks to subsea corrosion-protection spreads - be mobilised, installed and operated from a single vessel, whether planned or unplanned. Bigger lifts mean fewer of them: less deck shuffling, fewer supply runs and less port time, so campaigns run leaner and faster. And when priorities shift, this flexibility turns into contingency - ready to pick up slack and keep the offshore programme moving without missing a beat.\n',
+            images: ['static/images/deckpayload-a.jpg','static/images/deckpayload-b.jpg']
         }
+    },
     ],
 
     4: [ // Boot 5 (new)
