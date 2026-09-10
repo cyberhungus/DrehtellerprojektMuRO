@@ -140,7 +140,6 @@ canvas {
 #drawer-toggle.hidden {
     display: none;
 }
-
 .drawer-toggle-icon {
     display: grid;
     grid-template-columns: repeat(4, 7px);
@@ -160,7 +159,7 @@ canvas {
 }
 
 /* ═══════════════════════════════════════════════════════════
-   STATUS TEXT (top-left)
+   STATUS TEXT
    ═══════════════════════════════════════════════════════════ */
 #status-text {
     position: fixed;
@@ -178,7 +177,7 @@ canvas {
 }
 
 /* ═══════════════════════════════════════════════════════════
-   TOGGLE BAR (model switcher drawer)
+   TOGGLE BAR
    ═══════════════════════════════════════════════════════════ */
 #toggle-bar {
     position: fixed;
@@ -200,7 +199,6 @@ canvas {
 #toggle-bar.open {
     transform: translateY(0);
 }
-
 .model-toggle-btn {
     position: relative;
     flex: 1 1 0;
@@ -260,7 +258,7 @@ canvas {
 }
 
 /* ═══════════════════════════════════════════════════════════
-   DEBUG OVERLAY (press H)
+   DEBUG OVERLAY
    ═══════════════════════════════════════════════════════════ */
 #debug-overlay {
     position: fixed;
@@ -284,7 +282,6 @@ canvas {
     color: #fff;
     font-weight: 600;
 }
-
 #light-controls {
     pointer-events: auto;
     margin-top: 4px;
@@ -320,7 +317,6 @@ canvas {
     font-variant-numeric: tabular-nums;
     font-weight: 300;
 }
-
 .rotate-controls {
     display: flex;
     gap: 8px;
@@ -348,7 +344,7 @@ canvas {
 }
 
 /* ═══════════════════════════════════════════════════════════
-   HOTSPOT LAYER (3D-projected buttons)
+   HOTSPOT LAYER
    ═══════════════════════════════════════════════════════════ */
 #hotspot-layer {
     position: fixed;
@@ -359,8 +355,6 @@ canvas {
     pointer-events: none;
     z-index: 500;
 }
-
-/* ── Hotspot button ── */
 .hotspot-btn {
     position: absolute;
     width: 40px;
@@ -415,8 +409,6 @@ canvas {
 .hotspot-btn--pink:active {
     box-shadow: 0 0 22px rgba(236, 72, 153, 0.85);
 }
-
-/* Icon inside the button */
 .hotspot-icon {
     width: 40px;
     height: 40px;
@@ -424,8 +416,6 @@ canvas {
     display: block;
     pointer-events: none;
 }
-
-/* Optional label under a hotspot button (unused currently) */
 .hotspot-label {
     position: absolute;
     top: 48px;
@@ -551,7 +541,7 @@ canvas {
 }
 
 /* ═══════════════════════════════════════════════════════════
-   GREEN HOTSPOT TOGGLE (bottom-right circular button)
+   GREEN HOTSPOT TOGGLE
    ═══════════════════════════════════════════════════════════ */
 #green-hotspots-toggle {
     position: fixed;
@@ -588,6 +578,40 @@ canvas {
 }
 
 /* ═══════════════════════════════════════════════════════════
+   MOUSE ROTATION TOGGLE
+   ═══════════════════════════════════════════════════════════ */
+#mouse-rotation-toggle {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    border: none;
+    background: #4caf50;
+    color: white;
+    font-size: 22px;
+    line-height: 1;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    transition: background 0.25s ease, transform 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    user-select: none;
+}
+#mouse-rotation-toggle:hover {
+    transform: scale(1.08);
+}
+#mouse-rotation-toggle.inactive {
+    background: #888;
+}
+#mouse-rotation-toggle.inactive:hover {
+    background: #777;
+}
+
+/* ═══════════════════════════════════════════════════════════
    HOTSPOT OVERLAY — BACKDROP
    ═══════════════════════════════════════════════════════════ */
 #hotspot-overlay {
@@ -607,7 +631,6 @@ canvas {
 
 /* ═══════════════════════════════════════════════════════════
    HOTSPOT OVERLAY — CONTENT BOX
-   Layout: top bar (fixed) + scroll area (flexes) + deep-dive buttons
    ═══════════════════════════════════════════════════════════ */
 #hotspot-overlay-content {
     position: relative;
@@ -619,11 +642,8 @@ canvas {
     box-sizing: border-box;
     padding: 30px 40px;
     font-weight: 300;
-
     display: flex;
     flex-direction: column;
-
-    /* Allow the top-left badge and close button to stick out */
     overflow: visible;
 }
 
@@ -685,8 +705,6 @@ canvas {
     column-gap: 30px;
     align-items: start;
 }
-
-/* Text column */
 #hotspot-overlay-text {
     grid-column: 1;
     font-size: 24px;
@@ -695,8 +713,6 @@ canvas {
     margin: 0 0 20px 0;
     white-space: pre-line;
 }
-
-/* Images column — natural height, scrolls with the text */
 #hotspot-overlay-images {
     grid-column: 2;
     grid-row: 1;
@@ -718,8 +734,6 @@ canvas {
     object-fit: contain;
     border-radius: 12px;
 }
-
-/* Image class variants used by renderHotspotMedia */
 .hotspot-overlay-image {
     width: 100%;
     display: block;
@@ -734,24 +748,44 @@ canvas {
 .hotspot-overlay-image--cover {
     object-fit: cover;
 }
-
-/* ── Full-slideshow mode (slideshow with no text): hide title bar, widen images ── */
+/* ═══════════════════════════════════════════════════════════
+   FULL-SLIDESHOW MODE — no scrolling, fill the whole box
+   (applied when a deep dive has a slideshow and NO text)
+   ═══════════════════════════════════════════════════════════ */
 #hotspot-overlay-content.slideshow-full .hotspot-overlay-titleblock {
     display: none;
 }
 #hotspot-overlay-content.slideshow-full .hotspot-overlay-scroll {
     grid-template-columns: 1fr;
+    grid-template-rows: 1fr;   /* single row fills the wrapper's height */
+    align-items: stretch;
+    overflow: hidden;
 }
 #hotspot-overlay-content.slideshow-full #hotspot-overlay-images {
     grid-column: 1 / -1;
     grid-row: 1;
     width: 100%;
-    height: auto;
+    height: 100%;              /* now resolves, because the row is 1fr */
+    min-height: 0;
     margin-top: 0;
+    overflow: hidden;
+}
+#hotspot-overlay-content.slideshow-full .hotspot-slideshow {
+    height: 100%;
+    min-height: 0;             /* lets the flex column actually shrink */
+}
+#hotspot-overlay-content.slideshow-full .slideshow-image-wrapper {
+    flex: 1 1 auto;
+    min-height: 0;
+}
+#hotspot-overlay-content.slideshow-full .slideshow-image {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;       /* shrink to fit instead of getting cropped */
 }
 
 /* ═══════════════════════════════════════════════════════════
-   HOTSPOT OVERLAY — TOP-LEFT BADGE ICON
+   HOTSPOT OVERLAY — BADGE ICON (top-left) + CLOSE (top-right)
    ═══════════════════════════════════════════════════════════ */
 .hotspot-overlay-icon {
     position: absolute;
@@ -765,10 +799,6 @@ canvas {
     object-fit: contain;
     z-index: 10;
 }
-
-/* ═══════════════════════════════════════════════════════════
-   HOTSPOT OVERLAY — CLOSE BUTTON (top-right badge)
-   ═══════════════════════════════════════════════════════════ */
 #hotspot-overlay-close {
     position: absolute;
     top: -35px;
@@ -811,7 +841,7 @@ canvas {
 .hotspot-overlay--pink  #hotspot-overlay-close { border-color: #e84393; color: #e84393; }
 
 /* ═══════════════════════════════════════════════════════════
-   DEEP-DIVE BUTTONS (bottom of overlay, hanging out)
+   DEEP-DIVE BUTTONS
    ═══════════════════════════════════════════════════════════ */
 .hotspot-deep-dive-buttons {
     position: absolute;
@@ -896,8 +926,6 @@ canvas {
     display: block;
     object-fit: contain;
 }
-
-/* Navigation buttons */
 .slideshow-nav-btn {
     position: absolute;
     top: 50%;
@@ -930,8 +958,6 @@ canvas {
 .slideshow-nav-btn--next {
     right: 12px;
 }
-
-/* Dots */
 .slideshow-dots {
     display: flex;
     gap: 10px;
@@ -957,8 +983,6 @@ canvas {
     background: #000;
     box-shadow: 0 0 8px rgba(255, 255, 255, 0.4);
 }
-
-/* Counter */
 .slideshow-counter {
     font-size: 16px;
     font-weight: 500;
@@ -967,8 +991,6 @@ canvas {
     min-width: 40px;
     text-align: center;
 }
-
-/* Controls row */
 .slideshow-controls {
     flex-shrink: 0;
     display: flex;

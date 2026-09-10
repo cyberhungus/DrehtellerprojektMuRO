@@ -39,6 +39,26 @@ const buttonConfig = [
     {label: null, statusText: null}  // Model 8
 ];
 
+// Mouse-driven camera rotation toggle (top-right button) — starts OFF.
+let mouseRotationEnabled = false;
+let mouseRotationToggleBtn;
+let mouseRotationToggleIconEl; // <-- moved up here
+let mouseRotationSavedCameraState = null; // camera position/rotation/target, restored on toggle-off
+
+
+// Path to the two icon files — swap these to point at your own SVGs.
+// LOCKED = shown while the mode is OFF (camera fixed). UNLOCKED = shown while
+// the mode is ON (free mouse rotation).
+let mouseRotationIconLockedSrc = 'static/images/icons/camera-video-off.svg';
+let mouseRotationIconUnlockedSrc = 'static/images/icons/camera-video.svg';
+
+
+// Independent switch: whether OrbitControls zoom (wheel/pinch) is allowed
+// while mouse rotation mode is active. Flip this to taste — separate from
+// mouseRotationEnabled so you can enable rotation without necessarily
+// enabling zoom, or vice versa.
+let mouseRotationAllowZoom = true;
+
 
 
 // For Aruco Based Detection
@@ -237,6 +257,8 @@ const hotspotDefinitions = {
     icon: 'static/images/icons/hotspot-icon-green.png',
     content: {
         title: 'Gangway',
+        subtitle: 'Walk to work',
+        logo: 'static/images/mt-logo.png',
         text: '"The DO C-CSOV is fitted with the SMST TAB-L2 motion-compensated gangway. Behind it stands proven technology with a track record of over 86 gangway systems delivered. It is engineered for safety, reliability and operability, keeping technicians moving and operations running in tough offshore conditions. \n' +
             '\n' +
             '"\n' +
@@ -709,7 +731,7 @@ initConnectionWarning();
 initSwitchOverlay();
 initTrackingControls();
 initGreenToggle();   // <-- added: initialise the green toggle button
-
+initMouseRotationToggle(); // <-- add this line
 
 // ============================================================================
 //                              FUNCTION DEFINITIONS
@@ -720,6 +742,11 @@ function initServerSentEvents() {
     const eventSource = new EventSource('/stream');
 
     eventSource.onmessage = function (event) {
+
+        // While mouse rotation mode is active, ignore commands from the
+        // /stream route entirely — the mouse is in control of the camera,
+        // not the encoder-driven model yaw.
+        if (mouseRotationEnabled) return;
 
         console.log('New markers detected:', event.data);
 
@@ -732,14 +759,12 @@ function initServerSentEvents() {
 
     };
 
-    // Non-zero encoder readings (STEPS/SPEED/DIR) mean someone's physically
-    // spinning the object — treat that as user activity, same as mouse/keyboard,
-    // so the screensaver doesn't kick in mid-interaction.
     eventSource.addEventListener('encoder', function () {
         resetScreensaverTimer();
     });
 
 }
+
 
 function initKeyboardControls() {
 
@@ -1154,8 +1179,26 @@ directionalLight2.shadow.normalBias = 0.02;
 
     }
 
-    hideLoadingOverlay(); // all models attempted — hide the loading screen
+    // Preload every hotspot image/video/slideshow folder while the loading
+    // overlay is still up, so opening a hotspot later never has to wait on
+    // a network fetch.
+    updateLoadingProgress({
+        fileName: 'Hotspot-Medien',
+        fileProgress: 0,
+        modelsLoaded: enabledCount,
+        modelsTotal: enabledCount
+    });
 
+    await preloadAllHotspotMedia({
+        onProgress: (done, total) => {
+            loadingCurrentFileEl.textContent = `Hotspot-Medien (${done} / ${total})`;
+            const percent = total > 0 ? Math.round((done / total) * 100) : 100;
+            loadingBarFillEl.style.width = `${percent}%`;
+            loadingProgressTextEl.textContent = `${percent}%`;
+        }
+    });
+
+    hideLoadingOverlay(); // models + hotspot media both preloaded — hide the loading screen
 
 // Configure renderer to use shadow map
     renderer = new THREE.WebGLRenderer({antialias: true});
@@ -1181,6 +1224,8 @@ directionalLight2.shadow.normalBias = 0.02;
     controls.maxDistance = 10;
     controls.target.set(0, 0, 0); // Ensure the orbit control target is centered at the model
     controls.update();
+
+     controls.enableRotate = false;
 
     // ----- CAMERA CONTROLS (X, Y, Target Y, Model Z) -----
 const camXSlider = document.getElementById('cam-pos-x');
@@ -2602,5 +2647,177 @@ async function initTrackingControls() {
         lookaheadVal.textContent = val.toFixed(0);
         pushTrackingSetting('anticipation_lookahead_markers', val);
     });
+
+}
+
+function initMouseRotationToggle() {
+
+    mouseRotationToggleBtn = document.createElement('button');
+    mouseRotationToggleBtn.id = 'mouse-rotation-toggle';
+    mouseRotationToggleBtn.className = 'inactive';
+    mouseRotationToggleBtn.title = 'Kamera-Mausrotation';
+
+    mouseRotationToggleIconEl = document.createElement('img');
+    mouseRotationToggleIconEl.alt = '';
+    mouseRotationToggleIconEl.draggable = false;
+    mouseRotationToggleIconEl.style.width = '22px';
+    mouseRotationToggleIconEl.style.height = '22px';
+    mouseRotationToggleIconEl.style.pointerEvents = 'none';
+    mouseRotationToggleBtn.appendChild(mouseRotationToggleIconEl);
+
+    mouseRotationToggleBtn.addEventListener('click', toggleMouseRotationMode);
+
+    document.body.appendChild(mouseRotationToggleBtn);
+
+    updateMouseRotationToggleVisual();
+
+}
+
+function updateMouseRotationToggleVisual() {
+
+    if (!mouseRotationToggleBtn) return;
+
+    mouseRotationToggleBtn.classList.toggle('inactive', !mouseRotationEnabled);
+    mouseRotationToggleIconEl.src = mouseRotationEnabled
+        ? mouseRotationIconUnlockedSrc
+        : mouseRotationIconLockedSrc;
+
+}
+
+
+
+function toggleMouseRotationMode() {
+
+    mouseRotationEnabled = !mouseRotationEnabled;
+
+    if (mouseRotationEnabled) {
+
+        // Save the camera's current position/rotation/target so it can be
+        // restored exactly once mouse rotation mode is turned back off.
+        mouseRotationSavedCameraState = {
+            position: camera.position.clone(),
+            rotation: camera.rotation.clone(),
+            target: controls.target.clone()
+        };
+
+        controls.enableRotate = true;
+        controls.enableZoom = mouseRotationAllowZoom;
+
+    } else {
+
+        controls.enableRotate = false;
+        controls.enableZoom = true; // restore normal (non-rotation-mode) zoom behavior
+
+        if (mouseRotationSavedCameraState) {
+            camera.position.copy(mouseRotationSavedCameraState.position);
+            camera.rotation.copy(mouseRotationSavedCameraState.rotation);
+            controls.target.copy(mouseRotationSavedCameraState.target);
+            controls.update();
+        }
+
+        mouseRotationSavedCameraState = null;
+
+    }
+
+    updateMouseRotationToggleVisual();
+
+}
+
+
+// Walks hotspotDefinitions (including nested deepDives) and collects every
+// media reference so it can be preloaded. Returns { images, videos, slideshowDirs }.
+function collectAllHotspotMedia() {
+
+    const images = new Set();
+    const videos = new Set();
+    const slideshowDirs = new Set();
+
+    function collectFromContent(content) {
+
+        if (!content) return;
+
+        (content.images || []).forEach((src) => images.add(src));
+        if (content.video) videos.add(content.video);
+        if (content.logo) images.add(content.logo);
+        if (content.slideshow) slideshowDirs.add(content.slideshow);
+
+        (content.deepDives || []).forEach(collectFromContent);
+
+    }
+
+    Object.values(hotspotDefinitions).forEach((defs) => {
+        defs.forEach((def) => {
+            if (def.icon) images.add(def.icon);
+            collectFromContent(def.content);
+        });
+    });
+
+    return {
+        images: Array.from(images),
+        videos: Array.from(videos),
+        slideshowDirs: Array.from(slideshowDirs)
+    };
+
+}
+
+function preloadImage(src) {
+
+    return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => resolve();
+        img.onerror = () => resolve(); // don't let one bad path stall the whole preload
+        img.src = src;
+    });
+
+}
+
+// Videos are heavy — "preload" here just means asking the browser to fetch
+// and buffer metadata/data ahead of time via a hidden <video>, rather than
+// blocking on the full file (which could be large).
+function preloadVideo(src) {
+
+    return new Promise((resolve) => {
+        const video = document.createElement('video');
+        video.preload = 'auto';
+        video.muted = true;
+        video.style.display = 'none';
+        video.addEventListener('canplaythrough', () => resolve(), {once: true});
+        video.addEventListener('error', () => resolve(), {once: true});
+        video.src = src;
+        document.body.appendChild(video);
+        // Leave it in the DOM — the browser keeps the buffered data tied to
+        // this element/its cache entry, and removing it can drop the buffer.
+    });
+
+}
+
+async function preloadSlideshowDir(dirPath) {
+
+    const imagePaths = await fetchSlideshowImages(dirPath); // already defined elsewhere in this file
+    await Promise.all(imagePaths.map(preloadImage));
+
+}
+
+// Preloads every hotspot image, video, and slideshow folder, reporting
+// progress through the same loading overlay used for the 3D models.
+async function preloadAllHotspotMedia({onProgress} = {}) {
+
+    const {images, videos, slideshowDirs} = collectAllHotspotMedia();
+
+    const totalItems = images.length + videos.length + slideshowDirs.length;
+    let completedItems = 0;
+
+    function reportDone() {
+        completedItems++;
+        if (onProgress) onProgress(completedItems, totalItems);
+    }
+
+    const tasks = [
+        ...images.map((src) => preloadImage(src).then(reportDone)),
+        ...videos.map((src) => preloadVideo(src).then(reportDone)),
+        ...slideshowDirs.map((dir) => preloadSlideshowDir(dir).then(reportDone))
+    ];
+
+    await Promise.all(tasks);
 
 }
