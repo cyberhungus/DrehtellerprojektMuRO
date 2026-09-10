@@ -1198,7 +1198,6 @@ directionalLight2.shadow.normalBias = 0.02;
         }
     });
 
-    hideLoadingOverlay(); // models + hotspot media both preloaded — hide the loading screen
 
 // Configure renderer to use shadow map
     renderer = new THREE.WebGLRenderer({antialias: true});
@@ -1335,16 +1334,44 @@ controls.addEventListener('change', updateSliders);
     window.addEventListener('resize', onWindowResize);
 
 
-    // Simulate button 1 being pressed once everything is loaded and running,
+     // Simulate button 1 being pressed once everything is loaded and running,
     // so the first model is selected and the status text reflects it.
     selectModel(0);
 
-    // Started here, not right after the renderer is created — animate() calls
-    // controls.update(), which needs controls to exist first. The awaited boat model
-    // loads above yield control back to the browser mid-init(); if the loop had
-    // already started earlier, an animation frame could fire before controls was
-    // ready and crash on `undefined`.
+    // Preload hotspot media (images/videos/slideshows) and warm up every
+    // model's shaders/textures while the loading overlay is still covering
+    // the screen — so nothing has to fetch or compile for the first time
+    // later, when the person is actually watching.
+    updateLoadingProgress({
+        fileName: 'Hotspot-Medien',
+        fileProgress: 0,
+        modelsLoaded: enabledCount,
+        modelsTotal: enabledCount
+    });
+
+    await preloadAllHotspotMedia({
+        onProgress: (done, total) => {
+            loadingCurrentFileEl.textContent = `Hotspot-Medien (${done} / ${total})`;
+            const percent = total > 0 ? Math.round((done / total) * 100) : 100;
+            loadingBarFillEl.style.width = `${percent}%`;
+            loadingProgressTextEl.textContent = `${percent}%`;
+        }
+    });
+
+    warmUpAllModels({
+        onProgress: (done, total) => {
+            loadingCurrentFileEl.textContent = `Modelle vorbereiten (${done} / ${total})`;
+            const percent = total > 0 ? Math.round((done / total) * 100) : 100;
+            loadingBarFillEl.style.width = `${percent}%`;
+            loadingProgressTextEl.textContent = `${percent}%`;
+        }
+    });
+
+    hideLoadingOverlay(); // models, hotspot media, and GPU warm-up all done — hide the loading screen
+
     renderer.setAnimationLoop(animate);
+
+
 
 }
 
@@ -2819,5 +2846,39 @@ async function preloadAllHotspotMedia({onProgress} = {}) {
     ];
 
     await Promise.all(tasks);
+
+}
+
+// Warms up the GPU/shader pipeline for every loaded model by briefly making
+// each one visible and rendering a frame while the loading overlay still
+// covers the screen — this is the "press every button once" trick. It forces
+// three.js to compile shaders and upload textures for each model's materials
+// now, instead of on the first real selectModel() click, which is what
+// causes the visible hitch/stutter the first time a boat is switched to.
+function warmUpAllModels({onProgress} = {}) {
+
+    const entries = toggleableModels.filter(Boolean);
+    if (entries.length === 0) return;
+
+    // Remember what's actually visible right now (set by registerToggleableModel),
+    // so it can be restored exactly once warm-up is done.
+    const originalVisibility = toggleableModels.map((entry) => entry ? entry.object.visible : null);
+
+    entries.forEach((entry, i) => {
+
+        toggleableModels.forEach((otherEntry) => {
+            if (otherEntry) otherEntry.object.visible = false;
+        });
+        entry.object.visible = true;
+
+        renderer.render(scene, camera); // triggers shader compilation + texture upload for this model
+
+        if (onProgress) onProgress(i + 1, entries.length);
+
+    });
+
+    toggleableModels.forEach((entry, index) => {
+        if (entry) entry.object.visible = originalVisibility[index];
+    });
 
 }
