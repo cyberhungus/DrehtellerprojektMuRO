@@ -20,6 +20,13 @@ from flask import Flask
 import flask.cli
 import logging
 
+import os
+from flask import jsonify, abort, request
+
+ALLOWED_IMAGE_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.webp'}
+
+
+
 app = Flask(__name__)
 
 # 1. Suppress the "Serving Flask app..." startup banner
@@ -672,7 +679,29 @@ def api_settings():
     return jsonify(state_copy)
 
 
+@app.route('/api/list-images')
+def list_images():
 
+    rel_dir = request.args.get('dir', '')
+
+    # Security: resolve to an absolute path and make sure it's still inside
+    # the app's static folder — blocks path traversal like "../../etc".
+    base_dir = os.path.abspath(os.path.join(app.root_path, 'static'))
+    target_dir = os.path.abspath(os.path.join(app.root_path, rel_dir))
+
+    if not target_dir.startswith(base_dir) or not os.path.isdir(target_dir):
+        abort(404)
+
+    files = sorted(
+        f for f in os.listdir(target_dir)
+        if os.path.splitext(f)[1].lower() in ALLOWED_IMAGE_EXTENSIONS
+    )
+
+    # Return browser-usable paths (relative to the app root, matching how
+    # you reference other static assets elsewhere in hotspotDefinitions)
+    image_paths = [f'{rel_dir.rstrip("/")}/{f}' for f in files]
+
+    return jsonify(image_paths)
 
 @app.route('/stream')
 def stream():

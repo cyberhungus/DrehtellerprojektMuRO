@@ -22,14 +22,6 @@ let currentModelZ = 0;
 // Set to false to skip loading that model entirely (useful for testing/debugging).
 const modelEnabled = [true, true, false, true, false, false];
 
-// For top-down placement helper (Press K)
-let topDownPlacementActive = false;
-let topDownMarker;
-let topDownInfoEl;
-const topDownRaycaster = new THREE.Raycaster();
-const topDownMouse = new THREE.Vector2();
-let savedCameraState = null; // camera/controls state to restore when K is pressed again
-const topDownHeight = 8; // how high above the model the camera sits — adjust to taste
 
 
 // Edit this to customize what each button shows and what the top-right status text
@@ -92,13 +84,10 @@ let placementModeActive = false;
 const placementRaycaster = new THREE.Raycaster();
 const placementMouse = new THREE.Vector2();
 
-// Hotspot overlay - becomes visible when clicking a bubble in the models
 let hotspotOverlayEl, hotspotOverlayContentEl, hotspotOverlayIconEl,
     hotspotOverlayTitleEl, hotspotOverlayTextEl, hotspotOverlayImagesEl,
-    deepDiveEl; // <-- add this
-
-// PDF deep-dive overlay
-let pdfOverlayEl, pdfOverlayFrameEl;
+    hotspotOverlaySubtitleEl, hotspotOverlayLogoEl, // <-- new
+    deepDiveButtonsEl;
 
 // Loading overlay - shown during startup while models are fetched
 let loadingOverlayEl, loadingTitleEl, loadingCurrentFileEl, loadingBarFillEl, loadingProgressTextEl,
@@ -133,6 +122,16 @@ const HOTSPOT_ICON_SIZE = 40;
 // Green hotspots toggle state and button reference (will be assigned in initGreenToggle)
 let greenHotspotsVisible = true;   // true = visible
 let greenToggleBtn;                // will be assigned in initGreenToggle()
+
+// Slideshow deep-dive — tracks the autoplay interval so it can be stopped when
+// the overlay closes or a different deep dive/hotspot is opened.
+let slideshowAutoplayTimer = null;
+const SLIDESHOW_AUTOPLAY_MS = 4000;
+
+function clearSlideshowAutoplay() {
+    clearInterval(slideshowAutoplayTimer);
+    slideshowAutoplayTimer = null;
+}
 
 
 // --------------------------------------------
@@ -256,7 +255,17 @@ const hotspotDefinitions = {
             '•  Cargo limits for gangway and winch: 1,000 kg / 3,000 kg\n' +
             '•  ATEX prepared"\n',
         images: ['static/images/gangwayimage.jpg'],
-        pdf: 'static/pdfs/gangwaydeepdive.pdf'
+                deepDives: [
+            {
+                title: 'Technical Specifications',
+                text: 'Landing heights 12–30 m, telescoping length 11 m, slewing range 194°...',
+                images: ['static/images/walktoworkimage.jpg']
+            },
+            {
+                title: 'In Operation',
+                text: 'See the SMST TAB-L2 gangway in action during a live transfer.',
+                video: 'static/videos/autolanding.mp4'
+            }]
     }
 },
 {
@@ -311,7 +320,8 @@ const hotspotDefinitions = {
     variant: 'green',
     icon: 'static/images/icons/hotspot-icon-green.png',
     content: {
-        title: 'Space to out-perform',
+        title: 'Working deck',
+        subtitle: 'Space to out-perform',
         text: 'The working deck is a vast, unobstructed platform that reconfigures around whatever the job demands - from cable repair to subsea and light construction. Modular sockets and utility stations turn open deck into a purpose-built workspace, and hatches to the warehouse below puts stores and spares within immediate reach. For a charterer, this adaptability is the real advantage: one vessel that flexes across scopes, steps in when plans change, and keeps the campaign moving when risks materialize. Efficiency in every operation, contingency when it counts.\t"The DO C-CSOV working deck features payload, flexibility and multi-scope operations:\n' +
             '\n' +
             '•  Size: 800 sqm of open, unobstructed working area\n' +
@@ -333,9 +343,17 @@ const hotspotDefinitions = {
     variant: 'green',
     icon: 'static/images/icons/hotspot-icon-green.png',
     content: {
-        title: 'Propeller Heck',
-        text: 'PLATZHALTER Beschreibung für Propeller Heck PLATZHALTER',
-        images: ['static/images/hotspots/placeholder.jpg']
+        title: 'Works like a Swiss watch\n',
+        text: 'Powered by two Voith Schneider Propellers (VSP), each delivering 1,860 kW, the vessel combines exceptional manoeuvrability with precise thrust control. This propulsion concept enables rapid and accurate positioning while delivering a transit speed of up to 13.8 kn. At the same time, the VSP system provides highly efficient thrust generation, reducing energy consumption compared with conventional propulsion concepts.\t"Rapid response: More than 3× faster reaction to weather-induced forces than comparable azimuth-propelled vessels, with approximately 2 seconds thrust ramp-up and rapid 180° thrust reversal.\n' +
+            '\n' +
+            '\n' +
+            'High operability: Optimised for challenging offshore conditions, with up to 98% operability demonstrated for the specific location and metocean conditions shown.\n' +
+            '\n' +
+            'Reduced roll motion: Active VSP control counteracts wave-induced roll, reducing vessel motion, extending the operational window and improving transfer conditions and comfort.\n' +
+            '\n' +
+            'Low-noise operation: Electric VSP propulsion enables quiet operation, supporting DNV Comfort Class C2 and V2 requirements.\n' +
+            '"\n',
+        video: 'static/videos/voithpropulsion.mp4',
     }
 },
 {
@@ -380,7 +398,13 @@ const hotspotDefinitions = {
             '•  Clear separation of work, recreation and private living, with the layout designed around the daily workflow of personnel\n' +
             '•  Over 180 sqm of gym and wellness facilities across two decks, including a dedicated spa and treatment area, supporting health, mobility and recovery\n' +
             '•  Dedicated C-Deck leisure area with library, sports bar and lounge, providing space to switch off and recharge"\n',
-        images: ['static/images/hotspots/placeholder.jpg']
+        images: ['static/images/cabins-a.jpg','static/images/cabins-b.jpg'],
+                deepDives: [
+            {
+                title: 'Deck Gallery',
+                slideshow: 'static/images/accommodation' // <-- directory, not a single file
+            }
+        ]
     }
 },
 {
@@ -391,9 +415,16 @@ const hotspotDefinitions = {
     variant: 'green',
     icon: 'static/images/icons/hotspot-icon-green.png',
     content: {
-        title: 'Propeller Front',
-        text: 'PLATZHALTER Beschreibung für Propeller Front PLATZHALTER',
-        images: ['static/images/hotspots/placeholder.jpg']
+        title: 'Give it a nudge\n',
+        text: '"The DO C-CSOV is equipped with a high-end Brunvoll bow thrusters designed to maximise manoeuvrability, DP performance and operational redundancy. \n' +
+            '\n' +
+            'Configuration and arrangement of the thrusters are aligned to ensure safe and reliable position keeping in challenging environmental conditions. Size, power, location and performance criteria are balanced in order to match the thrust agility of the aft eVSP while minimizing ventilation, noise and vibrations and maintaining strong power reserves.\n' +
+            '"\t"The DO C-CSOV bow thruster arrangement combines high power, rapid response and redundancy to deliver precise vessel control across a wide range of offshore operating conditions:\n' +
+            '\n' +
+            '•  Three-thruster configuration: Two tunnel thrusters and one retractable azimuth thruster provide high levels of manoeuvrability and redundancy\n' +
+            '•  High power: 3x 1,500 kW provides strong thrust for demanding DP and manoeuvring conditions\n' +
+            '•  Resiliently mounted thrusters for minimal noise and vibration emissions during DP"\n',
+        images: ['static/images/bowthruster.png']
     }
 },
 
@@ -409,8 +440,8 @@ const hotspotDefinitions = {
         text: '"The DO C-CSOV is equipped with a Vestdavit launched Chartwell Catamaran Workboat. Its large deck space in combination with its modularity concept allows for carrying a high performance Daughter Craft without compromising on the asset\'s capabilities. The working deck remains spacious with sufficient capacity for containerized or bulk cargo. As the davit is skid mounted, quick mobilization and demobilization is catered for the event the additional space is required. \n' +
             '"\t"Benefiting from the use of a Daughter Craft should not go along unacceptable risks. The Vestdavit PLD-15002 is DNV-ST-0498 certified, setting a baseline to deploy and retrieve Daughter Crafts safely. A telescopic painter boom ensures proper hull clearance and controlled motion at high sea states, safeguarding that a recovery can be conducted under any circumstances.\n' +
             '"\n',
-        images: ['static/images/daughtercraft.png'],
-        pdf: 'static/pdfs/daughtercraft.pdf'
+        images: ['static/images/daughtercraft.png']
+
     }
 },
 {
@@ -431,8 +462,7 @@ const hotspotDefinitions = {
             'Improved commercials and sustainability may however not come at the cost of safety. The DO C-CSOV is the first purpose-built W2W asset to adopt the DNV DYNPOS AUTR-CB notation, incorporating the latest learnings and developments for a leap forward in closed-bus safety. \n' +
             '\n' +
             'As such, the notation achieves the operational safety standards of conventional open-bus operation while delivering the fuel-efficiency benefits of closed-bus operation. "\n',
-        images: ['static/images/mt-logo.png'],
-        pdf: 'static/pdfs/directpositioningdeepdive.pdf'
+        images: ['static/images/mt-logo.png']
     }
 },
 {
@@ -443,9 +473,17 @@ const hotspotDefinitions = {
     variant: 'green',
     icon: 'static/images/icons/hotspot-icon-green.png',
     content: {
-        title: 'Rumpf L Mitte',
-        text: 'PLATZHALTER Beschreibung für Rumpf L Mitte PLATZHALTER',
-        images: ['static/images/hotspots/placeholder.jpg']
+        title: 'Full steam ahead! \n',
+        text: '"The DO C-CSOV’s powertrain has been designed around an efficient and robust primary power generation system, recognising that the overall performance of the vessel’s energy concept starts with the selection of the main engines. Three medium-speed MAN engines, optimised for part-load operation, provide a highly efficient power source for propulsion, mission equipment and vessel services across a wide range of applicable load scenarios.\n' +
+            '\n' +
+            'The engines work in synergy with the vessel’s battery hybrid energy architecture. This enables the vessel to efficiently respond to varying power demands on the spot, cover demand peaks and act as temporary boosters.\n' +
+            '"\t"The DO C-CSOV powertrain combines efficient primary generation with hybrid energy storage and flexible fuel capability to maximise efficiency, resilience and operational flexibility. Key features include:\n' +
+            '\n' +
+            '•  Main engines: 3 × 1,760 kW MAN 8L21/31H MK2 PLO medium-speed engines\n' +
+            '•  Part-load efficiency: Engines optimised for efficient operation across varying load profiles, supporting reduced fuel consumption during typical offshore operations\n' +
+            '•  Hybrid battery: 1,000 kWh battery system supporting peak shaving, power boosting and DP spinning reserve\n' +
+            '•  Alternative fuels: Methanol-ready from delivery and capable of operating on biofuels including HVO-100 and FAME"\n',
+        images: ['static/images/cabins-a.jpg','static/images/cabins-b.jpg']
     }
 },
 {
@@ -667,7 +705,6 @@ initToggleButtons();
 initDebugOverlay();
 initHotspotEngine();
 initHotspotOverlay();
-initPdfOverlay(); // <-- add this
 initConnectionWarning();
 initSwitchOverlay();
 initTrackingControls();
@@ -1252,10 +1289,6 @@ controls.addEventListener('change', updateSliders);
     // Adjust with window resize
     window.addEventListener('resize', onWindowResize);
 
-    //Initialize the placement helper here after renderer is set up
-    initHotspotPlacementMode();
-
-    initTopDownPlacementHelper(); // <-- add this line
 
     // Simulate button 1 being pressed once everything is loaded and running,
     // so the first model is selected and the status text reflects it.
@@ -1298,22 +1331,15 @@ function animate() {
     renderer.render(scene, camera);
 
 }
-function initScreensaver() {
 
+function initScreensaver() {
     screensaverEl = document.getElementById('screensaver');
 
-    // Build the two stacked images once on startup — reused every time the
-    // screensaver shows rather than recreated per show/hide cycle.
     screensaverImgA = document.createElement('img');
     screensaverImgB = document.createElement('img');
 
     [screensaverImgA, screensaverImgB].forEach((img) => {
-        img.style.position = 'absolute';
-        img.style.top = '0';
-        img.style.left = '0';
-        img.style.width = '100%';
-        img.style.height = '100%';
-        img.style.objectFit = 'cover';
+        img.classList.add('screensaver-image');
         img.style.transition = `opacity ${screensaverCrossfadeDuration}ms ease-in-out`;
         img.draggable = false;
         screensaverEl.appendChild(img);
@@ -1330,7 +1356,6 @@ function initScreensaver() {
     window.addEventListener('mousedown', resetScreensaverTimer);
     window.addEventListener('touchstart', resetScreensaverTimer);
     window.addEventListener('keydown', resetScreensaverTimer);
-
 }
 
 function resetScreensaverTimer() {
@@ -1777,46 +1802,33 @@ function initGreenToggle() {
     });
 }
 
-function registerHotspot({id, object, localPosition, minAngle, maxAngle, label, variant, iconSrc, onClick}) {
 
+function registerHotspot({id, object, localPosition, minAngle, maxAngle, label, variant, iconSrc, onClick}) {
     const el = document.createElement('button');
     el.className = 'hotspot-btn';
     el.dataset.id = id;
 
-    el.style.position = 'absolute';
-    el.style.transform = 'translate(-50%, -50%)';
+    // position and transform are now handled by CSS
+    // el.style.position = 'absolute';        // removed
+    // el.style.transform = 'translate(-50%, -50%)'; // removed
 
     if (variant) {
-
         if (!HOTSPOT_VARIANTS.includes(variant)) {
             console.warn(`Hotspot "${id}" has unknown variant "${variant}" — falling back to default styling. Expected one of: ${HOTSPOT_VARIANTS.join(', ')}`);
         } else {
             el.classList.add(`hotspot-btn--${variant}`);
             el.dataset.variant = variant;
         }
-
     }
 
     if (iconSrc) {
-
         const iconEl = document.createElement('img');
         iconEl.className = 'hotspot-icon';
         iconEl.src = iconSrc;
         iconEl.alt = label || '';
         iconEl.draggable = false;
-
-        iconEl.style.width = `${HOTSPOT_ICON_SIZE}px`;
-        iconEl.style.height = `${HOTSPOT_ICON_SIZE}px`;
-        iconEl.style.objectFit = 'contain';
-        iconEl.style.display = 'block';
-        iconEl.style.pointerEvents = 'none';
-
         el.appendChild(iconEl);
-
     }
-
-    // (label is no longer rendered as a visible title beneath the hotspot —
-    // it's still used above for the icon's alt text)
 
     if (onClick) {
         el.addEventListener('click', onClick);
@@ -1832,8 +1844,8 @@ function registerHotspot({id, object, localPosition, minAngle, maxAngle, label, 
         maxAngle: THREE.MathUtils.euclideanModulo(maxAngle, 360),
         el
     });
-
 }
+
 
 function unregisterHotspot(id) {
 
@@ -1938,50 +1950,58 @@ function initHotspotPlacementMode() {
 
 }
 
-function initHotspotOverlay() {
 
+function initHotspotOverlay() {
     hotspotOverlayEl = document.getElementById('hotspot-overlay');
     hotspotOverlayContentEl = document.getElementById('hotspot-overlay-content');
     hotspotOverlayTitleEl = document.getElementById('hotspot-overlay-title');
     hotspotOverlayTextEl = document.getElementById('hotspot-overlay-text');
     hotspotOverlayImagesEl = document.getElementById('hotspot-overlay-images');
 
-    // Everything except the badge/close button moves into a scrollable inner
-    // wrapper. The content box itself now stays overflow: visible so the badge
-    // (positioned with negative top/left, overlapping the top-left corner) isn't
-    // clipped by the box's own scroll container.
+    // ── TOP BAR (Title + Subtitle + Logo) — stays fixed, never scrolls ──
+    const topBar = document.createElement('div');
+    topBar.className = 'hotspot-overlay-topbar';
+    hotspotOverlayContentEl.insertBefore(topBar, hotspotOverlayTitleEl);
+
+    const titleBlock = document.createElement('div');
+    titleBlock.className = 'hotspot-overlay-titleblock';
+    topBar.appendChild(titleBlock);
+
+    titleBlock.appendChild(hotspotOverlayTitleEl); // moves title into the title block
+
+    hotspotOverlaySubtitleEl = document.createElement('div');
+    hotspotOverlaySubtitleEl.className = 'hotspot-overlay-subtitle hidden';
+    titleBlock.appendChild(hotspotOverlaySubtitleEl);
+
+    hotspotOverlayLogoEl = document.createElement('img');
+    hotspotOverlayLogoEl.className = 'hotspot-overlay-logo hidden';
+    hotspotOverlayLogoEl.alt = '';
+    hotspotOverlayLogoEl.draggable = false;
+    topBar.appendChild(hotspotOverlayLogoEl);
+
+    // ── SCROLL AREA (Text + Images scroll together) ──
     const scrollWrapper = document.createElement('div');
     scrollWrapper.className = 'hotspot-overlay-scroll';
-    hotspotOverlayContentEl.insertBefore(scrollWrapper, hotspotOverlayTitleEl);
-    scrollWrapper.appendChild(hotspotOverlayTitleEl);
-    scrollWrapper.appendChild(hotspotOverlayTextEl);
-    scrollWrapper.appendChild(hotspotOverlayImagesEl);
+    hotspotOverlayContentEl.insertBefore(scrollWrapper, hotspotOverlayTextEl);
 
-    // ... inside initHotspotOverlay() ...
+    scrollWrapper.appendChild(hotspotOverlayTextEl);   // moves text into the scroll wrapper
+    scrollWrapper.appendChild(hotspotOverlayImagesEl); // moves images into the scroll wrapper
 
-deepDiveEl = document.createElement('div');
-deepDiveEl.className = 'hotspot-deep-dive';
-deepDiveEl.textContent = 'Deep Dive →';
-deepDiveEl.style.display = 'none';
-scrollWrapper.appendChild(deepDiveEl);
+    // ── Deep dive buttons (bottom, absolute — unchanged) ──
+    deepDiveButtonsEl = document.createElement('div');
+    deepDiveButtonsEl.className = 'hotspot-deep-dive-buttons';
+    hotspotOverlayContentEl.appendChild(deepDiveButtonsEl);
 
-// (Optional) Add a click event if it should do something
-deepDiveEl.addEventListener('click', () => {
-    console.log('Deep dive clicked!');
-});
-
-    // Badge icon, top-left — mirrors whichever hotspot icon was clicked, colored
-    // to match via CSS (see .hotspot-overlay-icon / hotspot-overlay--<variant>).
+    // ── Hotspot icon (top-left badge, absolute — unchanged) ──
     hotspotOverlayIconEl = document.createElement('img');
     hotspotOverlayIconEl.className = 'hotspot-overlay-icon';
     hotspotOverlayIconEl.alt = '';
     hotspotOverlayIconEl.draggable = false;
-    hotspotOverlayIconEl.style.display = 'none'; // shown once openHotspotOverlay sets a src
+    hotspotOverlayIconEl.classList.add('hidden');
     hotspotOverlayContentEl.insertBefore(hotspotOverlayIconEl, hotspotOverlayContentEl.firstChild);
 
     document.getElementById('hotspot-overlay-close').addEventListener('click', closeHotspotOverlay);
 
-    // Click on the dark backdrop (but not the content box) also closes it
     hotspotOverlayEl.addEventListener('click', (event) => {
         if (event.target === hotspotOverlayEl) closeHotspotOverlay();
     });
@@ -1989,21 +2009,15 @@ deepDiveEl.addEventListener('click', () => {
     window.addEventListener('keydown', (event) => {
         if (event.code === 'Escape') closeHotspotOverlay();
     });
-
 }
 
-// `content.video` (if present) plays instead of the `content.images` gallery.
-// `content.pdf` (if present) shows the Deep Dive button, which opens that PDF
-// in a fullscreen overlay — the button stays hidden when no pdf is defined.
-function openHotspotOverlay(content, variant, iconSrc) {
 
-    hotspotOverlayTitleEl.textContent = content.title || '';
-    hotspotOverlayTextEl.textContent = content.text || '';
-
+// Renders just the media (video OR image gallery) into hotspotOverlayImagesEl.
+function renderHotspotMedia(content) {
+    clearSlideshowAutoplay();
     hotspotOverlayImagesEl.innerHTML = '';
 
     if (content.video) {
-
         const video = document.createElement('video');
         video.src = content.video;
         video.controls = true;
@@ -2011,40 +2025,199 @@ function openHotspotOverlay(content, variant, iconSrc) {
         video.style.width = '100%';
         video.style.display = 'block';
         hotspotOverlayImagesEl.appendChild(video);
-
-        } else {
-
+    } else if (content.slideshow) {
+        renderSlideshow(content.slideshow);
+    } else {
         (content.images || []).forEach((src) => {
-
             const img = document.createElement('img');
-            img.src = src;
-            img.style.width = '100%';
-            img.style.display = 'block';
-
-            // PNGs in this project are almost always logos/graphics with
-            // transparency and a very different aspect ratio than the JPG photo
-            // gallery — "cover" (used for photos) crops into them. Use "contain"
-            // instead so the whole graphic is visible, with a light backdrop and
-            // a height cap so a wide/skinny logo doesn't blow out the popup.
+            img.className = 'hotspot-overlay-image';
             const isPng = src.toLowerCase().endsWith('.png');
-
             if (isPng) {
-                img.style.objectFit = 'contain';
-                img.style.maxHeight = '240px';
-                img.style.background = '#fff';
-                img.style.padding = '12px';
-                img.style.boxSizing = 'border-box';
+                img.classList.add('hotspot-overlay-image--contain');
             } else {
-                img.style.objectFit = 'cover';
+                img.classList.add('hotspot-overlay-image--cover');
             }
-
+            img.src = src;
             hotspotOverlayImagesEl.appendChild(img);
-
         });
+    }
+}
 
+
+async function fetchSlideshowImages(dirPath) {
+
+    try {
+        const res = await fetch(`/api/list-images?dir=${encodeURIComponent(dirPath)}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return await res.json();
+    } catch (e) {
+        console.error(`Failed to list images in "${dirPath}":`, e);
+        return [];
     }
 
-    // Clear any previously-applied variant class, then apply the new one
+}
+
+async function renderSlideshow(dirPath) {
+    const container = document.createElement('div');
+    container.className = 'hotspot-slideshow';
+
+    const loadingLabel = document.createElement('div');
+    loadingLabel.className = 'slideshow-loading';
+    loadingLabel.textContent = 'Lade Bilder...';
+    container.appendChild(loadingLabel);
+
+    hotspotOverlayImagesEl.appendChild(container);
+
+    const images = await fetchSlideshowImages(dirPath);
+
+    if (!container.isConnected) return;
+
+    loadingLabel.remove();
+
+    if (images.length === 0) {
+        const emptyLabel = document.createElement('div');
+        emptyLabel.className = 'slideshow-empty';
+        emptyLabel.textContent = 'Keine Bilder gefunden.';
+        container.appendChild(emptyLabel);
+        return;
+    }
+
+    let currentIndex = 0;
+
+    const imgWrapper = document.createElement('div');
+    imgWrapper.className = 'slideshow-image-wrapper';
+
+    const imgEl = document.createElement('img');
+    imgEl.className = 'slideshow-image';
+    imgWrapper.appendChild(imgEl);
+
+    const prevBtn = document.createElement('button');
+    prevBtn.className = 'slideshow-nav-btn slideshow-nav-btn--prev';
+    prevBtn.textContent = '‹';
+    imgWrapper.appendChild(prevBtn);
+
+    const nextBtn = document.createElement('button');
+    nextBtn.className = 'slideshow-nav-btn slideshow-nav-btn--next';
+    nextBtn.textContent = '›';
+    imgWrapper.appendChild(nextBtn);
+
+    container.appendChild(imgWrapper);
+
+    const controlsRow = document.createElement('div');
+    controlsRow.className = 'slideshow-controls';
+
+    const counterEl = document.createElement('span');
+    counterEl.className = 'slideshow-counter';
+    controlsRow.appendChild(counterEl);
+
+    const dotsWrapper = document.createElement('div');
+    dotsWrapper.className = 'slideshow-dots';
+    controlsRow.appendChild(dotsWrapper);
+
+    container.appendChild(controlsRow);
+
+    const dots = images.map((_, i) => {
+        const dot = document.createElement('button');
+        dot.className = 'slideshow-dot';
+        dot.addEventListener('click', () => {
+            showImage(i);
+            resetAutoplay();
+        });
+        dotsWrapper.appendChild(dot);
+        return dot;
+    });
+
+    function showImage(index) {
+        currentIndex = ((index % images.length) + images.length) % images.length;
+        imgEl.src = images[currentIndex];
+        counterEl.textContent = `${currentIndex + 1} / ${images.length}`;
+        dots.forEach((dot, i) => {
+            dot.classList.toggle('active', i === currentIndex);
+        });
+    }
+
+    function resetAutoplay() {
+        clearSlideshowAutoplay();
+        slideshowAutoplayTimer = setInterval(() => showImage(currentIndex + 1), SLIDESHOW_AUTOPLAY_MS);
+    }
+
+    prevBtn.addEventListener('click', () => {
+        showImage(currentIndex - 1);
+        resetAutoplay();
+    });
+    nextBtn.addEventListener('click', () => {
+        showImage(currentIndex + 1);
+        resetAutoplay();
+    });
+
+    showImage(0);
+    resetAutoplay();
+}
+
+
+function renderHotspotContent(content) {
+    if (!hotspotOverlayContentEl) return;
+
+    const hasText = content.text && content.text.trim().length > 0;
+    const isSlideshow = !!content.slideshow;
+    const slideshowFull = isSlideshow && !hasText;
+
+    hotspotOverlayContentEl.classList.toggle('slideshow-full', slideshowFull);
+
+    hotspotOverlayTitleEl.textContent = content.title || '';
+    hotspotOverlayTextEl.textContent = content.text || '';
+
+    // Subtitle (optional)
+    if (content.subtitle) {
+        hotspotOverlaySubtitleEl.textContent = content.subtitle;
+        hotspotOverlaySubtitleEl.classList.remove('hidden');
+    } else {
+        hotspotOverlaySubtitleEl.textContent = '';
+        hotspotOverlaySubtitleEl.classList.add('hidden');
+    }
+
+    // Logo (optional)
+    if (content.logo) {
+        hotspotOverlayLogoEl.src = content.logo;
+        hotspotOverlayLogoEl.classList.remove('hidden');
+    } else {
+        hotspotOverlayLogoEl.classList.add('hidden');
+        hotspotOverlayLogoEl.removeAttribute('src');
+    }
+
+    // Render the media (video, slideshow, or static images)
+    renderHotspotMedia(content);
+}
+
+
+function buildDeepDiveButtons(baseContent) {
+    deepDiveButtonsEl.innerHTML = '';
+
+    const deepDives = baseContent.deepDives || [];
+
+    if (deepDives.length === 0) {
+        deepDiveButtonsEl.classList.remove('visible');
+        return;
+    }
+
+    deepDiveButtonsEl.classList.add('visible');
+
+    const overviewBtn = document.createElement('button');
+    overviewBtn.className = 'hotspot-deep-dive';
+    overviewBtn.textContent = 'Übersicht';
+    overviewBtn.addEventListener('click', () => renderHotspotContent(baseContent));
+    deepDiveButtonsEl.appendChild(overviewBtn);
+
+    deepDives.forEach((dive, i) => {
+        const btn = document.createElement('button');
+        btn.className = 'hotspot-deep-dive';
+        btn.textContent = dive.title || `Deep Dive ${i + 1}`;
+        btn.addEventListener('click', () => renderHotspotContent(dive));
+        deepDiveButtonsEl.appendChild(btn);
+    });
+}
+
+function openHotspotOverlay(content, variant, iconSrc) {
     HOTSPOT_VARIANTS.forEach((v) => hotspotOverlayEl.classList.remove(`hotspot-overlay--${v}`));
     if (variant && HOTSPOT_VARIANTS.includes(variant)) {
         hotspotOverlayEl.classList.add(`hotspot-overlay--${variant}`);
@@ -2052,95 +2225,29 @@ function openHotspotOverlay(content, variant, iconSrc) {
 
     if (iconSrc) {
         hotspotOverlayIconEl.src = iconSrc;
-        hotspotOverlayIconEl.style.display = 'block';
+        hotspotOverlayIconEl.classList.remove('hidden');
     } else {
-        hotspotOverlayIconEl.style.display = 'none';
+        hotspotOverlayIconEl.classList.add('hidden');
     }
 
-    // Deep dive — only shown when this hotspot defines a PDF
-    if (content.pdf) {
-        deepDiveEl.style.display = 'block';
-        deepDiveEl.onclick = () => openPdfOverlay(content.pdf);
-    } else {
-        deepDiveEl.style.display = 'none';
-        deepDiveEl.onclick = null;
-    }
+    renderHotspotContent(content);
+    buildDeepDiveButtons(content);
 
     hotspotOverlayEl.style.display = 'flex';
-
 }
+
+
 
 function closeHotspotOverlay() {
 
     hotspotOverlayEl.style.display = 'none';
 
-    // Stop any playing video so audio/motion doesn't continue in the background
+    clearSlideshowAutoplay();
+
     const video = hotspotOverlayImagesEl.querySelector('video');
     if (video) video.pause();
 
 }
-function initPdfOverlay() {
-
-    pdfOverlayEl = document.createElement('div');
-    Object.assign(pdfOverlayEl.style, {
-        position: 'fixed',
-        top: '0', left: '0', width: '100%', height: '100%',
-        background: 'rgba(0,0,0,0.85)',
-        zIndex: '10000',
-        display: 'none',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center'
-    });
-
-    const closeBtn = document.createElement('button');
-    closeBtn.textContent = '✕';
-    Object.assign(closeBtn.style, {
-        position: 'absolute',
-        top: '20px',
-        right: '20px',
-        fontSize: '24px',
-        background: 'transparent',
-        color: '#fff',
-        border: 'none',
-        cursor: 'pointer',
-        zIndex: '10001'
-    });
-    closeBtn.addEventListener('click', closePdfOverlay);
-    pdfOverlayEl.appendChild(closeBtn);
-
-    pdfOverlayFrameEl = document.createElement('iframe');
-    Object.assign(pdfOverlayFrameEl.style, {
-        width: '90%',
-        height: '90%',
-        border: 'none',
-        background: '#fff'
-    });
-    pdfOverlayEl.appendChild(pdfOverlayFrameEl);
-
-    // Click on the dark backdrop (but not the iframe/close button) also closes it
-    pdfOverlayEl.addEventListener('click', (event) => {
-        if (event.target === pdfOverlayEl) closePdfOverlay();
-    });
-
-    window.addEventListener('keydown', (event) => {
-        if (event.code === 'Escape' && pdfOverlayEl.style.display === 'flex') closePdfOverlay();
-    });
-
-    document.body.appendChild(pdfOverlayEl);
-
-}
-
-function openPdfOverlay(pdfSrc) {
-    pdfOverlayFrameEl.src = pdfSrc;
-    pdfOverlayEl.style.display = 'flex';
-}
-
-function closePdfOverlay() {
-    pdfOverlayEl.style.display = 'none';
-    pdfOverlayFrameEl.src = ''; // stop the PDF from continuing to render/hold memory in the background
-}
-
 
 function registerHotspotsForModel(modelIndex, object3D) {
 
@@ -2495,126 +2602,5 @@ async function initTrackingControls() {
         lookaheadVal.textContent = val.toFixed(0);
         pushTrackingSetting('anticipation_lookahead_markers', val);
     });
-
-}
-
-function initTopDownPlacementHelper() {
-
-    // Small marker sphere shown at the raycast hit point — depthTest off + high
-    // renderOrder so it's always visible on top of the model, not occluded by it.
-    const markerGeo = new THREE.SphereGeometry(0.03, 12, 12);
-    const markerMat = new THREE.MeshBasicMaterial({color: 0xffff00, depthTest: false});
-    topDownMarker = new THREE.Mesh(markerGeo, markerMat);
-    topDownMarker.visible = false;
-    topDownMarker.renderOrder = 999;
-    scene.add(topDownMarker);
-
-    // Coordinate readout — built here in JS so no index.html changes are needed
-    topDownInfoEl = document.createElement('div');
-    Object.assign(topDownInfoEl.style, {
-        position: 'fixed',
-        top: '16px',
-        left: '50%',
-        transform: 'translateX(-50%)',
-        padding: '6px 14px',
-        background: 'rgba(0,0,0,0.7)',
-        color: '#fff',
-        fontFamily: 'monospace',
-        fontSize: '14px',
-        borderRadius: '6px',
-        zIndex: 9999,
-        display: 'none',
-        pointerEvents: 'none'
-    });
-    topDownInfoEl.textContent = 'X: —  Z: —';
-    document.body.appendChild(topDownInfoEl);
-
-    window.addEventListener('keydown', (event) => {
-        if (event.code === 'KeyK') {
-            toggleTopDownPlacementMode();
-        }
-    });
-
-    renderer.domElement.addEventListener('mousemove', onTopDownPlacementMouseMove);
-
-}
-
-function toggleTopDownPlacementMode() {
-
-    topDownPlacementActive = !topDownPlacementActive;
-
-    if (topDownPlacementActive) {
-
-        // Save current camera + controls state so pressing K again restores it
-        savedCameraState = {
-            position: camera.position.clone(),
-            rotation: camera.rotation.clone(),
-            target: controls.target.clone(),
-            enabled: controls.enabled
-        };
-
-        const activeEntry = getActiveModelEntry();
-        const focusPoint = activeEntry ? activeEntry.object.position.clone() : new THREE.Vector3();
-
-        // Fly straight above the active model, looking straight down (-Y)
-        camera.position.set(focusPoint.x, focusPoint.y + topDownHeight, focusPoint.z);
-        camera.up.set(0, 0, -1); // avoids the gimbal flip you get looking straight down with up=(0,1,0)
-        camera.lookAt(focusPoint.x, focusPoint.y, focusPoint.z);
-
-        controls.target.copy(focusPoint);
-        controls.enableRotate = false; // keep pan/zoom for lining up the cursor, but no tilting away from top-down
-        controls.update();
-
-        topDownMarker.visible = true;
-        topDownInfoEl.style.display = 'block';
-
-        console.log('Top-down placement helper: ON — move the cursor over the model');
-
-    } else {
-
-        if (savedCameraState) {
-            camera.position.copy(savedCameraState.position);
-            camera.rotation.copy(savedCameraState.rotation);
-            camera.up.set(0, 1, 0);
-            controls.target.copy(savedCameraState.target);
-            controls.enabled = savedCameraState.enabled;
-            controls.update();
-        }
-
-        controls.enableRotate = true;
-
-        topDownMarker.visible = false;
-        topDownInfoEl.style.display = 'none';
-
-        console.log('Top-down placement helper: OFF');
-
-    }
-
-}
-
-function onTopDownPlacementMouseMove(event) {
-
-    if (!topDownPlacementActive) return;
-
-    topDownMouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-    topDownMouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-
-    topDownRaycaster.setFromCamera(topDownMouse, camera);
-
-    const activeEntry = getActiveModelEntry();
-    if (!activeEntry) return;
-
-    const hits = topDownRaycaster.intersectObject(activeEntry.object, true);
-
-    if (hits.length === 0) {
-        topDownInfoEl.textContent = 'X: —  Z: —';
-        return;
-    }
-
-    const hit = hits[0];
-    topDownMarker.position.copy(hit.point);
-
-    const localPos = activeEntry.object.worldToLocal(hit.point.clone());
-    topDownInfoEl.textContent = `X: ${localPos.x.toFixed(3)}  Z: ${localPos.z.toFixed(3)}  (Y: ${localPos.y.toFixed(3)})`;
 
 }

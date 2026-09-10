@@ -1,4 +1,6 @@
-/* ── Local Montserrat font (Flask static path) ── */
+/* ═══════════════════════════════════════════════════════════
+   FONTS
+   ═══════════════════════════════════════════════════════════ */
 @font-face {
     font-family: 'Montserrat';
     src: url('/static/fonts/Montserrat-Light.ttf') format('truetype');
@@ -24,7 +26,9 @@
     font-style: normal;
 }
 
-/* ── Global text reset ── */
+/* ═══════════════════════════════════════════════════════════
+   GLOBAL RESET
+   ═══════════════════════════════════════════════════════════ */
 * {
     font-family: 'Montserrat', sans-serif;
     font-weight: 300;
@@ -37,21 +41,30 @@ body {
     height: 100%;
     overflow: hidden;
 }
-
 canvas {
     display: block;
 }
 
-/* ─── Customizable Popup Margins (Edit these values) ─── */
-:root {
-    --hotspot-margin-top: 40px;    /* Distance from top edge */
-    --hotspot-margin-right: 40px;  /* Distance from right edge */
-    --hotspot-margin-bottom: 40px; /* Distance from bottom edge */
-    --hotspot-margin-left: 40px;   /* Distance from left edge */
+/* ═══════════════════════════════════════════════════════════
+   GLOBAL UTILITY
+   ═══════════════════════════════════════════════════════════ */
+.hidden {
+    display: none !important;
 }
 
-/* ─── Rest of your original CSS ─── */
+/* ═══════════════════════════════════════════════════════════
+   CUSTOMIZABLE POPUP MARGINS
+   ═══════════════════════════════════════════════════════════ */
+:root {
+    --hotspot-margin-top: 40px;
+    --hotspot-margin-right: 40px;
+    --hotspot-margin-bottom: 40px;
+    --hotspot-margin-left: 40px;
+}
 
+/* ═══════════════════════════════════════════════════════════
+   FIXED SCENE LOGO
+   ═══════════════════════════════════════════════════════════ */
 .logo-image {
     position: fixed;
     top: 30px;
@@ -61,6 +74,9 @@ canvas {
     height: auto;
 }
 
+/* ═══════════════════════════════════════════════════════════
+   SCREENSAVER
+   ═══════════════════════════════════════════════════════════ */
 #screensaver {
     position: fixed;
     top: 0;
@@ -74,16 +90,23 @@ canvas {
     z-index: 1000;
     cursor: none;
 }
-
 #screensaver img {
     max-width: 100%;
     max-height: 100%;
     object-fit: contain;
 }
+.screensaver-image {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
 
-.hotspot-btn--green .hotspot-icon { /* or just use the PNG's own color */ }
-
-/* Drawer toggle handle */
+/* ═══════════════════════════════════════════════════════════
+   DRAWER TOGGLE HANDLE
+   ═══════════════════════════════════════════════════════════ */
 #drawer-toggle {
     position: fixed;
     bottom: 0;
@@ -109,11 +132,13 @@ canvas {
     z-index: 20;
     transition: background 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
 }
-
 #drawer-toggle:hover {
     background-color: #f6f6f6;
     box-shadow: 0 -4px 14px rgba(0, 0, 0, 0.12);
     transform: translateX(-50%) translateY(-4px);
+}
+#drawer-toggle.hidden {
+    display: none;
 }
 
 .drawer-toggle-icon {
@@ -123,19 +148,20 @@ canvas {
     gap: 4px;
     flex-shrink: 0;
 }
-
 .drawer-toggle-icon span {
     width: 7px;
     height: 7px;
     border-radius: 1px;
     background-color: #9a9a9a;
 }
-
 .drawer-toggle-label {
     line-height: 1;
     white-space: nowrap;
 }
 
+/* ═══════════════════════════════════════════════════════════
+   STATUS TEXT (top-left)
+   ═══════════════════════════════════════════════════════════ */
 #status-text {
     position: fixed;
     top: 180px;
@@ -151,6 +177,9 @@ canvas {
     pointer-events: none;
 }
 
+/* ═══════════════════════════════════════════════════════════
+   TOGGLE BAR (model switcher drawer)
+   ═══════════════════════════════════════════════════════════ */
 #toggle-bar {
     position: fixed;
     bottom: 0;
@@ -168,13 +197,8 @@ canvas {
     transform: translateY(100%);
     transition: transform 0.3s ease;
 }
-
 #toggle-bar.open {
     transform: translateY(0);
-}
-
-#drawer-toggle.hidden {
-    display: none;
 }
 
 .model-toggle-btn {
@@ -187,20 +211,16 @@ canvas {
     cursor: pointer;
     transition: background 0.2s, border-radius 0.2s;
 }
-
 .model-toggle-btn:hover {
     background: #999999;
 }
-
 .model-toggle-btn.inactive {
     opacity: 0.55;
 }
-
 .model-toggle-btn.active {
     background: #7a7a7a;
     box-shadow: inset 0 0 0 2px #22c55e;
 }
-
 .model-toggle-icon {
     position: absolute;
     inset: 0;
@@ -211,7 +231,6 @@ canvas {
     opacity: 0.8;
     pointer-events: none;
 }
-
 .model-toggle-label {
     position: absolute;
     top: 14px;
@@ -225,7 +244,6 @@ canvas {
     text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
     pointer-events: none;
 }
-
 .model-toggle-label::before {
     content: '';
     width: 0;
@@ -234,15 +252,16 @@ canvas {
     border-bottom: 6px solid transparent;
     border-left: 8px solid #fff;
 }
-
 .model-toggle-btn.active .model-toggle-label {
     color: #4ade80;
 }
-
 .model-toggle-btn.active .model-toggle-label::before {
     border-left-color: #4ade80;
 }
 
+/* ═══════════════════════════════════════════════════════════
+   DEBUG OVERLAY (press H)
+   ═══════════════════════════════════════════════════════════ */
 #debug-overlay {
     position: fixed;
     top: 20px;
@@ -256,13 +275,11 @@ canvas {
     line-height: 1.6;
     z-index: 499;
     display: none;
-    pointer-events: none;
     white-space: pre;
     max-height: 80vh;
     overflow-y: auto;
     pointer-events: auto;
 }
-
 #debug-overlay strong {
     color: #fff;
     font-weight: 600;
@@ -274,11 +291,9 @@ canvas {
     padding-top: 2px;
     border-top: 1px solid rgba(255, 255, 255, 0.25);
 }
-
 #light-controls .light-group {
     margin-bottom: 2px;
 }
-
 #light-controls label {
     display: flex;
     align-items: center;
@@ -286,12 +301,10 @@ canvas {
     margin: 2px 0;
     font-weight: 300;
 }
-
 #light-controls input[type="range"] {
     flex: 1;
     accent-color: #4ade80;
 }
-
 #light-controls input[type="color"] {
     width: 28px;
     height: 20px;
@@ -300,7 +313,6 @@ canvas {
     background: none;
     cursor: pointer;
 }
-
 #light-controls .light-value {
     min-width: 42px;
     text-align: right;
@@ -309,6 +321,35 @@ canvas {
     font-weight: 300;
 }
 
+.rotate-controls {
+    display: flex;
+    gap: 8px;
+    margin-top: 4px;
+}
+.rotate-btn {
+    flex: 1;
+    padding: 6px 12px;
+    font-size: 13px;
+    color: #f0f0f0;
+    font-weight: 300;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+}
+.rotate-btn:hover {
+    background: rgba(255, 255, 255, 0.16);
+    border-color: rgba(255, 255, 255, 0.4);
+}
+.rotate-btn:active {
+    background: rgba(255, 255, 255, 0.24);
+    transform: scale(0.97);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   HOTSPOT LAYER (3D-projected buttons)
+   ═══════════════════════════════════════════════════════════ */
 #hotspot-layer {
     position: fixed;
     top: 0;
@@ -319,7 +360,7 @@ canvas {
     z-index: 500;
 }
 
-/* --- Updated Hotspot Button --- */
+/* ── Hotspot button ── */
 .hotspot-btn {
     position: absolute;
     width: 40px;
@@ -341,7 +382,6 @@ canvas {
     appearance: none;
     -webkit-appearance: none;
 }
-
 .hotspot-btn--green {
     box-shadow: 0 2px 10px rgba(34, 197, 94, 0.55);
 }
@@ -351,7 +391,6 @@ canvas {
 .hotspot-btn--pink {
     box-shadow: 0 2px 10px rgba(236, 72, 153, 0.55);
 }
-
 .hotspot-btn:hover {
     transform: translate(-50%, -50%) scale(1.12);
 }
@@ -364,7 +403,6 @@ canvas {
 .hotspot-btn--pink:hover {
     box-shadow: 0 0 18px rgba(236, 72, 153, 0.75);
 }
-
 .hotspot-btn:active {
     transform: translate(-50%, -50%) scale(1.22);
 }
@@ -378,6 +416,16 @@ canvas {
     box-shadow: 0 0 22px rgba(236, 72, 153, 0.85);
 }
 
+/* Icon inside the button */
+.hotspot-icon {
+    width: 40px;
+    height: 40px;
+    object-fit: contain;
+    display: block;
+    pointer-events: none;
+}
+
+/* Optional label under a hotspot button (unused currently) */
 .hotspot-label {
     position: absolute;
     top: 48px;
@@ -393,6 +441,9 @@ canvas {
     pointer-events: none;
 }
 
+/* ═══════════════════════════════════════════════════════════
+   LOADING OVERLAY
+   ═══════════════════════════════════════════════════════════ */
 #loading-overlay {
     position: fixed;
     top: 0;
@@ -405,7 +456,6 @@ canvas {
     justify-content: center;
     z-index: 3000;
 }
-
 #loading-content {
     width: 400px;
     max-width: 80vw;
@@ -413,13 +463,11 @@ canvas {
     text-align: center;
     font-weight: 300;
 }
-
 #loading-title {
     font-size: 20px;
     margin-bottom: 8px;
     font-weight: 300;
 }
-
 #loading-current-file {
     font-size: 13px;
     color: #aaa;
@@ -428,7 +476,6 @@ canvas {
     word-break: break-word;
     font-weight: 300;
 }
-
 #loading-bar-track {
     width: 100%;
     height: 8px;
@@ -436,21 +483,18 @@ canvas {
     border-radius: 4px;
     overflow: hidden;
 }
-
 #loading-bar-fill {
     height: 100%;
     width: 0%;
     background: rgba(40, 140, 255, 0.9);
     transition: width 0.15s ease;
 }
-
 #loading-progress-text {
     font-size: 13px;
     color: #ccc;
     margin-top: 8px;
     font-weight: 300;
 }
-
 #loading-overall-text {
     font-size: 12px;
     color: #777;
@@ -458,35 +502,9 @@ canvas {
     font-weight: 300;
 }
 
-.rotate-controls {
-    display: flex;
-    gap: 8px;
-    margin-top: 4px;
-}
-
-.rotate-btn {
-    flex: 1;
-    padding: 6px 12px;
-    font-size: 13px;
-    color: #f0f0f0;
-    font-weight: 300;
-    background: rgba(255, 255, 255, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.25);
-    border-radius: 6px;
-    cursor: pointer;
-    transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
-}
-
-.rotate-btn:hover {
-    background: rgba(255, 255, 255, 0.16);
-    border-color: rgba(255, 255, 255, 0.4);
-}
-
-.rotate-btn:active {
-    background: rgba(255, 255, 255, 0.24);
-    transform: scale(0.97);
-}
-
+/* ═══════════════════════════════════════════════════════════
+   CONNECTION WARNING
+   ═══════════════════════════════════════════════════════════ */
 #connection-warning {
     position: fixed;
     bottom: 16px;
@@ -505,11 +523,9 @@ canvas {
     border-radius: 6px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
-
 #connection-warning.visible {
     display: flex;
 }
-
 #connection-warning-dismiss {
     background: none;
     border: none;
@@ -521,6 +537,9 @@ canvas {
     font-weight: 300;
 }
 
+/* ═══════════════════════════════════════════════════════════
+   MODEL-SWITCH COVER OVERLAY
+   ═══════════════════════════════════════════════════════════ */
 #model-switch-overlay {
     position: fixed;
     inset: 0;
@@ -531,7 +550,46 @@ canvas {
     transition: opacity 0.3s ease;
 }
 
-/* The fullscreen backdrop uses your custom margins */
+/* ═══════════════════════════════════════════════════════════
+   GREEN HOTSPOT TOGGLE (bottom-right circular button)
+   ═══════════════════════════════════════════════════════════ */
+#green-hotspots-toggle {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 100;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    border: none;
+    background: #4caf50;
+    color: white;
+    font-size: 22px;
+    line-height: 1;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    transition: background 0.25s ease, transform 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    user-select: none;
+}
+#green-hotspots-toggle:hover {
+    transform: scale(1.08);
+}
+#green-hotspots-toggle.hidden {
+    display: none !important;
+}
+#green-hotspots-toggle.inactive {
+    background: #888;
+}
+#green-hotspots-toggle.inactive:hover {
+    background: #777;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   HOTSPOT OVERLAY — BACKDROP
+   ═══════════════════════════════════════════════════════════ */
 #hotspot-overlay {
     position: fixed;
     top: 0;
@@ -539,24 +597,23 @@ canvas {
     width: 100vw;
     height: 100vh;
     background: rgba(0, 0, 0, 0.5);
-    display: none; /* Initially invisible - JS will set to 'flex' when opened */
+    display: none; /* JS sets to 'flex' when opened */
     align-items: stretch;
     justify-content: stretch;
     z-index: 2000;
-
-    /* Apply the separate edges here */
     padding: var(--hotspot-margin-top) var(--hotspot-margin-right) var(--hotspot-margin-bottom) var(--hotspot-margin-left);
     box-sizing: border-box;
 }
 
+/* ═══════════════════════════════════════════════════════════
+   HOTSPOT OVERLAY — CONTENT BOX
+   Layout: top bar (fixed) + scroll area (flexes) + deep-dive buttons
+   ═══════════════════════════════════════════════════════════ */
 #hotspot-overlay-content {
     position: relative;
     background: #fff;
-
-    /* Fills the space inside the margins */
     width: 100%;
     height: 100%;
-
     border-radius: 20px;
     border: 2px solid #22c55e;
     box-sizing: border-box;
@@ -566,85 +623,136 @@ canvas {
     display: flex;
     flex-direction: column;
 
-    /* CHANGE: Allow the icon to stick out without being cut off */
+    /* Allow the top-left badge and close button to stick out */
     overflow: visible;
 }
 
-
-
-/* The scrollable inner wrapper (Text left, Image right) */
-.hotspot-overlay-scroll {
-    flex: 1 1 auto;
-    min-height: 0;
-    overflow-y: auto;
-
-    display: grid;
-    grid-template-columns: 1fr 1fr; /* Both columns grow equally */
-    column-gap: 30px;
-    align-items: stretch; /* Stretch columns to fill height */
+/* ── TOP BAR: title + subtitle (left), logo (right) ── */
+.hotspot-overlay-topbar {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    padding-bottom: 16px;
+    margin-bottom: 16px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
 }
-
-/* Title and Text (Left Column) */
+.hotspot-overlay-titleblock {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-width: 0;
+}
 #hotspot-overlay-title {
-    grid-column: 1;
-    margin: 0 0 12px 0;
+    margin: 0;
     font-size: 26px;
     font-weight: 600;
     color: #333333;
 }
+.hotspot-overlay-subtitle {
+    font-size: 16px;
+    font-style: italic;
+    font-weight: 300;
+    opacity: 0.7;
+    color: #555555;
+    margin-top: 4px;
+}
+.hotspot-overlay-subtitle.hidden {
+    display: none;
+}
+.hotspot-overlay-logo {
+    flex: 0 0 auto;
+    max-height: 60px;
+    max-width: 160px;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    pointer-events: none;
+}
+.hotspot-overlay-logo.hidden {
+    display: none;
+}
 
+/* ── SCROLL AREA: text + images scroll together ── */
+.hotspot-overlay-scroll {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 30px;
+    align-items: start;
+}
+
+/* Text column */
 #hotspot-overlay-text {
     grid-column: 1;
     font-size: 24px;
     line-height: 1.6;
     color: #777777;
-    margin-bottom: 20px;
+    margin: 0 0 20px 0;
     white-space: pre-line;
-    align-self: start; /* Keeps text at top, but the column itself stretches */
 }
 
-/* Images (Right Column) - Fills the entire height */
+/* Images column — natural height, scrolls with the text */
 #hotspot-overlay-images {
     grid-column: 2;
-    grid-row: 1 / span 2;
+    grid-row: 1;
     display: flex;
     flex-direction: column;
-    margin-top: 50px;
     gap: 12px;
-    width: 95%;
-    height: 95%; /* Fill available height */
-    min-height: 0;
-}
-
-#hotspot-overlay-images img {
     width: 100%;
-    flex: 1 1 auto; /* Each image stretches to fill available vertical space */
+    height: auto;
     min-height: 0;
-    object-fit: cover; /* Crops image to fill the space */
+    margin-top: 0;
+    overflow: visible;
+}
+#hotspot-overlay-images img,
+#hotspot-overlay-images video {
+    flex: 0 0 auto;
+    width: 100%;
+    height: auto;
+    min-height: 0;
+    object-fit: contain;
     border-radius: 12px;
 }
 
-/* Deep Dive Option (Bottom Left) */
-.hotspot-deep-dive {
-    grid-column: 1;
-    margin-top: 10px;
-    color: #22c55e;
-    font-weight: 600;
-    font-size: 28px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 8px;
+/* Image class variants used by renderHotspotMedia */
+.hotspot-overlay-image {
+    width: 100%;
+    display: block;
+}
+.hotspot-overlay-image--contain {
+    object-fit: contain;
+    max-height: 240px;
+    background: #fff;
+    padding: 12px;
+    box-sizing: border-box;
+}
+.hotspot-overlay-image--cover {
+    object-fit: cover;
 }
 
-.hotspot-deep-dive::before {
-    content: '>';
-    font-size: 18px;
-    font-weight: 600;
+/* ── Full-slideshow mode (slideshow with no text): hide title bar, widen images ── */
+#hotspot-overlay-content.slideshow-full .hotspot-overlay-titleblock {
+    display: none;
+}
+#hotspot-overlay-content.slideshow-full .hotspot-overlay-scroll {
+    grid-template-columns: 1fr;
+}
+#hotspot-overlay-content.slideshow-full #hotspot-overlay-images {
+    grid-column: 1 / -1;
+    grid-row: 1;
+    width: 100%;
+    height: auto;
+    margin-top: 0;
 }
 
-/* Badge Icon (Top Left) */
-
+/* ═══════════════════════════════════════════════════════════
+   HOTSPOT OVERLAY — TOP-LEFT BADGE ICON
+   ═══════════════════════════════════════════════════════════ */
 .hotspot-overlay-icon {
     position: absolute;
     top: -35px;
@@ -653,24 +761,23 @@ canvas {
     height: 70px;
     border-radius: 50%;
     background: #ffffff;
-
     box-sizing: border-box;
     object-fit: contain;
-
-
-
-    /* CHANGE: Ensure it sits above the white box */
     z-index: 10;
 }
+
+/* ═══════════════════════════════════════════════════════════
+   HOTSPOT OVERLAY — CLOSE BUTTON (top-right badge)
+   ═══════════════════════════════════════════════════════════ */
 #hotspot-overlay-close {
     position: absolute;
     top: -35px;
-    right: -35px;          /* mirror of the left icon */
+    right: -35px;
     width: 70px;
     height: 70px;
     border-radius: 50%;
     background: #ffffff;
-    border: 2px solid #aaaaaa; /* fallback, overridden by variants */
+    border: 2px solid #aaaaaa;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -683,13 +790,14 @@ canvas {
     transition: transform 0.15s ease, box-shadow 0.15s ease;
     z-index: 10;
 }
-
 #hotspot-overlay-close:hover {
     transform: scale(1.08);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
 }
 
-/* Variant Colors */
+/* ═══════════════════════════════════════════════════════════
+   HOTSPOT OVERLAY — VARIANT COLOURS
+   ═══════════════════════════════════════════════════════════ */
 .hotspot-overlay--green #hotspot-overlay-content { border-color: #22c55e; }
 .hotspot-overlay--blue  #hotspot-overlay-content { border-color: #3498db; }
 .hotspot-overlay--pink  #hotspot-overlay-content { border-color: #e84393; }
@@ -698,50 +806,200 @@ canvas {
 .hotspot-overlay--blue  .hotspot-overlay-icon { border-color: #3498db; }
 .hotspot-overlay--pink  .hotspot-overlay-icon { border-color: #e84393; }
 
-
 .hotspot-overlay--green #hotspot-overlay-close { border-color: #22c55e; color: #22c55e; }
 .hotspot-overlay--blue  #hotspot-overlay-close { border-color: #3498db; color: #3498db; }
 .hotspot-overlay--pink  #hotspot-overlay-close { border-color: #e84393; color: #e84393; }
 
+/* ═══════════════════════════════════════════════════════════
+   DEEP-DIVE BUTTONS (bottom of overlay, hanging out)
+   ═══════════════════════════════════════════════════════════ */
+.hotspot-deep-dive-buttons {
+    position: absolute;
+    bottom: 0;
+    left: 40px;
+    transform: translateY(50%);
+    z-index: 30;
+    display: none;
+    flex-wrap: wrap;
+    gap: 12px;
+    justify-content: flex-start;
+    align-items: center;
+    background: transparent;
+    padding: 0;
+    margin: 0;
+    width: auto;
+    pointer-events: auto;
+}
+.hotspot-deep-dive-buttons.visible {
+    display: flex;
+}
+.hotspot-deep-dive {
+    background: #333;
+    color: #fff;
+    border: none;
+    border-radius: 50px;
+    padding: 12px 32px;
+    font-size: 18px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.15s ease, box-shadow 0.15s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    letter-spacing: 0.3px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    font-family: 'Montserrat', sans-serif;
+    white-space: nowrap;
+}
+.hotspot-deep-dive:hover {
+    transform: scale(1.06);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+}
+.hotspot-deep-dive:active {
+    transform: scale(0.94);
+}
+.hotspot-deep-dive::before {
+    content: none;
+}
+.hotspot-overlay--green .hotspot-deep-dive { background: #22c55e; }
+.hotspot-overlay--blue  .hotspot-deep-dive { background: #3498db; }
+.hotspot-overlay--pink  .hotspot-deep-dive { background: #e84393; }
 
-/* Circular toggle button – bottom-left */
-#green-hotspots-toggle {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  z-index: 100;
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  border: none;
-  background: #4caf50;            /* active = green */
-  color: white;
-  font-size: 22px;
-  line-height: 1;
-  cursor: pointer;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-  transition: background 0.25s ease, transform 0.2s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  user-select: none;
+/* ═══════════════════════════════════════════════════════════
+   SLIDESHOW
+   ═══════════════════════════════════════════════════════════ */
+.hotspot-slideshow {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    overflow: hidden;
+}
+.slideshow-loading,
+.slideshow-empty {
+    padding: 20px;
+    text-align: center;
+}
+.slideshow-image-wrapper {
+    position: relative;
+    flex: 1;
+    width: 95%;
+    min-height: 0;
+    overflow: hidden;
+}
+.slideshow-image {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: contain;
 }
 
-#green-hotspots-toggle:hover {
-  transform: scale(1.08);
+/* Navigation buttons */
+.slideshow-nav-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(0, 0, 0, 0.55);
+    color: #fff;
+    border: none;
+    border-radius: 50%;
+    width: 75px;
+    height: 75px;
+    font-size: 30px;
+    cursor: pointer;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s ease, transform 0.15s ease;
+    touch-action: manipulation;
+    user-select: none;
+}
+.slideshow-nav-btn:hover {
+    background: rgba(0, 0, 0, 0.75);
+}
+.slideshow-nav-btn:active {
+    transform: translateY(-50%) scale(0.92);
+}
+.slideshow-nav-btn--prev {
+    left: 12px;
+}
+.slideshow-nav-btn--next {
+    right: 12px;
 }
 
-/* Hidden when drawer is open */
-#green-hotspots-toggle.hidden {
-  display: none !important;
+/* Dots */
+.slideshow-dots {
+    display: flex;
+    gap: 10px;
+}
+.slideshow-dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(255, 255, 255, 0.5);
+    cursor: pointer;
+    padding: 0;
+    transition: background 0.2s ease, transform 0.15s ease;
+    touch-action: manipulation;
+}
+.slideshow-dot:hover {
+    background: rgba(255, 255, 255, 0.8);
+}
+.slideshow-dot:active {
+    transform: scale(0.85);
+}
+.slideshow-dot.active {
+    background: #000;
+    box-shadow: 0 0 8px rgba(255, 255, 255, 0.4);
 }
 
-/* Inactive state (hotspots hidden) – grey */
-#green-hotspots-toggle.inactive {
-  background: #888;
+/* Counter */
+.slideshow-counter {
+    font-size: 16px;
+    font-weight: 500;
+    color: #fff;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+    min-width: 40px;
+    text-align: center;
 }
 
-/* Optionally add a subtle shadow change on inactive */
-#green-hotspots-toggle.inactive:hover {
-  background: #777;
+/* Controls row */
+.slideshow-controls {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    padding: 8px 16px;
+    margin: 0 auto;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 30px;
+    backdrop-filter: blur(4px);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   TOP-DOWN COORDINATE READOUT
+   ═══════════════════════════════════════════════════════════ */
+.topdown-info {
+    position: fixed;
+    top: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 6px 14px;
+    background: rgba(0, 0, 0, 0.7);
+    color: #fff;
+    font-family: monospace;
+    font-size: 14px;
+    border-radius: 6px;
+    z-index: 9999;
+    pointer-events: none;
+    display: none;
+}
+.topdown-info.visible {
+    display: block;
 }
