@@ -1279,6 +1279,29 @@ directionalLight2.shadow.normalBias = 0.02;
     scene.add(camera);
 
 
+    //_______________________CAMERALIGHT START
+
+    const cameraLight = new THREE.SpotLight(
+    0xffffff,          // color
+    8,                 // intensity — tune to taste
+    0,                 // distance: 0 = no cutoff
+    Math.PI / 4,       // angle: ~45° cone
+    0.4,               // penumbra: soft edge
+    1.5                // decay — higher = falls off faster
+);
+cameraLight.position.set(0, 0, 0.2); // nudge forward so it sits just past the lens
+cameraLight.castShadow = false;      // keep off — moving shadow maps are costly
+camera.add(cameraLight);
+
+const cameraLightTarget = new THREE.Object3D();
+cameraLightTarget.position.set(0, 0, -1); // 1 unit in front, in camera space
+camera.add(cameraLightTarget);
+cameraLight.target = cameraLightTarget;
+
+//____________________________CAMERA LIGHT END
+
+
+
     const dracoLoader = new DRACOLoader();
 
     dracoLoader.setDecoderPath('static/js/vendor/three/examples/jsm/libs/draco/gltf/'); // note the /gltf/ subfolder — that's the JS-based decoder variant, most compatible
