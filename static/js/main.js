@@ -28,23 +28,32 @@ let modelEnabled = [true, true, false, true, false, true,false,true,true];
 // says when that button is clicked. Index matches modelEnabled / data-index (0 = button 1, etc).
 // "label" overrides the button's text — leave as null to just use the model's loaded name instead.
 // "statusText" is what appears top-right on click — leave as null to fall back to the model's name.
-const buttonConfig = [
-    {label: "Walk to Work", statusText: "Walk to Work"}, // Model 1
-    {label: "Rockbag Installation", statusText: "Rockbag Installation"}, // Model 2
-    {label: "Spezial", statusText: "Spezial"}, // Model 3
-    {label: "Deck Payload", statusText: "Deck Payload"}, // Model 4
-    {label: null, statusText: null}, // Model 5
-    {label: null, statusText: null}, // Model 6
-    {label: null, statusText: null}, // Model 7
-    {label: null, statusText: null}, // Model 8
-     {label: null, statusText: null}  // Model 8
-];
+const buttonConfig = {
+    // ---- Base boats (indices 0-8) ----
+    0: {label: "Walk to Work",         statusText: "Walk to Work"},
+    1: {label: "Rockbag Installation", statusText: "Rockbag Installation"},
+    2: {label: "Spezial",              statusText: "Spezial"},
+    3: {label: "Deck Payload",         statusText: "Deck Payload"},
+    4: {label: null, statusText: null},
+    5: {label: null, statusText: null},
+    6: {label: null, statusText: null},
+    7: {label: null, statusText: null},
+    8: {label: null, statusText: null},
+
+    // ---- Variants (index = boatNumber * 10 + variantNumber) ----
+    11: {label: "Walk to Work", statusText: "Extended Gangway"},
+    12: {label: "Walk to Work (Var. 2)", statusText: "Walk to Work – Variante 2"},
+    // e.g. Boot 2 variants:
+    21: {label: "Rockbag (Var. 1)",      statusText: "Rockbag – Variante 1"},
+};
 
 // Mouse-driven camera rotation toggle (top-right button) — starts OFF.
 let mouseRotationEnabled = false;
 let mouseRotationToggleBtn;
 let mouseRotationToggleIconEl; // <-- moved up here
 let mouseRotationSavedCameraState = null; // camera position/rotation/target, restored on toggle-off
+
+
 
 
 // Path to the two icon files — swap these to point at your own SVGs.
@@ -59,7 +68,15 @@ let mouseRotationIconUnlockedSrc = 'static/images/icons/camera-video.svg';
 // mouseRotationEnabled so you can enable rotation without necessarily
 // enabling zoom, or vice versa.
 let mouseRotationAllowZoom = true;
+// Whether OrbitControls zoom (wheel/pinch) is allowed in the default
+// (rotation-off) state. Final mode locks this off so the kiosk view is
+// fully read-only. Independent of mouseRotationAllowZoom, which only
+// governs zoom *while* mouse-rotation mode is active.
+let cameraZoomEnabled = true;
 
+// Independent switch: whether OrbitControls zoom (wheel/pinch) is allowed
+// while mouse rotation mode is active.
+let mouseRotationAllowZoom = true;
 
 
 // For Aruco Based Detection
@@ -885,11 +902,10 @@ async function applyFinalModeOverrides() {
 
             modelEnabled = modelEnabled.map(() => true);
             mouseRotationAllowZoom = false;
+                cameraZoomEnabled = false;          // <-- add this
             keyboardMovementEnabled = false;
 
         } else {
-
-            console.log('Final mode off — running with default dev settings');
 
         }
 
@@ -1426,6 +1442,7 @@ directionalLight2.shadow.normalBias = 0.02;
     controls.update();
 
      controls.enableRotate = false;
+     controls.enableZoom = cameraZoomEnabled;   // <-- was implicitly OrbitControls' default (true)
 
     // ----- CAMERA CONTROLS (X, Y, Target Y, Model Z) -----
 const camXSlider = document.getElementById('cam-pos-x');
@@ -1760,15 +1777,16 @@ function registerToggleableModel(index, name, object3D) {
                     console.log("Found Painthull, changing scaler");
                    // mat.color.multiplyScalar(0.75);  // 0.7 = 30% darker; lower = darker still
                 }
+                //Heliport
                    if (mat.name === 'PaintDeck_DOS_RAL_9023.003' ) {
                     console.log("Found Painthull, changing scaler");
-                     mat.color.setHex(0x000000);
+                     mat.color.setHex(0x505050);
                    // mat.color.multiplyScalar(0.75);  // 0.7 = 30% darker; lower = darker still
                 }
-
+                // Relinge
                                if (mat.name === 'PaintDeck_DOS_RAL_9023.002' ) {
                     console.log("Found Painthull, changing scaler");
-                     mat.color.setHex(0x636363);
+                     mat.color.setHex(0x606060);
                    // mat.color.multiplyScalar(0.75);  // 0.7 = 30% darker; lower = darker still
                 }
 
@@ -3048,7 +3066,7 @@ function toggleMouseRotationMode() {
     } else {
 
         controls.enableRotate = false;
-        controls.enableZoom = true; // restore normal (non-rotation-mode) zoom behavior
+           controls.enableZoom = cameraZoomEnabled;   // <-- was: true
 
         if (mouseRotationSavedCameraState) {
             camera.position.copy(mouseRotationSavedCameraState.position);
