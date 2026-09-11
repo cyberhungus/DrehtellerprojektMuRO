@@ -1760,6 +1760,11 @@ function registerToggleableModel(index, name, object3D) {
                     console.log("Found Painthull, changing scaler");
                    // mat.color.multiplyScalar(0.75);  // 0.7 = 30% darker; lower = darker still
                 }
+                   if (mat.name === 'PaintDeck_DOS_RAL_9023.003' ) {
+                    console.log("Found Painthull, changing scaler");
+                     mat.color.setHex(0x000000);
+                   // mat.color.multiplyScalar(0.75);  // 0.7 = 30% darker; lower = darker still
+                }
 
                 materials.push(mat);
             });
