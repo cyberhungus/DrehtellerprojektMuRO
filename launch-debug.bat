@@ -12,9 +12,9 @@ if errorlevel 1 (
     exit /b 1
 )
 
-:: Run the main script in final mode
-echo Launching app.py --final ...
-python app.py --final
+:: Run the main script
+echo Launching app.py ...
+python app.py
 
 :: If the script exits, keep the window open to see any errors
 pause

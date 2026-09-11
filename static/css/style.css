@@ -584,7 +584,7 @@ canvas {
     position: fixed;
     top: 20px;
     right: 20px;
-    z-index: 1000;
+    z-index: 100;
     width: 48px;
     height: 48px;
     border-radius: 50%;
@@ -840,6 +840,7 @@ canvas {
 .hotspot-overlay--blue  #hotspot-overlay-close { border-color: #3498db; color: #3498db; }
 .hotspot-overlay--pink  #hotspot-overlay-close { border-color: #e84393; color: #e84393; }
 
+
 /* ═══════════════════════════════════════════════════════════
    DEEP-DIVE BUTTONS
    ═══════════════════════════════════════════════════════════ */
@@ -863,16 +864,18 @@ canvas {
 .hotspot-deep-dive-buttons.visible {
     display: flex;
 }
+
 .hotspot-deep-dive {
-    background: #333;
-    color: #fff;
-    border: none;
+    background: #ffffff;
+    color: #333333;                       /* fallback colour, overridden per variant below */
+    border: 2px solid #333333;            /* fallback border, overridden per variant below */
     border-radius: 50px;
-    padding: 12px 32px;
+    padding: 10px 30px;                   /* 10 instead of 12 to keep visual size roughly the same now that a 2px border is added */
     font-size: 18px;
     font-weight: 600;
     cursor: pointer;
-    transition: background 0.2s ease, transform 0.15s ease, box-shadow 0.15s ease;
+    transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease,
+                transform 0.15s ease, box-shadow 0.15s ease;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -892,9 +895,25 @@ canvas {
 .hotspot-deep-dive::before {
     content: none;
 }
-.hotspot-overlay--green .hotspot-deep-dive { background: #22c55e; }
-.hotspot-overlay--blue  .hotspot-deep-dive { background: #3498db; }
-.hotspot-overlay--pink  .hotspot-deep-dive { background: #e84393; }
+
+/* ── Variant colours: white fill, coloured border + text ── */
+.hotspot-overlay--green .hotspot-deep-dive {
+    background: #ffffff;
+    color: #22c55e;
+    border-color: #22c55e;
+}
+.hotspot-overlay--blue .hotspot-deep-dive {
+    background: #ffffff;
+    color: #3498db;
+    border-color: #3498db;
+}
+.hotspot-overlay--pink .hotspot-deep-dive {
+    background: #ffffff;
+    color: #e84393;
+    border-color: #e84393;
+}
+
+
 
 /* ═══════════════════════════════════════════════════════════
    SLIDESHOW

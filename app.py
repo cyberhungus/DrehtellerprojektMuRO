@@ -12,6 +12,9 @@ import platform
 import os
 import socket
 
+import socket
+import argparse
+
 from flask import Flask, render_template, Response, jsonify, request
 from flask_cors import CORS
 
@@ -25,6 +28,18 @@ from flask import jsonify, abort, request
 
 ALLOWED_IMAGE_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.webp'}
 
+# ---- Command-line arguments ----
+_arg_parser = argparse.ArgumentParser(description='DO C-CSOV Kiosk Application')
+_arg_parser.add_argument(
+    '--final',
+    action='store_true',
+    help='Final/kiosk mode: all models enabled, mouse zoom off, keyboard movement off'
+)
+_args = _arg_parser.parse_args()
+
+FINAL_MODE = _args.final
+
+print(f"FINAL_MODE = {FINAL_MODE}")
 
 
 app = Flask(__name__)
@@ -679,6 +694,21 @@ def api_settings():
     return jsonify(state_copy)
 
 
+@app.route('/api/list-models')
+def list_models():
+
+    models_dir = os.path.join(app.root_path, 'static', 'models')
+
+    if not os.path.isdir(models_dir):
+        return jsonify([])
+
+    folders = sorted(
+        name for name in os.listdir(models_dir)
+        if os.path.isdir(os.path.join(models_dir, name))
+    )
+
+    return jsonify(folders)
+
 @app.route('/api/list-images')
 def list_images():
 
@@ -702,6 +732,11 @@ def list_images():
     image_paths = [f'{rel_dir.rstrip("/")}/{f}' for f in files]
 
     return jsonify(image_paths)
+
+
+@app.route('/api/final')
+def api_final():
+    return jsonify({"final": FINAL_MODE})
 
 @app.route('/stream')
 def stream():
