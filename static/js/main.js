@@ -62,12 +62,6 @@ let mouseRotationSavedCameraState = null; // camera position/rotation/target, re
 let mouseRotationIconLockedSrc = 'static/images/icons/camera-video-off.svg';
 let mouseRotationIconUnlockedSrc = 'static/images/icons/camera-video.svg';
 
-
-// Independent switch: whether OrbitControls zoom (wheel/pinch) is allowed
-// while mouse rotation mode is active. Flip this to taste — separate from
-// mouseRotationEnabled so you can enable rotation without necessarily
-// enabling zoom, or vice versa.
-let mouseRotationAllowZoom = true;
 // Whether OrbitControls zoom (wheel/pinch) is allowed in the default
 // (rotation-off) state. Final mode locks this off so the kiosk view is
 // fully read-only. Independent of mouseRotationAllowZoom, which only
