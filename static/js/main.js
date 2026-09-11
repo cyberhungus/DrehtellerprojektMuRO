@@ -1214,7 +1214,7 @@ async function init() {
     //ambientLight.castShadow = true;
     scene.add(ambientLight);
 
-    directionalLight = new THREE.DirectionalLight(0xfff1d0, 4); // warm, punchy key light
+    directionalLight = new THREE.DirectionalLight(0xffffff, 4); // warm, punchy key light
     directionalLight.position.set(5.5, 7.5, -3.5); // low, angled position for longer, more dramatic shadows
 
     directionalLight.castShadow = true;
@@ -1763,6 +1763,12 @@ function registerToggleableModel(index, name, object3D) {
                    if (mat.name === 'PaintDeck_DOS_RAL_9023.003' ) {
                     console.log("Found Painthull, changing scaler");
                      mat.color.setHex(0x000000);
+                   // mat.color.multiplyScalar(0.75);  // 0.7 = 30% darker; lower = darker still
+                }
+
+                               if (mat.name === 'PaintDeck_DOS_RAL_9023.002' ) {
+                    console.log("Found Painthull, changing scaler");
+                     mat.color.setHex(0x636363);
                    // mat.color.multiplyScalar(0.75);  // 0.7 = 30% darker; lower = darker still
                 }
 
