@@ -1,4 +1,834 @@
+// Edit this to customize what each button shows and what the top-right status text
+// says when that button is clicked. Index matches modelEnabled / data-index (0 = button 1, etc).
+// "label" overrides the button's text — leave as null to just use the model's loaded name instead.
+// "statusText" is what appears top-right on click — leave as null to fall back to the model's name.
+const buttonConfig = {
+    // ---- Base boats (indices 0-8) ----
+    0: {label: "Standard",         statusText: "Base Variant"},
+    1: {label: "Rockbag Installation", statusText: "Rockbag Installation"},
+    2: {label: "CFE",              statusText: "Control Flow Excavator"},
+    3: {label: "Deck Payload",         statusText: "Deck Payload"},
+    4: {label: "Cable Repair\"", statusText: "Cable Repair Spread"},
+    5: {label: "ROV", statusText: "ROV Operations"},
+    6: {label: null, statusText: null},
+    7: {label: "Grouting", statusText: "Grouting"},
+    8: {label: "Monopile Cleaning", statusText: "Monopile Cleaning"},
+
+    // ---- Variants (index = boatNumber * 10 + variantNumber) ----
+    11: {label: "Walk to Work", statusText: "Extended Gangway"},
+    12: {label: "Walk to Work (Var. 2)", statusText: "Walk to Work – Variante 2"},
+    // e.g. Boot 2 variants:
+    21: {label: "Rockbag (Var. 1)",      statusText: "Rockbag – Variante 1"},
+};
+
+
+const hotspotDefinitions = {
+
+    0: [ // Boot 1
+        {
+            id: '1-1-tower-oben-2',
+            localPosition: new THREE.Vector3(-0.134, 1, -0.03),
+            minAngle: 0,
+            maxAngle: 359,
+            variant: 'pink',
+            icon: 'static/images/icons/hotspot-icon-pink.png',
+            linkedModelIndex: 11 // jumps to "Boot 1_1"
+        },
+        {
+            id: '1-2-gangway-ende-2',
+            localPosition: new THREE.Vector3(0.458, 0.85, -0.215),
+            minAngle: 10,
+            maxAngle: 180,
+            variant: 'blue',
+            icon: 'static/images/icons/hotspot-icon-blue.png',
+            content: {
+                title: 'Walk to Work ',
+                text: '"Beyond its core W2W and accommodation role, the DO C-CSOV is configured to support a broad range of offshore scopes with the following key capabilities:\n' +
+                    '\n' +
+                    '•  Motion-compensated gangway with DP2 station-keeping for safe personnel transfer\n' +
+                    '•  Walk-to-Work tower, large modular deck and flexible crane for equipment handling and light construction works\n' +
+                    '•  HiPAP system for subsea positioning on operations such as grouting and inspection\n' +
+                    '•  Removable daughter craft to extend in-field reach\n' +
+                    '•  Helideck for rapid crew changes\n' +
+                    '•  Internal logistics layout linking deck, storage and gangway for efficient movement of cargo and personnel\n' +
+                    '\n' +
+                    'This configuration lets the vessel combine W2W, accommodation and additional offshore scopes within a single deployment, or serve as a dedicated project vessel for scopes such as grouting - creating synergies with installation vessels. Its W2W capability further provides in-field transfer capacity as project contingency when personnel transfer becomes a bottleneck for the primary W2W fleet."\n',
+                images: ['static/images/m1walktowork/walktowork1.jpg','static/images/m1walktowork/walktowork2.jpg']
+            }
+        }
+    ],
+
+    11: [ // Boot 1, variant 1 ("Boot 1_1")
+        {
+            id: 'boot1-1-switch-back-to-boot1',
+            localPosition: new THREE.Vector3(0.3, 0.5, 0),
+            minAngle: 0,
+            maxAngle: 359,
+            variant: 'pink',
+            icon: 'static/images/icons/hotspot-icon-pink.png',
+            linkedModelIndex: 0
+        }
+    ],
+
+    1: [ // Boot 2
+
+        {
+            id: 'tower-mittig-2',
+            localPosition: new THREE.Vector3(-0.134, 0.75, -0.24),
+            minAngle: 180,
+            maxAngle: 269,
+            variant: 'green',
+            icon: 'static/images/icons/hotspot-icon-green.png',
+            content: {
+                title: 'Gangway',
+                subtitle: 'Stay Safe!',
+                logo: 'static/images/logos/smst-logo.webp',
+                text: "The DO C-CSOV is fitted with the SMST TAB-L2 motion-compensated gangway. Behind it stands proven technology with a track record of over 86 gangway systems delivered. It is engineered for safety, reliability and operability, keeping technicians moving and operations running in tough offshore conditions."
+                    + "The DO C-CSOV is equipped with an SMST gangway system designed to maximise transfer efficiency, flexibility and uptime:"
+                    + "Its 12 to 30 m landing height range is the highest on the market, giving unrestricted access to any offshore infrastructure. The 3D winch provides redundancy for the main crane and enables 3D motion-compensated lifting when configured with the 50 t AHC crane. Digitalization such as AI assisted auto docking enable repeatable, high-speed connections for fast transfer of personnel. ",
+                images: ['static/images/f1gangway/TAB-L.jpg', 'static/images/f1gangway/TAB-L2.png'],
+                deepDives: [
+                    {
+                        title: 'Technical Specifications',
+                        text: `Technical Main Data:
+                        
+                        •  Large safety distance: >12 m safety distance between offshore structure and vessel at all times
+                        •  Deck & helideck access: independent access from both deck and helideck enables flexible personnel flow without reliance on the vessel’s elevator.
+                        •  Ship-to-fixed as well as ship-to-floating connection
+                        •  Condition monitoring: predictive maintenance capabilities help maximise system availability and operational uptime.
+                        •  Landing heights: 12 to 30 m (with luffing angle of 0°)
+                        •  Gangway inclination angle: +20°/-16.5°
+                        •  Telescoping length: 11 m
+                        •  Telescoping speed: up to 2.5 m/s
+                        •  Slewing range: 194°
+                        •  Cargo limits for gangway and winch: 1,000 kg / 3,000 kg
+                        •  ATEX prepared`,
+                        images: ['static/images/f1gangway/gangwaydeepdive.png']
+                    },
+                    {
+                        title: 'In Operation',
+                        video: 'static/images/f1gangway/video.mp4'
+                    }
+                ]
+            }
+        },
+        {
+            id: 'kran-beuge-2',
+            localPosition: new THREE.Vector3(-0.788, 0.4, -0.26),
+            minAngle: 180,
+            maxAngle: 269,
+            variant: 'green',
+            icon: 'static/images/icons/hotspot-icon-green.png',
+            content: {
+                title: 'Crane',
+                subtitle: 'Switch it!',
+                logo: 'static/images/logos/smst-logo.webp',
+                text: 'One crane, many missions. At the heart of the DO C-CSOV sits flexibility: The SMST KBC-M modular knuckle-boom crane is engineered around a concept that turns a single asset into many. Its knuckle configuration spear heads the modularity concept: the boom reconfigures for different tasks quickly and without external lifts. \n' +
+                    '\n' +
+                    'For the charterer, that means one crane that adapts to the mission at hand - higher efficiency, less downtime, and the confidence to have contingency to switch between tasks without adding vessels.\n' +
+                    '\n' +
+                    '\t50 t Active heave compensation or 10 t 3D motion control deliver precise and safe load handling in live seaways. Live collision-avoidance technology enhances safety by accounting for structures and preventing interference with construction spreads. Continuous condition monitoring safeguards uptime on equipment the whole campaign depends on.\n',
+                images: ['static/images/f2crane/crane1.jpg', 'static/images/f2crane/crane2.png'],
+                deepDives: [
+                    {
+                        title: 'Technical Specifications',
+                        text: `The DO C-CSOV is fitted with the SMST KBC-M modular knuckle-boom crane, engineered for capacity, precision and uptime:
+
+•  Construction mode: 50 t @ 12 m outreach for heavy lifts
+•  3D mode: 10 t with active heave compensation and 3D motion control for precise subsea lifts
+•  Operating height: 30 m above waterline - reaches offshore substation (OSS) decks
+•  Workability: operable up to 2.5 m Hs
+•  Winch: 650 m of cable for deep subsea deployment
+•  Redundancy: crane and SMST gangway 3D winch back each other up, forming a redundant lifting system
+•  Live collision-avoidance radar protects temporary structures during construction support
+•  smartACTIONS Condition monitoring enables predictive maintenance for high uptime on critical equipment
+•  smartENERGY for energy storage and power balancing 
+•  smartCRANE Modular knuckle boom: rig-up within ~48 h without external lifts - the main driver of the vessel's modularity`,
+                        images: ['static/images/f2crane/cranedeepdive.jpg']
+                    }
+                ]
+            }
+        },
+        {
+            id: 'leiter-2',
+            localPosition: new THREE.Vector3(-0.9, 0.35, -0.3),
+            minAngle: 180,
+            maxAngle: 269,
+            variant: 'green',
+            icon: 'static/images/icons/hotspot-icon-green.png',
+            content: {
+                title: 'Boatlanding',
+                subtitle: 'Please come in',
+                logo: 'static/images/logos/aukra-logo.jpg',
+                text: 'Designed for safe and efficient vessel-to-vessel transfers, the DO C-CSOV features an height-adjustable Aukra Boat Landing that accommodates a wide range of daughter craft and CTVs. Its sheltered, step-less design enhances transfer safety by providing a controlled transfer environment while remaining clear of propeller wash.\n' +
+                    '\n' +
+                    'Its removable configuration supports the vessel’s modular approach, allowing the boat landing to be removed to suit the operational task at hand.\tThe DO C-CSOV is equipped with a height-adjustable Aukra Boat Landing, designed to provide safe and flexible vessel-to-vessel personnel transfer:\n' +
+                    '\n' +
+                    '•  Step-less access: Seamless personnel transfer to other vessels, reducing transfer barriers and enhancing safety\n' +
+                    '•  Height-adjustable: Accommodates working heights from 1.7 m to 4.5 m, supporting both small daughter craft and larger CTVs\n' +
+                    '•  Clear of propeller wash: Positioned outside the propeller wash for a safer and more predictable transfer\n' +
+                    '•  Sheltered transfer: Lee side access from the vessel side provides a safer, more comfortable transfer environment in challenging offshore conditions\n' +
+                    '•  Removable design: Fully removable to maintain the vessel’s modularity and adapt the configuration to the operational requirement\n',
+                images: ['static/images/f11boatlanding/boatlanding1.png', 'static/images/f11boatlanding/boatlanding2.png']
+                // NOTE: previous deepDives here held the crane's KBC-M specs by
+                // mistake — those now live on kran-beuge-2. Add real Aukra
+                // boat-landing specs here when available.
+            }
+        },
+        {
+            id: 'heck-2',
+            localPosition: new THREE.Vector3(-1.29, 0.3, 0),
+            minAngle: 180,
+            maxAngle: 269,
+            variant: 'green',
+            icon: 'static/images/icons/hotspot-icon-green.png',
+            content: {
+                title: 'Sustainability',
+                subtitle: 'Embrace today, prepare for tomorrow\n',
+                text: 'The DO C-CSOV is built to embrace today\'s and prepare for tomorrow\'s technology. \n' +
+                    '\n' +
+                    'Upon delivery, the DO C-CSOV leverages on available technology to achieve sustainable operations. Optimised hull, efficient Voith Schneider propulsion, a closed bus battery hybrid energy concept as well as energy regeneration keep fuel consumption and emissions low. While in turnaround, shore power delivers zero-emission port stays.\n' +
+                    '\n' +
+                    'Green technologies develop fast, whereas the DO C-CSOV remains flexible to adapt to those that will prevail over time: methanol-ready engines and pre-installed MeoH infrastructure, biofuel capability and a clear path to full electric operation let the vessel decarbonise step by step - lowering the carbon footprint today while steering towards a climate neutral future.\tThe DO C-CSOV\'s sustainability concept is engineered into every system, from propulsion to crane:\n' +
+                    '\n' +
+                    '•   Propulsion: 2 x Voith Schneider with PM motors - up to 15-22% lower transit power\n' +
+                    '•   Hybrid battery: 1,017 kWh (Corvus Orca) for peak shaving, boosting and DP spinning reserve\n' +
+                    '•   Part load optimized main engines: 3 x 1,760 kW MAN, IMO Tier III + SCR\n' +
+                    '•   Alternative fuels: HVO-100 and FAME biofuels supported\n' +
+                    '•   Shore power: 1,000 kVA for zero-emission port stays\n' +
+                    '•   Energy recovery: >70% regeneration from the gangway winch, plus crane accumulator, waste-heat recovery\n' +
+                    '•   Variable air flow HVAC and frequency-controlled pumps for variable consumers\n' +
+                    '•   Future-proof: prepared for >10,000 kWh battery upgrade for 100% electric operation\n',
+                images: ['static/images/f14sustain/sustain1.png', 'static/images/f14sustain/sustain2.png']
+            }
+        },
+        {
+            id: 'holz-2',
+            localPosition: new THREE.Vector3(-0.78, 0.32, 0),
+            minAngle: 270,
+            maxAngle: 359,
+            variant: 'green',
+            icon: 'static/images/icons/hotspot-icon-green.png',
+            content: {
+                title: 'Working deck',
+                subtitle: 'Space to out-perform',
+                text: 'The working deck is a vast, unobstructed platform that reconfigures around whatever the job demands - from cable repair to subsea and light construction. Modular sockets and utility stations turn open deck into a purpose-built workspace, and hatches to the warehouse below puts stores and spares within immediate reach. For a charterer, this adaptability is the real advantage: one vessel that flexes across scopes, steps in when plans change, and keeps the campaign moving when risks materialize. Efficiency in every operation, contingency when it counts.\tThe DO C-CSOV working deck features payload, flexibility and multi-scope operations:\n' +
+                    '\n' +
+                    '•  Size: 800 sqm of open, unobstructed working area\n' +
+                    '•  Deck strength: rated for 10 t/m² \n' +
+                    '•  T-bars: up to 30 t/m, allowing heavy equipment mobilization\n' +
+                    '•  Clean deck: free of vent heads, mooring equipment and other obstructions, maximising usable working area\n' +
+                    '•  Modularity: removable infrastructure (daughter craft, boat landing, refuelling) \n' +
+                    '•  Utility stations: distributed supply of water, communications, electrical power and high pressure for demanding spreads (e.g. WROV / cable repair) without temporary infrastructure\n' +
+                    '•  Warehouse access: dedicated hatch enables operations at sea and effectively extends the working deck via the warehouse below\n' +
+                    '•  Functional layout: 5.2 m low freeboard with removable railings for easy overboard access\n',
+                images: ['static/images/f5deck/workingdecktopview.png']
+            }
+        },
+        {
+            id: 'propeller-heck-2',
+            localPosition: new THREE.Vector3(-1.2, 0, 0.11),
+            minAngle: 270,
+            maxAngle: 359,
+            variant: 'green',
+            icon: 'static/images/icons/hotspot-icon-green.png',
+            content: {
+                title: 'Voith',
+                subtitle: 'Works like a Swiss watch\n',
+                logo: 'static/images/logos/voith-logo.svg',
+                text: 'Powered by two Voith Schneider Propellers (VSP), each delivering 1,860 kW, the vessel combines exceptional manoeuvrability with precise thrust control. This propulsion concept enables rapid and accurate positioning while delivering a transit speed of up to 13.8 kn. At the same time, the VSP system provides highly efficient thrust generation, reducing energy consumption compared with conventional propulsion concepts.\tRapid response: More than 3× faster reaction to weather-induced forces than comparable azimuth-propelled vessels, with approximately 2 seconds thrust ramp-up and rapid 180° thrust reversal.\n' +
+                    '\n' +
+                    '\n' +
+                    'High operability: Optimised for challenging offshore conditions, with up to 98% operability demonstrated for the specific location and metocean conditions shown.\n' +
+                    '\n' +
+                    'Reduced roll motion: Active VSP control counteracts wave-induced roll, reducing vessel motion, extending the operational window and improving transfer conditions and comfort.\n' +
+                    '\n' +
+                    'Low-noise operation: Electric VSP propulsion enables quiet operation, supporting DNV Comfort Class C2 and V2 requirements.\n' +
+                    '\n',
+                images: ['static/images/f7voith/voith1.png', 'static/images/f7voith/voith2.png'],
+                deepDives: [
+                    {
+                        title: 'Keeping Steady - Video',
+                        video: ['static/images/f7voith/video.mp4']
+                    },
+                    {
+                        title: 'Technical Specifications',
+                        text: `DP Performance: 
+The VSP propulsion system delivers a DP footprint of less than 2 m, in conditions up to 3.5 m Hs, 1.5 kn current and approximately 30 m/s wind at 45% ASOG power utilisation. This supports safe, reliable and precision operations such as W2W, crane and cable repair.
+
+Lower energy demand: 
+The VSP system requires approximately 15–22% less power than alternative propulsion arrangements, reducing fuel consumption, operating costs and CO₂ emissions.`,
+                        images: ['static/images/f7voith/voithdeepdive1.png', 'static/images/f7voith/voithdeepdive2.png']
+                    }
+                ]
+            }
+        },
+        {
+            id: 'heck-l-2',
+            localPosition: new THREE.Vector3(-0.67, 0.29, 0.29),
+            minAngle: 270,
+            maxAngle: 359,
+            variant: 'green',
+            icon: 'static/images/icons/hotspot-icon-green.png',
+            content: {
+                title: 'Warehouse',
+                subtitle: 'Comes with a big belly',
+                text: 'The DO C-CSOV offers a large warehouse facility designed to keep the transfer of people, tools, and materials to the offshore structure safe and efficient. A unique integrated skidding system handles containers with a 6 × 30t/TEU capacity, while dedicated hatches allow containers and pallets to be handled even while offshore. \n' +
+                    '\n' +
+                    'Step-less access, via a dedicated elevator, runs throughout the vessel and onto the offshore structure via the gangway, allowing personnel and equipment to move without obstruction at any stage of the offshore operation.\tThe DO C-CSOV integrated warehouse facility supports offshore operations with a diverse set of capabilities:\n' +
+                    '\n' +
+                    '•  525 sqm dedicated warehouse with 300 sqm of free deck space and 3.4 m clear height\n' +
+                    '•  Integrated skidding system handling containers with a 6 × 30 t / TEU capacity, complemented by >120-pallet shelving\n' +
+                    '•  Dedicated hatches allowing containers and pallets to be handled even while offshore\n' +
+                    '•  Fully temperature- and humidity-controlled warehouse at 23 °C / 50 % RH, plus an additional 29 sqm area controlled at 23 °C / 30 % RH for sensitive goods\n' +
+                    '•  Complete supporting infrastructure, including large, client-dedicated IMDG store and workshop as well as storekeeper office and related duty mess\n',
+                images: ['static/images/f12warehouse/warehouse2.jpg', 'static/images/f12warehouse/warehouse1.png']
+            }
+        },
+        {
+            id: 'bruecke-l-seite-2',
+            localPosition: new THREE.Vector3(0.285, 0.72, 0.33),
+            minAngle: 270,
+            maxAngle: 359,
+            variant: 'green',
+            icon: 'static/images/icons/hotspot-icon-green.png',
+            content: {
+                title: 'Waveradar',
+                subtitle: 'What if you could predict the future?\n',
+                logo: 'static/images/logos/miros-logo.png',
+                text: 'The DO C-CSOV is equipped with a Miros WaveRadar incorporating predictive AI technology. \n' +
+                    '\n' +
+                    'The Miros WaveSystem provides accurate, local, real-time wave and current data, giving the crew a reliable picture of the actual conditions during weather-critical offshore wind operations.\n' +
+                    '\n' +
+                    'By combining real-time measurements from WaveSystem with short-term wave and vessel-motion prediction, PredictifAI gives the crew greater visibility ahead of weather-critical operations, supporting better timing and more informed operational decisions.\tMiros PredictifAI combines X-band radar measurements of the incoming wave field with local wave measurements to support DO C-CSOV operations:\n' +
+                    '\n' +
+                    '•  Enhanced safety: Anticipate incoming waves and vessel motions before they occur, allowing proactive measures during critical operations such as W2W transfers\n' +
+                    '•  Objective weather assessment: Real-time measurement of local sea conditions provides a clear understanding of the forces acting on the vessel\n' +
+                    '•  Increased operability: Greater visibility of approaching conditions enables the crew to make better use of available weather windows\n' +
+                    '•  Improved decision-making: Combining measured conditions with predicted vessel response provides greater transparency when assessing operational limits\n' +
+                    '•  Reduced downtime: Better understanding of short-term conditions can help avoid unnecessary interruptions and maximise productive operating time\n',
+                images: ['static/images/f13waveradar/waveradar1.jpg', 'static/images/f13waveradar/waveradar2.jpg'],
+                deepDives: [
+                    {
+                        title: 'Video',
+                        video: ['static/images/f13waveradar/video.mp4']
+                    }
+                ]
+            }
+        },
+        {
+            id: 'kabinen-r-2',
+            localPosition: new THREE.Vector3(0.7, 0.32, -0.29),
+            minAngle: 90,
+            maxAngle: 179,
+            variant: 'green',
+            icon: 'static/images/icons/hotspot-icon-green.png',
+            content: {
+                title: 'Accommodation',
+                subtitle: 'A home at sea',
+                text: 'Skilled and experienced personnel are becoming scarce across the industry. They are the single most important factor in achieving high-quality progress offshore. Crew and charterer personnel need to be well-rested to perform safely, thus the vessel is their safe haven after a hard day\'s work, the foundation for all and the reason every small detail has been considered in the design of the interior, facilities, and layout of the DO C-CSOV.\t •  99 cabins, each over 11 sqm, with 76 daylight cabins dedicated to charterer personnel\n' +
+                    '•  Flexible 1+1 cabin concept, allowing selected single cabins to be converted into doubles with a ceiling-mounted Pullman bed - without compromising comfort or space\n' +
+                    '•  140 sqm dedicated office wing, comprising four offices, 17 workstations and two combinable meeting rooms accommodating up to 24 people\n' +
+                    '•  Clear separation of work, recreation and private living, with the layout designed around the daily workflow of personnel\n' +
+                    '•  Over 180 sqm of gym and wellness facilities across two decks, including a dedicated spa and treatment area, supporting health, mobility and recovery\n' +
+                    '•  Dedicated C-Deck leisure area with library, sports bar and lounge, providing space to switch off and recharge',
+                images: ['static/images/f6acommodations/cabins-a.jpg', 'static/images/f6acommodations/cabins-b.jpg'],
+                deepDives: [
+                    {
+                        title: 'Image Slideshow',
+                        slideshow: 'static/images/accommodation' // directory, not a single file
+                    },
+                    {
+                        title: 'Specifications',
+                        text: `The DO C-CSOV offers a comprehensive range of state-of-the-art facilities and amenities, providing a comfortable, productive and flexible environment for crew and charterer personnel.
+
+Accommodation 
+
+99 cabins are provided, including 76 daylight cabins dedicated to charterer personnel. Each exceeds 11 sqm and features natural light, private bathroom, individual temperature control, high-bandwidth Wi-Fi for private video calls, video-on-demand and multiple resting positions (bed and day bed). Standard beds measure 0.9 × 2.1 m, with larger beds available in selected state cabins.
+
+A flexible 1+1 cabin concept allows selected cabins to be converted to double occupancy using a ceiling-mounted Pullman bed, discreetly integrated into the ceiling, providing additional capacity without compromising comfort or space.
+
+Recreation 
+
+300 sqm including: 
+
+•  Two games rooms with PlayStation and 4D simulators
+•  Sports bar, library and TV entertainment with VoD and satellite
+•  Lounges and recreational balcony
+•  Lobby with coffee bar, main mess and duty messes
+•  Sauna and treatment area
+•  Dedicated smoking room
+
+Fitness
+
+A two-floor 180 sqm gym includes cardio equipment, an extensive free-weights area with dumbbells and barbells, and a multifunctional cable tower. The adjacent sauna and spa provide dedicated post-workout relaxation facilities.
+
+Offices & Meeting Facilities 
+
+Four client offices and 17 workstations are provided in flexible 4/8/3/2 configurations. The main office overlooks the aft deck and gangway operations.
+Two 16.2 sqm meeting rooms accommodate 12 persons each and can be combined into a 32.4 sqm room for 24 seated persons. Both feature screens and video-conferencing systems with integrated speakers and microphones.
+
+Medical Facilities
+
+A 16 sqm hospital and 12 sqm sick bay include a separate adjoining ward, treatment room and dedicated toilet/bathroom facilities. Medical equipment and medicines are tailored to the vessel's operational profile, trading area and risk assessment.
+
+Changing & Drying Facilities
+
+The 48 sqm changing room provides 88 lockers and can be divided into separate men's and women's areas, accommodating up to 20 lockers in the women's area and a minimum of 68 in the men's area. A separate 44 sqm drying room is provided for suits, footwear, gloves and PPE. Crew members have dedicated facilities and do not share these areas.`
+                    },
+                    {
+                        title: 'Video',
+                        video: 'static/images/f6acommodations/video.mp4'
+                    }
+                ]
+            }
+        },
+        {
+            id: 'propeller-front-2',
+            localPosition: new THREE.Vector3(1.4, 0.1, 0),
+            minAngle: 90,
+            maxAngle: 179,
+            variant: 'green',
+            icon: 'static/images/icons/hotspot-icon-green.png',
+            content: {
+                title: 'Bowthruster',
+                subtitle: 'Give it a nudge',
+                logo: 'static/images/logos/brunvoll-logo.jpg',
+                text: 'The DO C-CSOV is equipped with a high-end Brunvoll bow thrusters designed to maximise manoeuvrability, DP performance and operational redundancy. \n' +
+                    '\n' +
+                    'Configuration and arrangement of the thrusters are aligned to ensure safe and reliable position keeping in challenging environmental conditions. Size, power, location and performance criteria are balanced in order to match the thrust agility of the aft eVSP while minimizing ventilation, noise and vibrations and maintaining strong power reserves.\n' +
+                    'The DO C-CSOV bow thruster arrangement combines high power, rapid response and redundancy to deliver precise vessel control across a wide range of offshore operating conditions:\n' +
+                    '\n' +
+                    '•  Three-thruster configuration: Two tunnel thrusters and one retractable azimuth thruster provide high levels of manoeuvrability and redundancy\n' +
+                    '•  High power: 3x 1,500 kW provides strong thrust for demanding DP and manoeuvring conditions\n' +
+                    '•  Resiliently mounted thrusters for minimal noise and vibration emissions during DP\n',
+                deepDives: [
+                    {
+                        title: 'Technical Specifications',
+                        text: `•  Enlarged tunnel thrusters: 2.5 m diameter propellers deliver increased thrust and improved efficiency
+•  Rapid thrust response: 20–80% thrust ramp-up in 4 seconds enables fast response to changing environmental forces
+•  High rotational speed: 5 rpm provides faster thrust agility to match operational advantage of Voith propellers
+•  Retractable azimuth thruster: Provides additional control and reduced thrust deduction when operating in high-current environments
+•  Optimised thruster grids: Designed to maximise thrust performance and DP efficiency
+•  Split configuration: Maintains redundancy during DP operations`,
+                        images: ['static/images/f8bowthruster/thrusterdeepdive.png']
+                    }
+                ]
+            }
+        },
+        {
+            id: 'beiboot-2',
+            localPosition: new THREE.Vector3(-0.295, 0.34, 0.23),
+            minAngle: 0,
+            maxAngle: 89,
+            variant: 'green',
+            icon: 'static/images/icons/hotspot-icon-green.png',
+            logo: 'static/images/logos/combined-logos.png',
+            content: {
+                title: 'Daughter Craft ',
+                subtitle: 'Pick me up!',
+                text: 'The DO C-CSOV is equipped with a Vestdavit launched Chartwell Catamaran Workboat. Its large deck space in combination with its modularity concept allows for carrying a high performance Daughter Craft without compromising on the asset\'s capabilities. The working deck remains spacious with sufficient capacity for containerized or bulk cargo. As the davit is skid mounted, quick mobilization and demobilization is catered for the event the additional space is required. \n' +
+                    '\tBenefiting from the use of a Daughter Craft should not go along unacceptable risks. The Vestdavit PLD-15002 is DNV-ST-0498 certified, setting a baseline to deploy and retrieve Daughter Crafts safely. A telescopic painter boom ensures proper hull clearance and controlled motion at high sea states, safeguarding that a recovery can be conducted under any circumstances.\n',
+                images: ['static/images/f3daughtercraft/daughtercraft.png', 'static/images/f3daughtercraft/daughtercraft2.png'],
+                deepDives: [
+                    {
+                        title: 'Technical Specifications',
+                        text: `The DO C-CSOV is fitted with the Chartwell Marine Catamaran Workboat 12, amended to the DO requirements:
+
+•  Increased safety standards: UK Workboat Code Cat.1
+•  Length: 12.66 m
+•  Width: 4.1 m
+•  Max capacity: 12 + 2 PAX
+•  Speed: 25 kn
+•  Payload 1 t
+•  Operational transfer limit: Hs 1.5 m
+•  Lateral and vertical accelerations: Max 0.15 g RMS for Hs 1.5 m`
+
+                    }
+                ]
+            }
+        },
+        {
+            id: 'bruecke-l-front-2',
+            localPosition: new THREE.Vector3(0.45, 0.7, 0.2),
+            minAngle: 0,
+            maxAngle: 89,
+            variant: 'green',
+            icon: 'static/images/icons/hotspot-icon-green.png',
+            content: {
+                title: 'Dynamic Positioning',
+                subtitle: 'Control at your fingertips',
+                logo: 'static/images/logos/mt-logo.png',
+                text: 'The DO C-CSOV is equipped with a high-performance dynamic positioning and Integrated bridge system from Marine Technologies (MT). This combines proven DP capability with advanced navigation and communications systems for safe and reliable offshore operations.\n' +
+                    '\n' +
+                    'DP Alert, Clear Comms, integrated HiPAP and dedicated anti-jamming and anti-spoofing technology further enhance positioning integrity, communication resilience and operational robustness.\n' +
+                    '\n' +
+                    'With 800+ DP2 systems delivered and more than 35 million DP operating hours, Marine Technologies brings proven technology, hardened by experience. \tModern offshore assets have adopted closed-bus operations in order to reduce fuel cost and carbon emissions, turning away from traditional open-bus-tie configurations. \n' +
+                    '\n' +
+                    'Improved commercials and sustainability may however not come at the cost of safety. The DO C-CSOV is the first purpose-built W2W asset to adopt the DNV DYNPOS AUTR-CB notation, incorporating the latest learnings and developments for a leap forward in closed-bus safety. \n' +
+                    '\n' +
+                    'As such, the notation achieves the operational safety standards of conventional open-bus operation while delivering the fuel-efficiency benefits of closed-bus operation. ',
+                images: ['static/images/f4dynpos/DOS1.png', 'static/images/f4dynpos/DOS2.png'],
+                deepDives: [
+                    {
+                        title: 'Technical Specifications',
+                        text: `The DO C-CSOV is fitted with DNV DYNPOS-AUTR-CB electric system designed by ABB:
+
+•  Blackout recovery within 45 s
+•  Enhanced monitoring and protection systems: 
+     ◦  Additional protection relays are fitted for vital components to ensure discrimination of the bus‑tie in case of relevant fault modes
+     ◦  Current and voltage transformer sensors serve as the core sensing elements for protection relays and measuring systems
+     ◦  Arc detection system ensures that the bus‑tie has selective protection capability in case of arcing faults and other relevant fault modes
+     ◦  AGS (Advanced Generator Supervisor) as key component of the power management system (PMS) for closed bus‑tie operation, used to monitor generator speed control and voltage control systems to prevent fault propagation
+     ◦  A stringent verification regime with FMEA and simulation modelling , such as short circuit ride-through study and arc flash study`,
+                        images: ['static/images/f4dynpos/dynposdeepdive.png']
+                    },
+                    {
+                        title: 'Operability',
+                        linkedHotspotId: 'bug-2' // jumps to that hotspot's content
+                    }
+                ]
+            }
+        },
+        {
+            id: 'rumpf-l-mitte-2',
+            localPosition: new THREE.Vector3(0, 0.2, 0.29),
+            minAngle: 0,
+            maxAngle: 89,
+            variant: 'green',
+            icon: 'static/images/icons/hotspot-icon-green.png',
+            content: {
+                title: 'Power Train',
+                subtitle: 'Full steam ahead! \n',
+                logo: 'static/images/logos/man-logo.jpg',
+                text: 'The DO C-CSOV’s powertrain has been designed around an efficient and robust primary power generation system, recognising that the overall performance of the vessel’s energy concept starts with the selection of the main engines. Three medium-speed MAN engines, optimised for part-load operation, provide a highly efficient power source for propulsion, mission equipment and vessel services across a wide range of applicable load scenarios.\n' +
+                    '\n' +
+                    'The engines work in synergy with the vessel’s battery hybrid energy architecture. This enables the vessel to efficiently respond to varying power demands on the spot, cover demand peaks and act as temporary boosters.\n' +
+                    'The DO C-CSOV powertrain combines efficient primary generation with hybrid energy storage and flexible fuel capability to maximise efficiency, resilience and operational flexibility. Key features include:\n' +
+                    '\n' +
+                    '•  Main engines: 3 × 1,760 kW MAN 8L21/31H MK2 PLO medium-speed engines\n' +
+                    '•  Part-load efficiency: Engines optimised for efficient operation across varying load profiles, supporting reduced fuel consumption during typical offshore operations\n' +
+                    '•  Hybrid battery: 1,000 kWh battery system supporting peak shaving, power boosting and DP spinning reserve\n' +
+                    '•  Alternative fuels: Methanol-ready from delivery and capable of operating on biofuels including HVO-100 and FAME',
+                images: ['static/images/f9powertrain/powertrain1.png', 'static/images/f9powertrain/powertrain2.png']
+            }
+        },
+        {
+            id: 'rumpf-l-vorner-2',
+            localPosition: new THREE.Vector3(0.54, 0.23, 0.29),
+            minAngle: 0,
+            maxAngle: 89,
+            variant: 'green',
+            icon: 'static/images/icons/hotspot-icon-green.png',
+            content: {
+                title: 'Electric System',
+                subtitle: 'Safety and robustness prevail! ',
+                logo: 'static/images/logos/abb-logo.webp',
+                text: 'The DO C-CSOV’s electrical system has been engineered with safety, robustness and operational continuity at its core. The vessel is fitted with a three-split 690 V AC/DC hybrid system, arranged across four independent redundancy groups and supporting the vessel’s DNV DYNPOS-AUTR-CB class notation. \n' +
+                    '\n' +
+                    'This architecture ensures that a single failure cannot compromise the vessel’s overall power availability, providing the resilience required to maintain critical DP integrity during demanding offshore operations.\n' +
+                    '\n' +
+                    'A closed-loop configuration connects the main switchboards for fuel efficient and balanced operation, while allowing individual redundancy groups to be isolated and the system to operate in full open-bus-tie configuration when required. The power system architecture and energy management concept combines multiple technologies to maximise efficiency, resilience and future flexibility:\n' +
+                    '\n' +
+                    '•  2x 1800 kW instant power discharge to match Voith thrust agility\n' +
+                    '•  Two redundant battery packs integrated via a DC Bus system\n' +
+                    '•  Shore power: 1,000 kVA shore connection enabling zero-emission operation while in port\n' +
+                    '•  2x 1000 kVA at 690 V Utility Station on deck to support heavy consumers\n' +
+                    '•  All Permanent Magnet motors for increased efficiency at part loads\n' +
+                    '•  Energy recovery: Energy recuperation from crane and gangway\n' +
+                    '•  Future-ready: Prepared for a battery upgrade exceeding 10,000 kWh, supporting a future transition towards fully electric operation',
+                images: ['static/images/f10electrics/electrics1.png', 'static/images/f10electrics/electrics2.png'],
+                deepDives: [
+                    {
+                        title: 'Technical Specifications',
+                        text: `The DO C-CSOV is fitted with DNV DYNPOS-AUTR-CB electric system designed by ABB:
+
+•  Blackout recovery within 45 s
+•  Enhanced monitoring and protection systems: 
+     ◦  Additional protection relays are fitted for vital components to ensure discrimination of the bus‑tie in case of relevant fault modes
+     ◦  Current and voltage transformer sensors serve as the core sensing elements for protection relays and measuring systems
+     ◦  Arc detection system ensures that the bus‑tie has selective protection capability in case of arcing faults and other relevant fault modes
+     ◦  AGS (Advanced Generator Supervisor) as key component of the power management system (PMS) for closed bus‑tie operation, used to monitor generator speed control and voltage control systems to prevent fault propagation
+     ◦  A stringent verification regime with FMEA and simulation modelling , such as short circuit ride-through study and arc flash study`,
+                        images: ['static/images/f4dynpos/dynposdeepdive.png']
+                    }
+                ]
+            }
+        },
+        {
+            id: 'helipad-2',
+            localPosition: new THREE.Vector3(0.89, 0.8, 0),
+            minAngle: 0,
+            maxAngle: 89,
+            variant: 'green',
+            icon: 'static/images/icons/hotspot-icon-green.png',
+            content: {
+                title: 'Helideck\n',
+                subtitle: 'Big boat meets big bird',
+                text: 'The DO C-CSOV’s D-21 rated helideck adds another dimension of operational flexibility offshore, supporting large helicopter types including the S-92. Beyond crew changes, material transfers and medevac, the helideck integrates directly with the vessel’s logistics chain: the gangway can connect to the helideck to provide step-less access throughout the vessel and into the warehouse, enabling efficient movement of personnel and materials.\n' +
+                    '\n' +
+                    ' The dedicated platform also provides a safe operating area for drones without occupying valuable working deck space.\tThe DO C-CSOV helideck has been designed with operational efficiency and ease of access in mind:\n' +
+                    '\n' +
+                    '•   D-21 rated helideck with maximum take-off weight of 12.6 t\n' +
+                    '•   Suitable for S-92 and other helicopter types\n' +
+                    '•   CAP 437 certification\n' +
+                    '•   Drone operations: Dedicated platform for safe deployment and recovery\n' +
+                    '•   Three access points: For efficient access and egress\n' +
+                    '•   Direct MCC gangway connection: Enables step-free transfer of personnel and materials throughout the vessel as well as elevator redundancy\n' +
+                    '•   Fully certified Helideck monitoring system',
+                images: ['static/images/f15heliport/heliport1.jpg', 'static/images/f15heliport/heliport2.jpg']
+            }
+        },
+        {
+            id: 'bug-2',
+            localPosition: new THREE.Vector3(1.5, 0.477, 0),
+            minAngle: 0,
+            maxAngle: 89,
+            variant: 'green',
+            icon: 'static/images/icons/hotspot-icon-green.png',
+            content: {
+                title: 'Operability\n',
+                subtitle: 'Stay steady, work ready\n',
+                text: 'The DO C-CSOV offers excellent seakeeping and station keeping performance and consequently strong W2W and crane operability. These capabilities are primarily driven by:\n' +
+                    '\n' +
+                    'Propulsion configuration: 2 × Voith Schneider Propellers, 2 × 1,500 kW Brunvoll bow thrusters and 1 × 1,500 kW retractable azimuth thruster.\n' +
+                    '\n' +
+                    'Power availability: 3-split AC/DC hybrid power distribution with 3 × 1,760 kW main engines and a 1,017 kWh battery.\n' +
+                    '\n' +
+                    'Hull design: 96.25 m LOA × 20 m beam with a bow-shaped stern optimised for all-heading seakeeping.\n' +
+                    '\n' +
+                    'The vessel’s operational capability has been verified through DNV L3 time-domain analysis and assessed against actual 2025 German Bight metocean data. The results demonstrate approximately 98% annual W2W availability, with a W2W envelope of up to 3.5 m Hs at ±20° headings and 3.25 m Hs at ±30°, at mean wind speeds up to 16 m/s. DP position-keeping capability is demonstrated up to 4.0 m Hs at ±30° from head seas.\tBeyond the vessel’s inherent seakeeping performance, dedicated motion-control, positioning and prediction systems further enhance operability, safety and comfort.\n' +
+                    '\n' +
+                    'Motion & Roll Control\n' +
+                    'Voith propulsion control, Hoppe active stabilisers and bilge keels work together to reduce roll motions, improving transfer conditions, comfort and operational windows.\n' +
+                    '\n' +
+                    'Positioning & Motion Prediction\n' +
+                    'Five independent position-reference systems — SceneScan, CyScan, HiPAP 502 and 2 × Veripos DGNSS with anti-jamming/spoofing capability — provide robust positioning. JRC wave radar, Miros WaveSystem, PredictifAI and multiple MRUs support accurate motion monitoring and short-term wave and motion prediction.\n' +
+                    '\n' +
+                    'Human Factor\n' +
+                    'Motion sickness analysis indicates that less than 10% of personnel are expected to experience motion sickness up to 3.0 m Hs, supporting safe and comfortable offshore operations.',
+                images: ['static/images/f16operability/ops1.jpeg', 'static/images/f16operability/ops2.png']
+            }
+        },
+        {
+            id: '3-1-kran-ausleger-2',
+            localPosition: new THREE.Vector3(-0.81, 0.51, -0.755),
+            minAngle: 0,
+            maxAngle: 359,
+            variant: 'blue',
+            icon: 'static/images/icons/hotspot-icon-blue.png',
+            content: {
+                title: 'Rockbag Installation',
+                subtitle: 'On the Rocks',
+                text: '`For rock bag installation the DO C-CSOV provides the following key capabilities:\n' +
+                    '\n' +
+                    '•  Large and strengthened deck area with 800 sqm and 10 t/m²\n' +
+                    '•  50 t AHC crane capacity\n' +
+                    '•  Warehouse (500 sqm) with 6 x 30 t TEU skidding system, for the storage of project specific tools and/or additional rock bags stored in open-top containers, accessible offshore via the main hatch\n' +
+                    '•  Utility stations and ROV infrastructure \n' +
+                    '•  Suitable stability and weight margins\n' +
+                    '•  Compatible with established rock bag deployment tools such as the UTILITY ROV RBDT, deploying either single 8 ton bags or 2 x 4 ton bags per lift\n' +
+                    '`',
+                images: ['static/images/m3rockbag/rockbag2.jpg','static/images/m3rockbag/rockbag1.jpg']
+            }
+        }
+    ],
+
+    2: [ // Boot 3
+ {
+        id: '5-1-holz-richtung-r-2',
+        localPosition: new THREE.Vector3(-0.78, 0.32, 0.1),
+        minAngle: 0,
+        maxAngle: 359,
+        variant: 'blue',
+        icon: 'static/images/icons/hotspot-icon-blue.png',
+        content: {
+            title: 'Control Flow Excavator',
+            subtitle: 'Clear the way',
+            text: '`Removing sediment from around subsea structures is a recurring need throughout project construction and maintenance, for both planned campaigns and unplanned interventions. The DO C-CSOV can take on this scope directly, using its unique design features to run a controlled flow excavation spread. Ample deck space allows the works to run alongside other scopes - Absorbing the task on an existing vessel adds efficiency and gives the project valuable contingency.\n' +
+                '\n' +
+                'For CFE deployment our DO C-CSOV provides the following key capabilities:\n' +
+                '\n' +
+                '- Utility stations for power and services to the excavation spread\n' +
+                '- 10t 3D MCC or 50t AHC crane capacity and reach\n' +
+                '- Suitable stability and weight margins\n' +
+                '- HiPAP 502 for subsea positioning\n' +
+                '- Compatible with established CFE spreads such as the ROTECH TRS1\n' +
+                '`',
+            images: ['static/images/m5cfe/cfe1.png','static/images/m5cfe/cfe2.jpg']
+        }
+    },
+
+
+    {
+        id: '7-1-beiboot-ohne-dc-2',
+        localPosition: new THREE.Vector3(-0.305, 0.34, 0.23),
+        minAngle: 0,
+        maxAngle: 359,
+        variant: 'blue',
+        icon: 'static/images/icons/hotspot-icon-blue.png',
+        content: {
+            title: '7.1 Beiboot (ohne DC)',
+            text: 'PLATZHALTER Beschreibung für 7.1 Beiboot (ohne DC) PLATZHALTER',
+            images: ['static/images/hotspots/placeholder.jpg']
+        }
+    },
+
+    {
+        id: '9-1-reling-2',
+        localPosition: new THREE.Vector3(-0.295, 0.34, 0.29),
+        minAngle: 0,
+        maxAngle: 359,
+        variant: 'blue',
+        icon: 'static/images/icons/hotspot-icon-blue.png',
+        content: {
+            title: 'ROV Operations',
+            subtitle: 'Your hands & eyes underwater\n',
+            text: '`The DO C-CSOV is a flexible platform for work-class ROV support - from inspection, maintenance and repair to construction support and contingency work. Its low freeboard and modular railings enable safe, efficient over-the-side deployment of high-capacity WROVs for requirements demanding station keeping and special tooling. The result is greater operational efficiency, less reliance on dedicated ROV vessels and valuable extra contingency capacity, when and where it is needed - both during construction and the O&M phase.\n' +
+                '\n' +
+                'As such, the DO C-CSOV can facilitate various tasks such as foundation, cable and scour-protection inspection, cable route and burial surveys, cathodic-protection and anode checks; construction and lift support with touchdown monitoring as well as unplanned subsea interventions.\n' +
+                '\n' +
+                'For work-class ROV capability the DO C-CSOV provides the following key capabilities:\n' +
+                '\n' +
+                '•  High-capacity work-class ROV (WROV) for requirements beyond observation\n' +
+                '•  Permanent ROV mobilization by integration of ROV piloting into convertible charterer\'s office \n' +
+                '•  HiPAP 502 acoustic subsea positioning\n' +
+                '•  Ample space for ROV integration next to conventional CSOV scopes\n' +
+                '•  Large warehouse and workshop facilities to accommodate maintenance requirements for high spec underwater assets\n' +
+                '`',
+            images: ['static/images/m9rov/rov1.jpg','static/images/m9rov/rov2.png']
+        }
+    }
+
+
+
+    ],
+
+    3: [ // Boot 4
+        {
+            id: 'boot9-deck-payload',
+            //new THREE.Vector3(-0.7, 0.32, 0),
+            localPosition: new THREE.Vector3(-0.7, 0.32, 0),
+            minAngle: 260,
+            maxAngle: 80,
+            variant: 'blue',
+            icon: 'static/images/icons/hotspot-icon-blue.png',
+            content: {
+                title: 'Deck payload',
+                subtitle: 'When size matters',
+                text: 'When the job calls for size, the DO C-CSOV delivers. A vast, strengthened deck, generous payload and a powerful crane let big, bulky equipment - from generator sets with pre-filled fuel tanks to subsea corrosion-protection spreads - be mobilised, installed and operated from a single vessel, whether planned or unplanned. Bigger lifts mean fewer of them: less deck shuffling, fewer supply runs and less port time, so campaigns run leaner and faster. And when priorities shift, this flexibility turns into contingency - ready to pick up slack and keep the offshore programme moving without missing a beat.\n',
+                images: ['static/images/m6payload/deckpayload-a.jpg', 'static/images/m6payload/deckpayload-b.jpg']
+            }
+        }
+    ],
+
+    4: [ // Boot 5
+  {
+        id: '8-1-container-2',
+        localPosition: new THREE.Vector3(-1.2, 0.3, 0),
+        minAngle: 0,
+        maxAngle: 359,
+        variant: 'blue',
+        icon: 'static/images/icons/hotspot-icon-blue.png',
+        content: {
+            title: 'Cable Repair',
+            subtitle: 'Don\'t waste time',
+            text: '`Designed for rapid response, the DO C-CSOV provides a pre-engineered cable repair capability that is readily available and significantly reduces mobilization time when intervention is required. With offshore power cables forming part of critical energy infrastructure, fast deployment minimizes downtime, reduces opportunity costs and supports lower project risk. The integrated solution enables efficient cable repair operations without the delays associated with vessel and equipment availability.\n' +
+                '\n' +
+                'Maximising cable repair capability is at the core of the DO C-CSOV\'s design. The vessel suits both cable replacement and repair campaigns, for inter-array and common AC export cables. On deck utility stations support the cable-repair spread and ROV operations, while the technical layout allows the below-deck warehouse space to be used to its full extent, significantly enlarging the total space available on board.\n' +
+                '\n' +
+                'For cable repair the DO C-CSOV provides the following key capabilities:\n' +
+                '\n' +
+                '- Up to 400t cable capacity on a dual partition carousel or reel\n' +
+                '- Up to 20m highway length for suitable cable protection system installation\n' +
+                '- Minimum bending radius (MBR) of 5m \n' +
+                '- 15t tensioner\n' +
+                '- Quadrant deployment system with integrated joint handling crane\n' +
+                '`',
+            images: ['static/images/m8cablerepair/repair1.jpg','static/images/m8cablerepair/repair2.jpg']
+        }
+    },
+    {
+        id: '8-2-rettungsboot-2',
+        localPosition: new THREE.Vector3(-0.295, 0.34, -0.29),
+        minAngle: 0,
+        maxAngle: 359,
+        variant: 'blue',
+        icon: 'static/images/icons/hotspot-icon-blue.png',
+        content: {
+            title: 'Cable Repair Video',
+            video: ['static/images/m8cablerepair/video.mp4']
+        }
+    }
+    ],
+
+    5: [ // Boot 6
+
+    ],
+    6: [//Boot7
+         ],
+    7: [//Boot8
+            {
+        id: '6-1-holz-richtung-bug-2',
+                //7-1new THREE.Vector3(-0.305, 0.34, 0.23),
+        localPosition: new THREE.Vector3(-0.7, 0.32, 0),
+        minAngle: 0,
+        maxAngle: 359,
+        variant: 'blue',
+        icon: 'static/images/icons/hotspot-icon-blue.png',
+        content: {
+            title: 'Grouting spread',
+            subtitle: 'Close the gap',
+            text: '`The DO C-CSOV supports grouting operations as a complementary scope to HLV campaigns, significantly increasing overall project efficiency. By taking over the grouting and bolt fastening thus reducing the time CAPEX-intensive HLV needs to remain on location, the DO C-CSOV helps minimise costly idle time and enables heavy-lift assets to move on faster.\n' +
+                '\n' +
+                'Stability and weight margins as well as a working deck suitable to carry spacious and heavy equipment, enable the DO C-CSOV to mobilize up to 400 t of dry grout powder in combination with high output mixer (e.g. Found Ocean\'s HRJM 27) and other necessary infrastructure. Depending on project requirements, either 100 t / 50 t silos or container based silos can be deployed, enabling quick turnaround times in harbour.\n' +
+                '\n' +
+                'Grouting operations can be combined with bolt tightening, as additional space is both available on deck as well as below deck. The DO C-CSOVs W2W capability eliminates the need to mobilise a rental gangway, saving mobilisation time and cost while improving overall project efficiency.\n' +
+                '`',
+            images: ['static/images/m7grouting/grouting1.jpg','static/images/m7grouting/grouting2.png']
+        }
+    },
+         ],
+    8: [ { // Boot 9
+        id: '9-1-holz-richtung-heck-2',
+        localPosition: new THREE.Vector3(-0.82, 0.32, 0),
+        minAngle: 0,
+        maxAngle: 359,
+        variant: 'blue',
+        icon: 'static/images/icons/hotspot-icon-blue.png',
+        content: {
+            title: 'Monopile Cleaning',
+            subtitle:'Nice and shiny!',
+            text: `The DO C-CSOV offers the unique capability to support installation vessels with monopile and pile cleaning, a step required to remove marine growth prior to installation of the transition piece. Its large, strengthened working deck and AHC crane accommodate cleaning tools, skids and all ancillary equipment.
+
+The DO C-CSOV is able to support offshore construction with its unique capability set. By offering significantly increased deck space in combination with suitable crane capacity as well as power supply, monopile cleaning can be performed alongside regular W2W activities, either as a contingency measure, or as a preplanned scope. This offers cost saving potential compared to a WTIV deployed scenario, or removes the dependency on a dedicated construction vessel which needs to be chartered from the volatile spot market.
+`,
+            images: ['static/images/m4cleaning/cleaning1.jpg','static/images/m4cleaning/cleaning2.jpg']
+        }
+    }
+    ]
+
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 import * as THREE from 'three';
+
+
+
+
 
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
@@ -6,12 +836,12 @@ import {DRACOLoader} from 'three/addons/loaders/DRACOLoader.js';
 import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
 
 let camera, scene, renderer, controls;
-let ambientLight, directionalLight, directionalLight2; // hoisted so the debug-overlay light controls can reach them
+let ambientLight, directionalLight, directionalLight2,cameraLight; // hoisted so the debug-overlay light controls can reach them
 let lightVisual1, lightVisual2; // small sphere+line shown per light while the debug overlay (H) is open
 
 // Initial camera settings (edit these to change the starting view)
 const initialCameraPosition = new THREE.Vector3(-2.35, 1, 0);
-let initialTargetY = 0.45; // desired initial look height (controls.target.y)
+let initialTargetY = 0.25; // desired initial look height (controls.target.y)
 // Initial camera settings (edit these to change the starting view)
 
 let initialTargetZ = 0;   // <-- desired initial look depth (controls.target.z)
@@ -20,32 +850,10 @@ let currentModelZ = 0;
 
 // Toggle which boat models are loaded/active — index 0 = Boot 1, index 1 = Boot 2, etc.
 // Set to false to skip loading that model entirely (useful for testing/debugging).
-let modelEnabled = [true, true, false, true, false, true,false,true,true];
+let modelEnabled = [true, true, true, true, true, true,true,true,true];
 
 
 
-// Edit this to customize what each button shows and what the top-right status text
-// says when that button is clicked. Index matches modelEnabled / data-index (0 = button 1, etc).
-// "label" overrides the button's text — leave as null to just use the model's loaded name instead.
-// "statusText" is what appears top-right on click — leave as null to fall back to the model's name.
-const buttonConfig = {
-    // ---- Base boats (indices 0-8) ----
-    0: {label: "Walk to Work",         statusText: "Walk to Work"},
-    1: {label: "Rockbag Installation", statusText: "Rockbag Installation"},
-    2: {label: "Spezial",              statusText: "Spezial"},
-    3: {label: "Deck Payload",         statusText: "Deck Payload"},
-    4: {label: null, statusText: null},
-    5: {label: null, statusText: null},
-    6: {label: null, statusText: null},
-    7: {label: null, statusText: null},
-    8: {label: null, statusText: null},
-
-    // ---- Variants (index = boatNumber * 10 + variantNumber) ----
-    11: {label: "Walk to Work", statusText: "Extended Gangway"},
-    12: {label: "Walk to Work (Var. 2)", statusText: "Walk to Work – Variante 2"},
-    // e.g. Boot 2 variants:
-    21: {label: "Rockbag (Var. 1)",      statusText: "Rockbag – Variante 1"},
-};
 
 // Mouse-driven camera rotation toggle (top-right button) — starts OFF.
 let mouseRotationEnabled = false;
@@ -219,624 +1027,6 @@ function updateHotspots() {
   });
 }
 
-
-const hotspotDefinitions = {
-
-    0: [ // Boot 1
-
-             {
-        id: '1-1-tower-oben-2',
-        localPosition: new THREE.Vector3(-0.134, 1, -0.03),
-        minAngle: 0,
-        maxAngle: 359,
-        variant: 'blue',
-        icon: 'static/images/icons/hotspot-icon-blue.png',
-        content: {
-            title: '1.1 Tower Oben',
-            text: 'PLATZHALTER Beschreibung für 1.1 Tower Oben PLATZHALTER',
-            images: ['static/images/hotspots/placeholder.jpg']
-        }
-    },
-    {
-        id: '1-2-gangway-ende-2',
-        localPosition: new THREE.Vector3(0.458, 0.85, -0.215),
-        minAngle: 10,
-        maxAngle: 180,
-        variant: 'blue',
-        icon: 'static/images/icons/hotspot-icon-blue.png',
-        content: {
-            title: 'Walk to Work ',
-            text: '"Beyond its core W2W and accommodation role, the DO C-CSOV is configured to support a broad range of offshore scopes with the following key capabilities:\n' +
-                '\n' +
-                '•  Motion-compensated gangway with DP2 station-keeping for safe personnel transfer\n' +
-                '•  Walk-to-Work tower, large modular deck and flexible crane for equipment handling and light construction works\n' +
-                '•  HiPAP system for subsea positioning on operations such as grouting and inspection\n' +
-                '•  Removable daughter craft to extend in-field reach\n' +
-                '•  Helideck for rapid crew changes\n' +
-                '•  Internal logistics layout linking deck, storage and gangway for efficient movement of cargo and personnel\n' +
-                '\n' +
-                'This configuration lets the vessel combine W2W, accommodation and additional offshore scopes within a single deployment, or serve as a dedicated project vessel for scopes such as grouting - creating synergies with installation vessels. Its W2W capability further provides in-field transfer capacity as project contingency when personnel transfer becomes a bottleneck for the primary W2W fleet."\n',
-            images: ['static/images/walktoworkimage.jpg']
-        }
-    },
-        {
-    id: 'boot1-switch-to-variant',
-    localPosition: new THREE.Vector3(0.3, 0.5, 0),
-    minAngle: 0,
-    maxAngle: 359,
-    variant: 'pink',
-    icon: 'static/images/icons/hotspot-icon-pink.png',
-    linkedModelIndex: 11 // e.g. jumps to "Boot 1_1" using the i*10+v scheme from before
-}
-
-    ],
-        11: [ // Boot 1, variant 1 ("Boot 1_1")
-        {
-            id: 'boot1-1-switch-back-to-boot1',
-            localPosition: new THREE.Vector3(0.3, 0.5, 0),
-            minAngle: 0,
-            maxAngle: 359,
-            variant: 'pink',
-            icon: 'static/images/icons/hotspot-icon-pink.png',
-            linkedModelIndex: 0
-        }
-        // ...any other hotspots specific to this variant
-    ],
-    1: [ // Boot 2
-   // ---- Green hotspots for Boot 2 (Gruppe 1 & 4 swapped) ----
-
-{
-    id: 'tower-mittig-2',
-    localPosition: new THREE.Vector3(-0.134, 0.75, -0.24),
-    minAngle: 180,
-    maxAngle: 269,
-    variant: 'green',
-    icon: 'static/images/icons/hotspot-icon-green.png',
-    content: {
-        title: 'Gangway',
-        subtitle: 'Stay Safe!',
-        logo: 'static/images/mt-logo.png',
-        text: 'The DO C-CSOV is fitted with the SMST TAB-L2 motion-compensated gangway. Behind it stands proven technology with a track record of over 86 gangway systems delivered. It is engineered for safety, reliability and operability, keeping technicians moving and operations running in tough offshore conditions. \n' +
-            '\n' +
-            '\n' +
-            '\n' +
-            'Technical Main Data:\n' +
-            '\n' +
-            '•  Large safety distance: >12 m safety distance between offshore structure and vessel at all times\n' +
-            '•  Deck & helideck access: independent access from both deck and helideck enables flexible personnel flow without reliance on the vessel’s elevator.\n' +
-            '•  Ship-to-fixed as well as ship-to-floating connection\n' +
-            '•  Condition monitoring: predictive maintenance capabilities help maximise system availability and operational uptime.\n' +
-            '•  Landing heights: 12 to 30 m (with luffing angle of 0°)\n' +
-            '•  Gangway inclination angle: +20°/-16.5°\n' +
-            '•  Telescoping length: 11 m\n' +
-            '•  Telescoping speed: up to 2.5 m/s\n' +
-            '•  Slewing range: 194°\n' +
-            '•  Cargo limits for gangway and winch: 1,000 kg / 3,000 kg\n' +
-            '•  ATEX prepared\n',
-        images: ['static/images/gangwayimage.jpg'],
-                deepDives: [
-            {
-                title: 'Technical Specifications',
-                text: 'Landing heights 12–30 m, telescoping length 11 m, slewing range 194°...',
-                images: ['static/images/walktoworkimage.jpg']
-            },
-            {
-                title: 'In Operation',
-                text: 'See the SMST TAB-L2 gangway in action during a live transfer.',
-                video: 'static/videos/autolanding.mp4'
-            }]
-    }
-},
-{
-    id: 'kran-beuge-2',
-    localPosition: new THREE.Vector3(-0.788, 0.4, -0.26),
-    minAngle: 180,
-    maxAngle: 269,
-    variant: 'green',
-    icon: 'static/images/icons/hotspot-icon-green.png',
-    content: {
-        title: 'Crane',
-           subtitle: 'Switch it!',
-        text: 'One crane, many missions. At the heart of the DO C-CSOV sits flexibility: The SMST KBC-M modular knuckle-boom crane is engineered around a concept that turns a single asset into many. Its knuckle configuration spear heads the modularity concept: the boom reconfigures for different tasks quickly and without external lifts. \n' +
-            '\n' +
-            'For the charterer, that means one crane that adapts to the mission at hand - higher efficiency, less downtime, and the confidence to have contingency to switch between tasks without adding vessels.\n' +
-            '\n' +
-            '\t50 t Active heave compensation or 10 t 3D motion control deliver precise and safe load handling in live seaways. Live collision-avoidance technology enhances safety by accounting for structures and preventing interference with construction spreads. Continuous condition monitoring safeguards uptime on equipment the whole campaign depends on.\n',
-        images: ['static/images/kranimage.jpg']
-    }
-},
-{
-    id: 'leiter-2',
-    localPosition: new THREE.Vector3(-0.9, 0.35, -0.3),
-    minAngle: 180,
-    maxAngle: 269,
-    variant: 'green',
-    icon: 'static/images/icons/hotspot-icon-green.png',
-    content: {
-        title: 'Boatlanding',
-        subtitle: 'Please come in',
-        text: 'Designed for safe and efficient vessel-to-vessel transfers, the DO C-CSOV features an height-adjustable Aukra Boat Landing that accommodates a wide range of daughter craft and CTVs. Its sheltered, step-less design enhances transfer safety by providing a controlled transfer environment while remaining clear of propeller wash.\n' +
-            '\n' +
-            'Its removable configuration supports the vessel’s modular approach, allowing the boat landing to be removed to suit the operational task at hand.\tThe DO C-CSOV is equipped with a height-adjustable Aukra Boat Landing, designed to provide safe and flexible vessel-to-vessel personnel transfer:\n' +
-            '\n' +
-            '•  Step-less access: Seamless personnel transfer to other vessels, reducing transfer barriers and enhancing safety\n' +
-            '•  Height-adjustable: Accommodates working heights from 1.7 m to 4.5 m, supporting both small daughter craft and larger CTVs\n' +
-            '•  Clear of propeller wash: Positioned outside the propeller wash for a safer and more predictable transfer\n' +
-            '•  Sheltered transfer: Lee side access from the vessel side provides a safer, more comfortable transfer environment in challenging offshore conditions\n' +
-            '•  Removable design: Fully removable to maintain the vessel’s modularity and adapt the configuration to the operational requirement\n',
-        images: ['static/images/hotspots/placeholder.jpg']
-    }
-},
-{
-    id: 'heck-2',
-    localPosition: new THREE.Vector3(-1.29, 0.3, 0),
-    minAngle: 180,
-    maxAngle: 269,
-    variant: 'green',
-    icon: 'static/images/icons/hotspot-icon-green.png',
-    content: {
-        title: 'Sustainability',
-        subtitle: 'Embrace today, prepare for tomorrow\n',
-        text: 'The DO C-CSOV is built to embrace today\'s and prepare for tomorrow\'s technology. \n' +
-            '\n' +
-            'Upon delivery, the DO C-CSOV leverages on available technology to achieve sustainable operations. Optimised hull, efficient Voith Schneider propulsion, a closed bus battery hybrid energy concept as well as energy regeneration keep fuel consumption and emissions low. While in turnaround, shore power delivers zero-emission port stays.\n' +
-            '\n' +
-            'Green technologies develop fast, whereas the DO C-CSOV remains flexible to adapt to those that will prevail over time: methanol-ready engines and pre-installed MeoH infrastructure, biofuel capability and a clear path to full electric operation let the vessel decarbonise step by step - lowering the carbon footprint today while steering towards a climate neutral future.\tThe DO C-CSOV\'s sustainability concept is engineered into every system, from propulsion to crane:\n' +
-            '\n' +
-            '•   Propulsion: 2 x Voith Schneider with PM motors - up to 15-22% lower transit power\n' +
-            '•   Hybrid battery: 1,017 kWh (Corvus Orca) for peak shaving, boosting and DP spinning reserve\n' +
-            '•   Part load optimized main engines: 3 x 1,760 kW MAN, IMO Tier III + SCR\n' +
-            '•   Alternative fuels: HVO-100 and FAME biofuels supported\n' +
-            '•   Shore power: 1,000 kVA for zero-emission port stays\n' +
-            '•   Energy recovery: >70% regeneration from the gangway winch, plus crane accumulator, waste-heat recovery\n' +
-            '•   Variable air flow HVAC and frequency-controlled pumps for variable consumers\n' +
-            '•   Future-proof: prepared for >10,000 kWh battery upgrade for 100% electric operation\n'
-           ,
-        images: ['static/images/hotspots/placeholder.jpg']
-    }
-},
-
-{
-    id: 'holz-2',
-    localPosition: new THREE.Vector3(-0.78, 0.32, 0),
-    minAngle: 270,
-    maxAngle: 359,
-    variant: 'green',
-    icon: 'static/images/icons/hotspot-icon-green.png',
-    content: {
-        title: 'Working deck',
-        subtitle: 'Space to out-perform',
-        text: 'The working deck is a vast, unobstructed platform that reconfigures around whatever the job demands - from cable repair to subsea and light construction. Modular sockets and utility stations turn open deck into a purpose-built workspace, and hatches to the warehouse below puts stores and spares within immediate reach. For a charterer, this adaptability is the real advantage: one vessel that flexes across scopes, steps in when plans change, and keeps the campaign moving when risks materialize. Efficiency in every operation, contingency when it counts.\tThe DO C-CSOV working deck features payload, flexibility and multi-scope operations:\n' +
-            '\n' +
-            '•  Size: 800 sqm of open, unobstructed working area\n' +
-            '•  Deck strength: rated for 10 t/m² \n' +
-            '•  T-bars: up to 30 t/m, allowing heavy equipment mobilization\n' +
-            '•  Clean deck: free of vent heads, mooring equipment and other obstructions, maximising usable working area\n' +
-            '•  Modularity: removable infrastructure (daughter craft, boat landing, refuelling) \n' +
-            '•  Utility stations: distributed supply of water, communications, electrical power and high pressure for demanding spreads (e.g. WROV / cable repair) without temporary infrastructure\n' +
-            '•  Warehouse access: dedicated hatch enables operations at sea and effectively extends the working deck via the warehouse below\n' +
-            '•  Functional layout: 5.2 m low freeboard with removable railings for easy overboard access\n',
-        images: ['static/images/workingdecktopview.png']
-    }
-},
-{
-    id: 'propeller-heck-2',
-    localPosition: new THREE.Vector3(-1.2, 0, 0.11),
-    minAngle: 270,
-    maxAngle: 359,
-    variant: 'green',
-    icon: 'static/images/icons/hotspot-icon-green.png',
-    content: {
-        title: 'Voith',
-        subtitle: 'Works like a Swiss watch\n',
-        text: 'Powered by two Voith Schneider Propellers (VSP), each delivering 1,860 kW, the vessel combines exceptional manoeuvrability with precise thrust control. This propulsion concept enables rapid and accurate positioning while delivering a transit speed of up to 13.8 kn. At the same time, the VSP system provides highly efficient thrust generation, reducing energy consumption compared with conventional propulsion concepts.\tRapid response: More than 3× faster reaction to weather-induced forces than comparable azimuth-propelled vessels, with approximately 2 seconds thrust ramp-up and rapid 180° thrust reversal.\n' +
-            '\n' +
-            '\n' +
-            'High operability: Optimised for challenging offshore conditions, with up to 98% operability demonstrated for the specific location and metocean conditions shown.\n' +
-            '\n' +
-            'Reduced roll motion: Active VSP control counteracts wave-induced roll, reducing vessel motion, extending the operational window and improving transfer conditions and comfort.\n' +
-            '\n' +
-            'Low-noise operation: Electric VSP propulsion enables quiet operation, supporting DNV Comfort Class C2 and V2 requirements.\n' +
-            '\n',
-        video: 'static/videos/voithpropulsion.mp4',
-    }
-},
-{
-    id: 'heck-l-2',
-    localPosition: new THREE.Vector3(-0.67, 0.29, 0.29),
-    minAngle: 270,
-    maxAngle: 359,
-    variant: 'green',
-    icon: 'static/images/icons/hotspot-icon-green.png',
-    content: {
-        title: 'Warehouse',
-        subtitle:'Comes with a big belly',
-        text: 'The DO C-CSOV offers a large warehouse facility designed to keep the transfer of people, tools, and materials to the offshore structure safe and efficient. A unique integrated skidding system handles containers with a 6 × 30t/TEU capacity, while dedicated hatches allow containers and pallets to be handled even while offshore. \n' +
-            '\n' +
-            'Step-less access, via a dedicated elevator, runs throughout the vessel and onto the offshore structure via the gangway, allowing personnel and equipment to move without obstruction at any stage of the offshore operation.\tThe DO C-CSOV integrated warehouse facility supports offshore operations with a diverse set of capabilities:\n' +
-            '\n' +
-            '•  525 sqm dedicated warehouse with 300 sqm of free deck space and 3.4 m clear height\n' +
-            '•  Integrated skidding system handling containers with a 6 × 30 t / TEU capacity, complemented by >120-pallet shelving\n' +
-            '•  Dedicated hatches allowing containers and pallets to be handled even while offshore\n' +
-            '•  Fully temperature- and humidity-controlled warehouse at 23 °C / 50 % RH, plus an additional 29 sqm area controlled at 23 °C / 30 % RH for sensitive goods\n' +
-            '•  Complete supporting infrastructure, including large, client-dedicated IMDG store and workshop as well as storekeeper office and related duty mess\n',
-        images: ['static/images/hotspots/placeholder.jpg']
-    }
-},
-{
-    id: 'bruecke-l-seite-2',
-    localPosition: new THREE.Vector3(0.285, 0.72, 0.33),
-    minAngle: 270,
-    maxAngle: 359,
-    variant: 'green',
-    icon: 'static/images/icons/hotspot-icon-green.png',
-    content: {
-        title: 'Waveradar',
-        subtitle : 'What if you could predict the future?\n',
-        text: 'The DO C-CSOV is equipped with a Miros WaveRadar incorporating predictive AI technology. \n' +
-            '\n' +
-            'The Miros WaveSystem provides accurate, local, real-time wave and current data, giving the crew a reliable picture of the actual conditions during weather-critical offshore wind operations.\n' +
-            '\n' +
-            'By combining real-time measurements from WaveSystem with short-term wave and vessel-motion prediction, PredictifAI gives the crew greater visibility ahead of weather-critical operations, supporting better timing and more informed operational decisions.\tMiros PredictifAI combines X-band radar measurements of the incoming wave field with local wave measurements to support DO C-CSOV operations:\n' +
-            '\n' +
-            '•  Enhanced safety: Anticipate incoming waves and vessel motions before they occur, allowing proactive measures during critical operations such as W2W transfers\n' +
-            '•  Objective weather assessment: Real-time measurement of local sea conditions provides a clear understanding of the forces acting on the vessel\n' +
-            '•  Increased operability: Greater visibility of approaching conditions enables the crew to make better use of available weather windows\n' +
-            '•  Improved decision-making: Combining measured conditions with predicted vessel response provides greater transparency when assessing operational limits\n' +
-            '•  Reduced downtime: Better understanding of short-term conditions can help avoid unnecessary interruptions and maximise productive operating time\n',
-        images: ['static/images/hotspots/placeholder.jpg']
-    }
-},
-
-{
-    id: 'kabinen-r-2',
-    localPosition: new THREE.Vector3(0.7, 0.32, -0.29),
-    minAngle: 90,
-    maxAngle: 179,
-    variant: 'green',
-    icon: 'static/images/icons/hotspot-icon-green.png',
-    content: {
-        title: 'Accommodation',
-        subtitle: 'A home at sea',
-        text: 'Skilled and experienced personnel are becoming scarce across the industry. They are the single most important factor in achieving high-quality progress offshore. Crew and charterer personnel need to be well-rested to perform safely, thus the vessel is their safe haven after a hard day\'s work, the foundation for all and the reason every small detail has been considered in the design of the interior, facilities, and layout of the DO C-CSOV.\t •  99 cabins, each over 11 sqm, with 76 daylight cabins dedicated to charterer personnel\n' +
-            '•  Flexible 1+1 cabin concept, allowing selected single cabins to be converted into doubles with a ceiling-mounted Pullman bed - without compromising comfort or space\n' +
-            '•  140 sqm dedicated office wing, comprising four offices, 17 workstations and two combinable meeting rooms accommodating up to 24 people\n' +
-            '•  Clear separation of work, recreation and private living, with the layout designed around the daily workflow of personnel\n' +
-            '•  Over 180 sqm of gym and wellness facilities across two decks, including a dedicated spa and treatment area, supporting health, mobility and recovery\n' +
-            '•  Dedicated C-Deck leisure area with library, sports bar and lounge, providing space to switch off and recharge',
-        images: ['static/images/cabins-a.jpg','static/images/cabins-b.jpg'],
-                deepDives: [
-            {
-                title: 'Deck Gallery',
-                slideshow: 'static/images/accommodation' // <-- directory, not a single file
-            }
-        ]
-    }
-},
-{
-    id: 'propeller-front-2',
-    localPosition: new THREE.Vector3(1.4, 0.1, 0),
-    minAngle: 90,
-    maxAngle: 179,
-    variant: 'green',
-    icon: 'static/images/icons/hotspot-icon-green.png',
-    content: {
-        title: 'Bowthruster',
-        subtitle:'Give it a nudge',
-        text: 'The DO C-CSOV is equipped with a high-end Brunvoll bow thrusters designed to maximise manoeuvrability, DP performance and operational redundancy. \n' +
-            '\n' +
-            'Configuration and arrangement of the thrusters are aligned to ensure safe and reliable position keeping in challenging environmental conditions. Size, power, location and performance criteria are balanced in order to match the thrust agility of the aft eVSP while minimizing ventilation, noise and vibrations and maintaining strong power reserves.\n' +
-            'The DO C-CSOV bow thruster arrangement combines high power, rapid response and redundancy to deliver precise vessel control across a wide range of offshore operating conditions:\n' +
-            '\n' +
-            '•  Three-thruster configuration: Two tunnel thrusters and one retractable azimuth thruster provide high levels of manoeuvrability and redundancy\n' +
-            '•  High power: 3x 1,500 kW provides strong thrust for demanding DP and manoeuvring conditions\n' +
-            '•  Resiliently mounted thrusters for minimal noise and vibration emissions during DP\n',
-        images: ['static/images/bowthruster.png']
-    }
-},
-
-{
-    id: 'beiboot-2',
-    localPosition: new THREE.Vector3(-0.295, 0.34, 0.23),
-    minAngle: 0,
-    maxAngle: 89,
-    variant: 'green',
-    icon: 'static/images/icons/hotspot-icon-green.png',
-    content: {
-        title: 'Daughter Craft ',
-           subtitle: 'Pick me up!',
-        text: 'The DO C-CSOV is equipped with a Vestdavit launched Chartwell Catamaran Workboat. Its large deck space in combination with its modularity concept allows for carrying a high performance Daughter Craft without compromising on the asset\'s capabilities. The working deck remains spacious with sufficient capacity for containerized or bulk cargo. As the davit is skid mounted, quick mobilization and demobilization is catered for the event the additional space is required. \n' +
-            '\tBenefiting from the use of a Daughter Craft should not go along unacceptable risks. The Vestdavit PLD-15002 is DNV-ST-0498 certified, setting a baseline to deploy and retrieve Daughter Crafts safely. A telescopic painter boom ensures proper hull clearance and controlled motion at high sea states, safeguarding that a recovery can be conducted under any circumstances.\n' +
-            '',
-        images: ['static/images/daughtercraft.png']
-
-    }
-},
-{
-    id: 'bruecke-l-front-2',
-    localPosition: new THREE.Vector3(0.45, 0.7, 0.2),
-    minAngle: 0,
-    maxAngle: 89,
-    variant: 'green',
-    icon: 'static/images/icons/hotspot-icon-green.png',
-    content: {
-        title: 'Dynamic Positioning',
-           subtitle: 'Control at your fingertips',
-        text: 'The DO C-CSOV is equipped with a high-performance dynamic positioning and Integrated bridge system from Marine Technologies (MT). This combines proven DP capability with advanced navigation and communications systems for safe and reliable offshore operations.\n' +
-            '\n' +
-            'DP Alert, Clear Comms, integrated HiPAP and dedicated anti-jamming and anti-spoofing technology further enhance positioning integrity, communication resilience and operational robustness.\n' +
-            '\n' +
-            'With 800+ DP2 systems delivered and more than 35 million DP operating hours, Marine Technologies brings proven technology, hardened by experience. \tModern offshore assets have adopted closed-bus operations in order to reduce fuel cost and carbon emissions, turning away from traditional open-bus-tie configurations. \n' +
-            '\n' +
-            'Improved commercials and sustainability may however not come at the cost of safety. The DO C-CSOV is the first purpose-built W2W asset to adopt the DNV DYNPOS AUTR-CB notation, incorporating the latest learnings and developments for a leap forward in closed-bus safety. \n' +
-            '\n' +
-            'As such, the notation achieves the operational safety standards of conventional open-bus operation while delivering the fuel-efficiency benefits of closed-bus operation. ',
-        images: ['static/images/mt-logo.png']
-    }
-},
-{
-    id: 'rumpf-l-mitte-2',
-    localPosition: new THREE.Vector3(0, 0.2, 0.29),
-    minAngle: 0,
-    maxAngle: 89,
-    variant: 'green',
-    icon: 'static/images/icons/hotspot-icon-green.png',
-    content: {
-        title: 'Power Train',
-        subtitle: 'Full steam ahead! \n',
-        text: 'The DO C-CSOV’s powertrain has been designed around an efficient and robust primary power generation system, recognising that the overall performance of the vessel’s energy concept starts with the selection of the main engines. Three medium-speed MAN engines, optimised for part-load operation, provide a highly efficient power source for propulsion, mission equipment and vessel services across a wide range of applicable load scenarios.\n' +
-            '\n' +
-            'The engines work in synergy with the vessel’s battery hybrid energy architecture. This enables the vessel to efficiently respond to varying power demands on the spot, cover demand peaks and act as temporary boosters.\n' +
-            'The DO C-CSOV powertrain combines efficient primary generation with hybrid energy storage and flexible fuel capability to maximise efficiency, resilience and operational flexibility. Key features include:\n' +
-            '\n' +
-            '•  Main engines: 3 × 1,760 kW MAN 8L21/31H MK2 PLO medium-speed engines\n' +
-            '•  Part-load efficiency: Engines optimised for efficient operation across varying load profiles, supporting reduced fuel consumption during typical offshore operations\n' +
-            '•  Hybrid battery: 1,000 kWh battery system supporting peak shaving, power boosting and DP spinning reserve\n' +
-            '•  Alternative fuels: Methanol-ready from delivery and capable of operating on biofuels including HVO-100 and FAME',
-        images: ['static/images/cabins-a.jpg','static/images/cabins-b.jpg']
-    }
-},
-{
-    id: 'rumpf-l-vorner-2',
-    localPosition: new THREE.Vector3(0.54, 0.23, 0.29),
-    minAngle: 0,
-    maxAngle: 89,
-    variant: 'green',
-    icon: 'static/images/icons/hotspot-icon-green.png',
-    content: {
-        title: 'Electric System',
-        subtitle: 'Safety and robustness prevail! ',
-        text: 'The DO C-CSOV’s electrical system has been engineered with safety, robustness and operational continuity at its core. The vessel is fitted with a three-split 690 V AC/DC hybrid system, arranged across four independent redundancy groups and supporting the vessel’s DNV DYNPOS-AUTR-CB class notation. \n' +
-            '\n' +
-            'This architecture ensures that a single failure cannot compromise the vessel’s overall power availability, providing the resilience required to maintain critical DP integrity during demanding offshore operations.\n' +
-            '\n' +
-            'A closed-loop configuration connects the main switchboards for fuel efficient and balanced operation, while allowing individual redundancy groups to be isolated and the system to operate in full open-bus-tie configuration when required. The power system architecture and energy management concept combines multiple technologies to maximise efficiency, resilience and future flexibility:\n' +
-            '\n' +
-            '•  2x 1800 kW instant power discharge to match Voith thrust agility\n' +
-            '•  Two redundant battery packs integrated via a DC Bus system\n' +
-            '•  Shore power: 1,000 kVA shore connection enabling zero-emission operation while in port\n' +
-            '•  2x 1000 kVA at 690 V Utility Station on deck to support heavy consumers\n' +
-            '•  All Permanent Magnet motors for increased efficiency at part loads\n' +
-            '•  Energy recovery: Energy recuperation from crane and gangway\n' +
-            '•  Future-ready: Prepared for a battery upgrade exceeding 10,000 kWh, supporting a future transition towards fully electric operation',
-        images: ['static/images/hotspots/placeholder.jpg']
-    }
-},
-{
-    id: 'helipad-2',
-    localPosition: new THREE.Vector3(0.89, 0.8, 0),
-    minAngle: 0,
-    maxAngle: 89,
-    variant: 'green',
-    icon: 'static/images/icons/hotspot-icon-green.png',
-    content: {
-        title: 'Helideck\n',
-        subtitle: 'Big boat meets big bird',
-        text: 'The DO C-CSOV’s D-21 rated helideck adds another dimension of operational flexibility offshore, supporting large helicopter types including the S-92. Beyond crew changes, material transfers and medevac, the helideck integrates directly with the vessel’s logistics chain: the gangway can connect to the helideck to provide step-less access throughout the vessel and into the warehouse, enabling efficient movement of personnel and materials.\n' +
-            '\n' +
-            ' The dedicated platform also provides a safe operating area for drones without occupying valuable working deck space.\tThe DO C-CSOV helideck has been designed with operational efficiency and ease of access in mind:\n' +
-            '\n' +
-            '•   D-21 rated helideck with maximum take-off weight of 12.6 t\n' +
-            '•   Suitable for S-92 and other helicopter types\n' +
-            '•   CAP 437 certification\n' +
-            '•   Drone operations: Dedicated platform for safe deployment and recovery\n' +
-            '•   Three access points: For efficient access and egress\n' +
-            '•   Direct MCC gangway connection: Enables step-free transfer of personnel and materials throughout the vessel as well as elevator redundancy\n' +
-            '•   Fully certified Helideck monitoring system',
-        images: ['static/images/hotspots/placeholder.jpg']
-    }
-},
-{
-    id: 'bug-2',
-    localPosition: new THREE.Vector3(1.5, 0.477, 0),
-    minAngle: 0,
-    maxAngle: 89,
-    variant: 'green',
-    icon: 'static/images/icons/hotspot-icon-green.png',
-    content: {
-        title: 'Operability\n',
-        subtitle:'Stay steady, work ready\n',
-        text: 'The DO C-CSOV offers excellent seakeeping and station keeping performance and consequently strong W2W and crane operability. These capabilities are primarily driven by:\n' +
-            '\n' +
-            'Propulsion configuration: 2 × Voith Schneider Propellers, 2 × 1,500 kW Brunvoll bow thrusters and 1 × 1,500 kW retractable azimuth thruster.\n' +
-            '\n' +
-            'Power availability: 3-split AC/DC hybrid power distribution with 3 × 1,760 kW main engines and a 1,017 kWh battery.\n' +
-            '\n' +
-            'Hull design: 96.25 m LOA × 20 m beam with a bow-shaped stern optimised for all-heading seakeeping.\n' +
-            '\n' +
-            'The vessel’s operational capability has been verified through DNV L3 time-domain analysis and assessed against actual 2025 German Bight metocean data. The results demonstrate approximately 98% annual W2W availability, with a W2W envelope of up to 3.5 m Hs at ±20° headings and 3.25 m Hs at ±30°, at mean wind speeds up to 16 m/s. DP position-keeping capability is demonstrated up to 4.0 m Hs at ±30° from head seas.\tBeyond the vessel’s inherent seakeeping performance, dedicated motion-control, positioning and prediction systems further enhance operability, safety and comfort.\n' +
-            '\n' +
-            'Motion & Roll Control\n' +
-            'Voith propulsion control, Hoppe active stabilisers and bilge keels work together to reduce roll motions, improving transfer conditions, comfort and operational windows.\n' +
-            '\n' +
-            'Positioning & Motion Prediction\n' +
-            'Five independent position-reference systems — SceneScan, CyScan, HiPAP 502 and 2 × Veripos DGNSS with anti-jamming/spoofing capability — provide robust positioning. JRC wave radar, Miros WaveSystem, PredictifAI and multiple MRUs support accurate motion monitoring and short-term wave and motion prediction.\n' +
-            '\n' +
-            'Human Factor\n' +
-            'Motion sickness analysis indicates that less than 10% of personnel are expected to experience motion sickness up to 3.0 m Hs, supporting safe and comfortable offshore operations.',
-        images: ['static/images/hotspots/placeholder.jpg']
-    }
-},
-            {
-        id: '3-1-kran-ausleger-2',
-        localPosition: new THREE.Vector3(-0.81, 0.51, -0.755),
-        minAngle: 0,
-        maxAngle: 359,
-        variant: 'blue',
-        icon: 'static/images/icons/hotspot-icon-blue.png',
-        content: {
-            title: 'On the Rocks',
-            text: 'The DO C-CSOV extends the scope of Walk-to-Work operations by combining W2W with rock bag installation for scour and cable protection. Its large working deck and high-capacity crane enable efficient handling and installation of rock bags alongside W2W activities. Those complementary tasks reduce the need for costly short term tonnage, decreasing the total number of assets in the field and increasing overall offshore efficiency.\n',
-            images: ['static/images/hotspots/placeholder.jpg']
-        }
-    },
-
-
-    ],
-
-    2: [ // Boot 3 (new)
-        {
-            id: 'boot3-hull',
-            localPosition: new THREE.Vector3(0, -0.5, 0),
-            minAngle: 0,
-            maxAngle: 360,
-            variant: 'green',
-            icon: 'static/images/icons/hotspot-icon-green.png',
-            content: {
-                title: 'Rumpf',
-                text: 'PLATZHALTER GFK‑Rumpf mit Antifouling‑Beschichtung. PLATZHALTER',
-                images: ['static/images/hotspots/hull.jpg']
-            }
-        },
-        {
-            id: 'boot3-antenna',
-            localPosition: new THREE.Vector3(0.2, 1.5, -0.3),
-            minAngle: 45,
-            maxAngle: 135,
-            variant: 'blue',
-            icon: 'static/images/icons/hotspot-icon-blue.png',
-            content: {
-                title: 'Antenne',
-                text: 'PLATZHALTER VHF‑Antenne mit 2 m Reichweite. PLATZHALTER',
-                images: ['static/images/hotspots/antenna.jpg']
-            }
-        },
-        {
-            id: 'boot3-anchor',
-            localPosition: new THREE.Vector3(-1.0, -0.2, 1.8),
-            minAngle: 200,
-            maxAngle: 300,
-            variant: 'green',
-            icon: 'static/images/icons/hotspot-icon-green.png',
-            content: {
-                title: 'Anker',
-                text: 'PLATZHALTER Edelstahl‑Anker, 15 kg, mit Kette. PLATZHALTER',
-                images: ['static/images/hotspots/anchor.jpg']
-            }
-        }
-    ],
-
-    3: [ // Boot 4 (new)
-           {
-        id: 'boot4-deck-payload',
-        localPosition: new THREE.Vector3(-0.7, 0.32, 0),
-        minAngle: 260,
-        maxAngle: 80,
-        variant: 'blue',
-        icon: 'static/images/icons/hotspot-icon-blue.png',
-        content: {
-            title: 'When size matters',
-            text: 'When the job calls for size, the DO C-CSOV delivers. A vast, strengthened deck, generous payload and a powerful crane let big, bulky equipment - from generator sets with pre-filled fuel tanks to subsea corrosion-protection spreads - be mobilised, installed and operated from a single vessel, whether planned or unplanned. Bigger lifts mean fewer of them: less deck shuffling, fewer supply runs and less port time, so campaigns run leaner and faster. And when priorities shift, this flexibility turns into contingency - ready to pick up slack and keep the offshore programme moving without missing a beat.\n',
-            images: ['static/images/deckpayload-a.jpg','static/images/deckpayload-b.jpg']
-        }
-    },
-    ],
-
-    4: [ // Boot 5 (new)
-        {
-            id: 'boot5-radio',
-            localPosition: new THREE.Vector3(-0.2, 0.6, -0.5),
-            minAngle: 0,
-            maxAngle: 359,
-            variant: 'green',
-            icon: 'static/images/icons/hotspot-icon-green.png',
-            content: {
-                title: 'Funkgerät',
-                text: 'PLATZHALTER Digitales UKW‑Funkgerät mit DSC. PLATZHALTER',
-                images: ['static/images/hotspots/radio.jpg']
-            }
-        },
-        {
-            id: 'boot5-bilge',
-            localPosition: new THREE.Vector3(0.0, -0.7, 0.8),
-            minAngle: 180,
-            maxAngle: 270,
-            variant: 'blue',
-            icon: 'static/images/icons/hotspot-icon-blue.png',
-            content: {
-                title: 'Bilgenpumpe',
-                text: 'PLATZHALTER Automatische Bilgenpumpe 2000 l/h. PLATZHALTER',
-                images: ['static/images/hotspots/bilge.jpg']
-            }
-        },
-        {
-            id: 'boot5-windlass',
-            localPosition: new THREE.Vector3(-1.2, -0.1, 1.2),
-            minAngle: 300,
-            maxAngle: 30,
-            variant: 'green',
-            icon: 'static/images/icons/hotspot-icon-green.png',
-            content: {
-                title: 'Ankerwinde',
-                text: 'PLATZHALTER Elektrische Ankerwinde mit Fernbedienung. PLATZHALTER',
-                images: ['static/images/hotspots/windlass.jpg']
-            }
-        }
-    ],
-
-    5: [ // Boot 6 (new)
-        {
-            id: 'boot6-sail',
-            localPosition: new THREE.Vector3(0, 1.2, 0),
-            minAngle: 0,
-            maxAngle: 360,
-            variant: 'green',
-            icon: 'static/images/icons/hotspot-icon-green.png',
-            content: {
-                title: 'Segel',
-                text: 'PLATZHALTER Großsegel aus Dacron, 25 m². PLATZHALTER',
-                images: ['static/images/hotspots/sail.jpg']
-            }
-        },
-        {
-            id: 'boot6-rudder',
-            localPosition: new THREE.Vector3(0.0, -0.4, 1.8),
-            minAngle: 135,
-            maxAngle: 225,
-            variant: 'pink',
-            icon: 'static/images/icons/hotspot-icon-pink.png',
-            content: {
-                title: 'Ruder',
-                text: 'PLATZHALTER Ausgewogenes Ruder mit Edelstahlschaft. PLATZHALTER',
-                images: ['static/images/hotspots/rudder.jpg']
-            }
-        },
-        {
-            id: 'boot6-cleat',
-            localPosition: new THREE.Vector3(1.0, 0.1, -1.0),
-            minAngle: 60,
-            maxAngle: 150,
-            variant: 'green',
-            icon: 'static/images/icons/hotspot-icon-green.png',
-            content: {
-                title: 'Klampe',
-                text: 'PLATZHALTER Edelstahl‑Klampe für Festmacherleinen. PLATZHALTER',
-                images: ['static/images/hotspots/cleat.jpg']
-            }
-        }
-    ]
-
-};
 
 
 
@@ -1281,7 +1471,7 @@ directionalLight2.shadow.normalBias = 0.02;
 
     //_______________________CAMERALIGHT START
 
-    const cameraLight = new THREE.SpotLight(
+    cameraLight = new THREE.SpotLight(
     0xffffff,          // color
     8,                 // intensity — tune to taste
     0,                 // distance: 0 = no cutoff
@@ -1676,7 +1866,22 @@ function resetScreensaverTimer() {
 
 }
 
+// True while the hotspot info overlay is on screen. The overlay is shown/hidden
+// purely via its inline display style ('flex' when open, 'none' when closed),
+// so that's what we check.
+function isHotspotOverlayOpen() {
+    return !!hotspotOverlayEl && hotspotOverlayEl.style.display !== 'none';
+}
+
 function showScreensaver() {
+
+    // Don't cover an open hotspot overlay — the person may be reading a long
+    // text or watching a video, and a screensaver on top of it would hide the
+    // close button and interrupt them. Re-arm the timer and wait instead.
+    if (isHotspotOverlayOpen()) {
+        resetScreensaverTimer();
+        return;
+    }
 
     screensaverActive = true;
     screensaverEl.style.display = 'flex';
@@ -2331,36 +2536,54 @@ function initHotspotOverlay() {
 }
 
 
-// Renders just the media (video OR image gallery) into hotspotOverlayImagesEl.
 function renderHotspotMedia(content) {
     clearSlideshowAutoplay();
     hotspotOverlayImagesEl.innerHTML = '';
 
     if (content.video) {
-        const video = document.createElement('video');
-        video.src = content.video;
-        video.controls = true;
-        video.playsInline = true;
-        video.style.width = '100%';
-        video.style.display = 'block';
-        hotspotOverlayImagesEl.appendChild(video);
+
+        // `video` may be a single string path OR an array of paths — the
+        // definitions use both shapes. Normalise so either works.
+        const videoSources = Array.isArray(content.video) ? content.video : [content.video];
+
+        videoSources.forEach((src) => {
+            const video = document.createElement('video');
+            video.className = 'hotspot-overlay-video';
+            video.src = src;
+            video.controls = true;
+            video.playsInline = true;
+            video.preload = 'metadata';
+
+            // Centre + size the video so it behaves like the images do, without
+            // relying on outer CSS existing. `margin: 0 auto` is the horizontal
+            // centring; max-height keeps it from running off-screen.
+            video.style.display = 'block';
+            video.style.margin = '0 auto';
+            video.style.width = '100%';
+            video.style.maxWidth = '100%';
+            video.style.height = 'auto';
+            video.style.maxHeight = '60vh';
+            video.style.objectFit = 'contain';
+            video.style.background = '#000';
+
+            hotspotOverlayImagesEl.appendChild(video);
+        });
+
     } else if (content.slideshow) {
         renderSlideshow(content.slideshow);
+
     } else {
         (content.images || []).forEach((src) => {
             const img = document.createElement('img');
             img.className = 'hotspot-overlay-image';
             const isPng = src.toLowerCase().endsWith('.png');
-            if (isPng) {
-                img.classList.add('hotspot-overlay-image--contain');
-            } else {
-                img.classList.add('hotspot-overlay-image--cover');
-            }
+            img.classList.add(isPng ? 'hotspot-overlay-image--contain' : 'hotspot-overlay-image--cover');
             img.src = src;
             hotspotOverlayImagesEl.appendChild(img);
         });
     }
 }
+
 
 // Fetches the list of available model folder names from the backend once —
 // the browser can't list a server directory on its own, so this is how we
@@ -2446,12 +2669,24 @@ async function renderSlideshow(dirPath) {
 
     const prevBtn = document.createElement('button');
     prevBtn.className = 'slideshow-nav-btn slideshow-nav-btn--prev';
-    prevBtn.textContent = '‹';
+    prevBtn.setAttribute('aria-label', 'Previous image');
+    const prevIcon = document.createElement('img');
+    prevIcon.className = 'slideshow-nav-icon';
+    prevIcon.src = 'static/images/icons/chevron-left.svg';
+    prevIcon.alt = 'Previous image';
+    prevIcon.draggable = false;
+    prevBtn.appendChild(prevIcon);
     imgWrapper.appendChild(prevBtn);
 
     const nextBtn = document.createElement('button');
     nextBtn.className = 'slideshow-nav-btn slideshow-nav-btn--next';
-    nextBtn.textContent = '›';
+    nextBtn.setAttribute('aria-label', 'Next image');
+    const nextIcon = document.createElement('img');
+    nextIcon.className = 'slideshow-nav-icon';
+    nextIcon.src = 'static/images/icons/chevron-right.svg';
+    nextIcon.alt = 'Next image';
+    nextIcon.draggable = false;
+    nextBtn.appendChild(nextIcon);
     imgWrapper.appendChild(nextBtn);
 
     container.appendChild(imgWrapper);
@@ -2511,14 +2746,25 @@ async function renderSlideshow(dirPath) {
 function renderHotspotContent(content) {
     if (!hotspotOverlayContentEl) return;
 
-    const hasText = content.text && content.text.trim().length > 0;
-    const isSlideshow = !!content.slideshow;
-    const slideshowFull = isSlideshow && !hasText;
+    const hasText     = !!(content.text && content.text.trim().length > 0);
+    const hasImages   = !!(content.images && content.images.length > 0);
+    const hasVideo    = !!content.video;
+    const hasSlideshow = !!content.slideshow;
+
+    // Full-bleed modes:
+    //   • slideshow with no text  → slideshow fills overlay (existing behaviour)
+    //   • video with no text      → video fills overlay
+    //   • text-only (no other media) → text fills overlay
+    const slideshowFull = hasSlideshow && !hasText;
+    const videoFull     = hasVideo && !hasText;
+    const textFull      = hasText && !hasImages && !hasVideo && !hasSlideshow;
 
     hotspotOverlayContentEl.classList.toggle('slideshow-full', slideshowFull);
+    hotspotOverlayContentEl.classList.toggle('video-full',     videoFull);
+    hotspotOverlayContentEl.classList.toggle('text-full',      textFull);
 
     hotspotOverlayTitleEl.textContent = content.title || '';
-renderHotspotText(content.text || '');
+    renderHotspotText(content.text || '');
 
     // Subtitle (optional)
     if (content.subtitle) {
@@ -2538,7 +2784,6 @@ renderHotspotText(content.text || '');
         hotspotOverlayLogoEl.removeAttribute('src');
     }
 
-    // Render the media (video, slideshow, or static images)
     renderHotspotMedia(content);
 }
 
@@ -2625,7 +2870,37 @@ function buildDeepDiveButtons(baseContent) {
         const btn = document.createElement('button');
         btn.className = 'hotspot-deep-dive';
         btn.textContent = dive.title || `Deep Dive ${i + 1}`;
-        btn.addEventListener('click', () => renderHotspotContent(dive));
+
+        btn.addEventListener('click', () => {
+
+            // ---- Linked-hotspot deep dive ----
+            if (dive.linkedHotspotId) {
+                const linkedDef = findHotspotDefinitionById(dive.linkedHotspotId);
+                if (!linkedDef || !linkedDef.content) {
+                    console.warn(`Deep dive "${dive.title}" references unknown hotspot id "${dive.linkedHotspotId}"`);
+                    return;
+                }
+                if (linkedDef.variant && HOTSPOT_VARIANTS.includes(linkedDef.variant)) {
+                    HOTSPOT_VARIANTS.forEach((v) => hotspotOverlayEl.classList.remove(`hotspot-overlay--${v}`));
+                    hotspotOverlayEl.classList.add(`hotspot-overlay--${linkedDef.variant}`);
+                }
+                if (linkedDef.icon) {
+                    hotspotOverlayIconEl.src = linkedDef.icon;
+                    hotspotOverlayIconEl.classList.remove('hidden');
+                }
+
+                renderHotspotContent(linkedDef.content);
+                // Different hotspot → it has its own deep-dive list, so rebuild.
+                buildDeepDiveButtons(linkedDef.content);
+                return;
+            }
+
+            // ---- Normal deep dive ----
+            // Just swap the content. KEEP the existing button row so the user
+            // can still hit "Return" or jump to a sibling deep dive.
+            renderHotspotContent(dive);
+        });
+
         deepDiveButtonsEl.appendChild(btn);
     });
 }
@@ -2865,6 +3140,24 @@ function initLightControls() {
 
     wireDirectionalLightControls(directionalLight, '');
     wireDirectionalLightControls(directionalLight2, '-2');
+
+        wireDirectionalLightControls(directionalLight, '');
+    wireDirectionalLightControls(directionalLight2, '-2');
+
+    // ---- Camera light (spot light parented to the camera) ----
+    const camLightSlider = document.getElementById('camera-light-intensity');
+    const camLightVal = document.getElementById('camera-light-intensity-val');
+
+    camLightSlider.value = cameraLight.intensity;
+    camLightVal.textContent = cameraLight.intensity.toFixed(1);
+
+    camLightSlider.addEventListener('input', () => {
+        const val = parseFloat(camLightSlider.value);
+        cameraLight.intensity = val;
+        camLightVal.textContent = val.toFixed(1);
+    });
+
+
 
 }
 
@@ -3231,4 +3524,16 @@ function warmUpAllModels({onProgress} = {}) {
         if (entry) entry.object.visible = originalVisibility[index];
     });
 
+}
+
+// Looks up a hotspot definition by its `id` across every model's list.
+// Returns the definition object (with .content, .variant, .icon) or null.
+function findHotspotDefinitionById(id) {
+    for (const modelIndex in hotspotDefinitions) {
+        const defs = hotspotDefinitions[modelIndex];
+        if (!Array.isArray(defs)) continue;
+        const found = defs.find((def) => def.id === id);
+        if (found) return found;
+    }
+    return null;
 }
