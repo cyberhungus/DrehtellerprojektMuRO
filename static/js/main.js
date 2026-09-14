@@ -188,7 +188,7 @@ const SHARED_GREEN_HOTSPOTS = [
     },
     {
         id: 'propeller-heck-2',
-  localPosition: new THREE.Vector3(-1.241, -0.172, 0.137),
+  localPosition: new THREE.Vector3(-1.051, 0.1, 0.137),
         minAngle: 270,
         maxAngle: 359,
         variant: 'green',
