@@ -406,8 +406,8 @@ The 48 sqm changing room provides 88 lockers and can be divided into separate me
     {
         id: 'bruecke-l-front-2',
         localPosition: new THREE.Vector3(0.45, 0.7, 0.2),
-        minAngle: 270,
-        maxAngle: 180,
+        minAngle: 0,
+        maxAngle: 90,
         variant: 'green',
         icon: 'static/images/icons/hotspot-icon-green.png',
         content: {
@@ -450,8 +450,8 @@ The 48 sqm changing room provides 88 lockers and can be divided into separate me
     {
         id: 'rumpf-l-mitte-2',
         localPosition: new THREE.Vector3(0, 0.2, 0.29),
-        minAngle: 300,
-        maxAngle: 190,
+        minAngle: 10,
+        maxAngle: 170,
         variant: 'green',
         icon: 'static/images/icons/hotspot-icon-green.png',
         content: {
@@ -473,8 +473,8 @@ The 48 sqm changing room provides 88 lockers and can be divided into separate me
     {
         id: 'rumpf-l-vorner-2',
         localPosition: new THREE.Vector3(0.54, 0.23, 0.29),
-        minAngle: 280,
-        maxAngle: 190,
+        minAngle: 10,
+        maxAngle: 170,
         variant: 'green',
         icon: 'static/images/icons/hotspot-icon-green.png',
         content: {
