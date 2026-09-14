@@ -67,8 +67,8 @@ canvas {
    ═══════════════════════════════════════════════════════════ */
 .logo-image {
     position: fixed;
-    top: 10px;
-    left: 10px;
+    top: 40px;
+    left: 40px;
     z-index: 900;
     width: 300px;
     height: auto;
@@ -163,8 +163,8 @@ canvas {
    ═══════════════════════════════════════════════════════════ */
 #status-text {
     position: fixed;
-    top: 180px;
-    left: 20px;
+    top: 150px;
+    left: 40px;
     background: transparent;
     color: #515151;
     font-weight: 300;
@@ -210,12 +210,11 @@ canvas {
 .model-toggle-btn:hover {
     background: #e0e0e0;                 /* was #999999 */
 }
-.model-toggle-btn.inactive {
-    opacity: 0.55;
-}
+
 .model-toggle-btn.active {
     background: #c8c8c8;                 /* was #7a7a7a */
     box-shadow: inset 0 0 0 2px #00AC00;
+
 }
 .model-toggle-icon {
     position: absolute;
@@ -261,7 +260,9 @@ canvas {
 }
 .model-toggle-btn.active .model-toggle-label {
     color: #00AC00;
-    border-color: #00AC00;               /* left, right and top edges go green when active */
+    border-color: #00AC00;
+      font-weight: 700;
+
 }
 .model-toggle-btn.active .model-toggle-label::before {
     border-left-color: #00AC00;

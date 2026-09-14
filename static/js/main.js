@@ -5,7 +5,7 @@ const buttonConfig = {
     // hotspot image paths.
     0: {label: "Base",                statusText: "Base Variant",
         image: 'static/images/shipicons/basis.png'},
-    1: {label: "Rockbag Installation", statusText: "Rockbag Installation",
+    1: {label: "Rockbags", statusText: "Rockbag Installation",
         image: 'static/images/shipicons/rockbag.png'},
     2: {label: "CFE",                  statusText: "Control Flow Excavator",
         image: 'static/images/shipicons/cfe.png'},
