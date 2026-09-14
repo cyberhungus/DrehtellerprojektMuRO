@@ -1,17 +1,32 @@
 const buttonConfig = {
     // ---- Base boats (indices 0-8) ----
-    0: {label: "Standard",             statusText: "Base Variant"},
-    1: {label: "Rockbag Installation", statusText: "Rockbag Installation"},
-    2: {label: "CFE",                  statusText: "Control Flow Excavator"},
-    3: {label: "Deck Payload",         statusText: "Deck Payload"},
-    4: {label: "Cable Repair",         statusText: "Cable Repair Spread"},
-    5: {label: "ROV",                  statusText: "ROV Operations"},
-    6: {label: null,                   statusText: null},
-    7: {label: "Grouting",             statusText: "Grouting"},
-    8: {label: "Monopile Cleaning",    statusText: "Monopile Cleaning"},
+    // `image` is optional — omit it (or set to null) to leave the button's
+    // existing icon in place. Paths are relative to the page root, same as
+    // hotspot image paths.
+    0: {label: "Base",                statusText: "Base Variant",
+        image: 'static/images/shipicons/basis.png'},
+    1: {label: "Rockbag Installation", statusText: "Rockbag Installation",
+        image: 'static/images/shipicons/rockbag.png'},
+    2: {label: "CFE",                  statusText: "Control Flow Excavator",
+        image: 'static/images/shipicons/cfe.png'},
+    3: {label: "Deck Payload",         statusText: "Deck Payload",
+        image: 'static/images/shipicons/deckpayload.png'},
+    4: {label: "Cable Repair",         statusText: "Cable Repair Spread",
+        image: 'static/images/shipicons/cable.png'},
+    5: {label: "ROV",                  statusText: "ROV Operations",
+        image: 'static/images/shipicons/rov.png'},
+    6: {label: "Walk to work",         statusText: "Daughter Craft",
+        image: 'static/images/shipicons/walktowork.png'},
+    7: {label: "Grouting",             statusText: "Grouting",
+        image: 'static/images/shipicons/grouting.png'},
+    8: {label: "Monopile Cleaning",    statusText: "Monopile Cleaning",
+        image: 'static/images/shipicons/cleaning.png'},
 
     // ---- Variants (index = boatNumber * 10 + variantNumber) ----
-    11: {label: "Walk to Work (Var. 1)",         statusText: "Extended Gangway"},
+    // Variants can also carry an image if you want them to look different
+    // from their base boat. Leave off to keep the base's icon.
+    71: {label: "Walk to Work (Var. 1)",         statusText: "Extended Gangway",
+         image: 'static/images/buttons/w2w_var1.jpg'},
     21: {label: "Rockbag Installation (Var. 1)", statusText: "Rockbag – Variante 1"},
     31: {label: "CFE (Var. 1)",                  statusText: "CFE – Variante 1"},
     41: {label: "Deck Payload (Var. 1)",         statusText: "Deck Payload – Variante 1"},
@@ -21,9 +36,6 @@ const buttonConfig = {
 
 // ═══════════════════════════════════════════════════════════════════════════
 // SHARED GREEN HOTSPOTS
-// Every model array in hotspotDefinitions below starts with
-// `...SHARED_GREEN_HOTSPOTS` — edit any green's content here once, and
-// every boat + variant picks up the change.
 // ═══════════════════════════════════════════════════════════════════════════
 const SHARED_GREEN_HOTSPOTS = [
 
@@ -60,10 +72,7 @@ const SHARED_GREEN_HOTSPOTS = [
                     •  ATEX prepared`,
                     images: ['static/images/f1gangway/gangwaydeepdive.png']
                 },
-                {
-                    title: 'In Operation',
-                    video: 'static/images/f1gangway/video.mp4'
-                }
+                { title: 'In Operation', video: 'static/images/f1gangway/video.mp4' }
             ]
         }
     },
@@ -189,8 +198,7 @@ const SHARED_GREEN_HOTSPOTS = [
             subtitle: 'Works like a Swiss watch\n',
             logo: 'static/images/logos/voith-logo.svg',
             text: 'Powered by two Voith Schneider Propellers (VSP), each delivering 1,860 kW, the vessel combines exceptional manoeuvrability with precise thrust control. This propulsion concept enables rapid and accurate positioning while delivering a transit speed of up to 13.8 kn. At the same time, the VSP system provides highly efficient thrust generation, reducing energy consumption compared with conventional propulsion concepts.\tRapid response: More than 3× faster reaction to weather-induced forces than comparable azimuth-propelled vessels, with approximately 2 seconds thrust ramp-up and rapid 180° thrust reversal.\n' +
-                '\n' +
-                '\n' +
+                '\n\n' +
                 'High operability: Optimised for challenging offshore conditions, with up to 98% operability demonstrated for the specific location and metocean conditions shown.\n' +
                 '\n' +
                 'Reduced roll motion: Active VSP control counteracts wave-induced roll, reducing vessel motion, extending the operational window and improving transfer conditions and comfort.\n' +
@@ -199,10 +207,7 @@ const SHARED_GREEN_HOTSPOTS = [
                 '\n',
             images: ['static/images/f7voith/voith1.png', 'static/images/f7voith/voith2.png'],
             deepDives: [
-                {
-                    title: 'Keeping Steady - Video',
-                    video: ['static/images/f7voith/video.mp4']
-                },
+                { title: 'Keeping Steady - Video', video: ['static/images/f7voith/video.mp4'] },
                 {
                     title: 'Technical Specifications',
                     text: `DP Performance: 
@@ -260,12 +265,7 @@ The VSP system requires approximately 15–22% less power than alternative propu
                 '•  Improved decision-making: Combining measured conditions with predicted vessel response provides greater transparency when assessing operational limits\n' +
                 '•  Reduced downtime: Better understanding of short-term conditions can help avoid unnecessary interruptions and maximise productive operating time\n',
             images: ['static/images/f13waveradar/waveradar1.jpg', 'static/images/f13waveradar/waveradar2.jpg'],
-            deepDives: [
-                {
-                    title: 'Video',
-                    video: ['static/images/f13waveradar/video.mp4']
-                }
-            ]
+            deepDives: [ { title: 'Video', video: ['static/images/f13waveradar/video.mp4'] } ]
         }
     },
     {
@@ -286,10 +286,7 @@ The VSP system requires approximately 15–22% less power than alternative propu
                 '•  Dedicated C-Deck leisure area with library, sports bar and lounge, providing space to switch off and recharge',
             images: ['static/images/f6acommodations/cabins-a.jpg', 'static/images/f6acommodations/cabins-b.jpg'],
             deepDives: [
-                {
-                    title: 'Image Slideshow',
-                    slideshow: 'static/images/accommodation'
-                },
+                { title: 'Image Slideshow', slideshow: 'static/images/accommodation' },
                 {
                     title: 'Specifications',
                     text: `The DO C-CSOV offers a comprehensive range of state-of-the-art facilities and amenities, providing a comfortable, productive and flexible environment for crew and charterer personnel.
@@ -328,10 +325,7 @@ Changing & Drying Facilities
 
 The 48 sqm changing room provides 88 lockers and can be divided into separate men's and women's areas, accommodating up to 20 lockers in the women's area and a minimum of 68 in the men's area. A separate 44 sqm drying room is provided for suits, footwear, gloves and PPE. Crew members have dedicated facilities and do not share these areas.`
                 },
-                {
-                    title: 'Video',
-                    video: 'static/images/f6acommodations/video.mp4'
-                }
+                { title: 'Video', video: 'static/images/f6acommodations/video.mp4' }
             ]
         }
     },
@@ -410,15 +404,20 @@ The 48 sqm changing room provides 88 lockers and can be divided into separate me
             title: 'Dynamic Positioning',
             subtitle: 'Control at your fingertips',
             logo: 'static/images/logos/mt-logo.png',
-            text: 'The DO C-CSOV is equipped with a high-performance dynamic positioning and Integrated bridge system from Marine Technologies (MT). This combines proven DP capability with advanced navigation and communications systems for safe and reliable offshore operations.\n' +
+            text: 'The DO C-CSOV is equipped with Dynamic Positioning, Integrated Bridge Systems, and Thruster Control System, engineered and delivered by Marine Technologies. All systems share a single data model — position, thruster state, navigation and alarm management resolved in one architecture, not reconciled across vendor boundaries. \n' +
                 '\n' +
-                'DP Alert, Clear Comms, integrated HiPAP and dedicated anti-jamming and anti-spoofing technology further enhance positioning integrity, communication resilience and operational robustness.\n' +
+                'With 800+ DP2 systems delivered and more than 35 million DP operating hours, Marine Technologies brings proven technology — hardened by experience across the most demanding offshore environments in the world.\n' +
                 '\n' +
-                'With 800+ DP2 systems delivered and more than 35 million DP operating hours, Marine Technologies brings proven technology, hardened by experience. \tModern offshore assets have adopted closed-bus operations in order to reduce fuel cost and carbon emissions, turning away from traditional open-bus-tie configurations. \n' +
+                'DNV DYNPOS AUTR-CB certifies that the closed-bus configuration aboard the DO fleet achieves the operational safety standards of conventional open-bus operation. This is not a regulatory waiver. It is an engineering result — achieved through architecture, through failure-mode modelling, and through the same redundancy discipline that defines DP2.\n' +
                 '\n' +
-                'Improved commercials and sustainability may however not come at the cost of safety. The DO C-CSOV is the first purpose-built W2W asset to adopt the DNV DYNPOS AUTR-CB notation, incorporating the latest learnings and developments for a leap forward in closed-bus safety. \n' +
+                'Building on that notation - the DO C-CSOV delivers:\n' +
                 '\n' +
-                'As such, the notation achieves the operational safety standards of conventional open-bus operation while delivering the fuel-efficiency benefits of closed-bus operation. ',
+                '•  Safe and efficient DP operations from four independent redundancy groups \n' +
+                '•  Efficient closed-bus-tie operation under the CB class notation - keeping fuel burn low while achieving same safety standards as Open Bus Tie operations. \n' +
+                '•  DP Alert, Clear Comms, integrated HiPAP and dedicated anti-jamming and anti-spoofing technology further enhance positioning integrity, communication resilience and operational robustness\n' +
+                '•  Combined with the vessel\'s powerful, fast-responding propulsion, this delivers maximised operability\n' +
+                '•  The DO C-CSOV holds position across a wider weather window, so more work gets done, more safely, on every day of the campaign\n' +
+                '•  DP position-keeping capability is demonstrated up to 4.0 m Hs at ±30° from head seas.\n',
             images: ['static/images/f4dynpos/DOS1.png', 'static/images/f4dynpos/DOS2.png'],
             deepDives: [
                 {
@@ -434,10 +433,7 @@ The 48 sqm changing room provides 88 lockers and can be divided into separate me
      ◦  A stringent verification regime with FMEA and simulation modelling , such as short circuit ride-through study and arc flash study`,
                     images: ['static/images/f4dynpos/dynposdeepdive.png']
                 },
-                {
-                    title: 'Operability',
-                    linkedHotspotId: 'bug-2'
-                }
+                { title: 'Operability', linkedHotspotId: 'bug-2' }
             ]
         }
     },
@@ -567,7 +563,6 @@ The 48 sqm changing room provides 88 lockers and can be divided into separate me
 
 // ═══════════════════════════════════════════════════════════════════════════
 // SHARED BLUE HOTSPOTS
-// Per-scope blue hotspots referenced by both a base boat and its variant.
 // ═══════════════════════════════════════════════════════════════════════════
 
 const WALK_TO_WORK_BLUE = {
@@ -684,30 +679,16 @@ For work-class ROV capability the DO C-CSOV provides the following key capabilit
 
 // ═══════════════════════════════════════════════════════════════════════════
 // PER-MODEL HOTSPOT DEFINITIONS
-// Every model spreads SHARED_GREEN_HOTSPOTS first, then adds its own
-// scope-specific blue hotspot(s) and any pink navigation hotspots.
 // ═══════════════════════════════════════════════════════════════════════════
 const hotspotDefinitions = {
 
-    0: [ // Boot 1
-        ...SHARED_GREEN_HOTSPOTS,
-        WALK_TO_WORK_BLUE,
-        // ---- Pink → variant ----
-        {
-            id: '1-1-tower-oben-2',
-            localPosition: new THREE.Vector3(-0.134, 1, -0.03),
-            minAngle: 0,
-            maxAngle: 359,
-            variant: 'pink',
-            icon: 'static/images/icons/hotspot-icon-pink.png',
-            linkedModelIndex: 11
-        }
+    0: [ // Boot 1 — greens only
+        ...SHARED_GREEN_HOTSPOTS
     ],
 
     11: [ // Boot 1, variant 1
         ...SHARED_GREEN_HOTSPOTS,
         WALK_TO_WORK_BLUE,
-        // ---- Pink back to base ----
         {
             id: 'boot1-1-switch-back-to-boot1',
             localPosition: new THREE.Vector3(0.3, 0.5, 0),
@@ -722,7 +703,6 @@ const hotspotDefinitions = {
     1: [ // Boot 2
         ...SHARED_GREEN_HOTSPOTS,
         ROCKBAG_BLUE,
-        // ---- Pink → variant ----
         {
             id: 'boot2-switch-to-variant',
             localPosition: new THREE.Vector3(0, 0, 0),
@@ -873,8 +853,18 @@ For cable repair the DO C-CSOV provides the following key capabilities:
         }
     ],
 
-    6: [ // Boot 7
-        ...SHARED_GREEN_HOTSPOTS
+    6: [ // Boot 7 — Walk to Work (moved from Boot 1)
+        ...SHARED_GREEN_HOTSPOTS,
+        WALK_TO_WORK_BLUE,
+        {
+            id: 'boot7-switch-to-variant',
+            localPosition: new THREE.Vector3(0.3, 0.5, 0),
+            minAngle: 0,
+            maxAngle: 359,
+            variant: 'pink',
+            icon: 'static/images/icons/hotspot-icon-pink.png',
+            linkedModelIndex: 71
+        }
     ],
 
     7: [ // Boot 8
@@ -922,8 +912,6 @@ The DO C-CSOV is able to support offshore construction with its unique capabilit
     ]
 
 };
-
-
 
 import * as THREE from 'three';
 
@@ -1161,6 +1149,7 @@ function updateHotspots() {
     await initTrackingControls();
     initGreenToggle();
     initMouseRotationToggle();
+       initLogoClick();
 
 })();
 
@@ -2137,17 +2126,31 @@ function registerToggleableModel(index, name, object3D) {
 
     }
 
-    const btn = document.querySelector(`.model-toggle-btn[data-index="${index}"]`);
-    if (btn) {
+const btn = document.querySelector(`.model-toggle-btn[data-index="${index}"]`);
+if (btn) {
 
-        const labelEl = btn.querySelector('.model-toggle-label');
-        const configEntry = buttonConfig[index];
-        if (labelEl) labelEl.textContent = (configEntry && configEntry.label) ? configEntry.label : name;
+    const labelEl = btn.querySelector('.model-toggle-label');
+    const configEntry = buttonConfig[index];
+    if (labelEl) labelEl.textContent = (configEntry && configEntry.label) ? configEntry.label : name;
 
-        btn.classList.remove('inactive');
-        btn.classList.toggle('active', isFirstRegistered);
+    // ---- Per-button image (optional) ----
+    // If the config has an `image`, set it on the button's background <img>.
+    // Otherwise leave whatever icon the HTML template provides.
+    if (configEntry && configEntry.image) {
+        let iconEl = btn.querySelector('.model-toggle-icon');
+        if (!iconEl) {
+            iconEl = document.createElement('img');
+            iconEl.className = 'model-toggle-icon';
+            iconEl.alt = '';
+            iconEl.draggable = false;
+            btn.insertBefore(iconEl, btn.firstChild);
+        }
+        iconEl.src = configEntry.image;
     }
 
+    btn.classList.remove('inactive');
+    btn.classList.toggle('active', isFirstRegistered);
+}
 }
 
 // Switches the active model by covering the screen with an opaque overlay, hard-swapping
@@ -3641,4 +3644,21 @@ function findHotspotDefinitionById(id) {
         if (found) return found;
     }
     return null;
+}
+
+function initLogoClick() {
+
+    const logoEl = document.querySelector('.logo-image');
+    if (!logoEl) {
+        console.warn('Logo element (.logo-image) not found — click-to-reset disabled');
+        return;
+    }
+
+    logoEl.style.cursor = 'pointer';
+
+    logoEl.addEventListener('click', (event) => {
+        event.stopPropagation();     // don't trigger drawer-close-on-outside-click logic
+        selectModel(0);
+    });
+
 }
