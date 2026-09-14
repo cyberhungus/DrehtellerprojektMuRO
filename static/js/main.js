@@ -567,7 +567,7 @@ The 48 sqm changing room provides 88 lockers and can be divided into separate me
 
 const WALK_TO_WORK_BLUE = {
     id: '1-2-gangway-ende-2',
-    localPosition: new THREE.Vector3(0.458, 0.85, -0.215),
+    localPosition: new THREE.Vector3(-0.24, 0.7, -0.08),
     minAngle: 10,
     maxAngle: 180,
     variant: 'blue',
@@ -613,7 +613,7 @@ const ROCKBAG_BLUE = {
 
 const CFE_BLUE = {
     id: '5-1-holz-richtung-r-2',
-    localPosition: new THREE.Vector3(-0.78, 0.32, 0.1),
+    localPosition: new THREE.Vector3(-0.79, 0.52, -0.75),
     minAngle: 0,
     maxAngle: 359,
     variant: 'blue',
@@ -637,7 +637,7 @@ For CFE deployment our DO C-CSOV provides the following key capabilities:
 
 const PAYLOAD_BLUE = {
     id: 'boot9-deck-payload',
-    localPosition: new THREE.Vector3(-0.7, 0.32, 0),
+    localPosition: new THREE.Vector3(-1.023, 0.426, 0.003),
     minAngle: 260,
     maxAngle: 80,
     variant: 'blue',
@@ -682,7 +682,7 @@ For work-class ROV capability the DO C-CSOV provides the following key capabilit
 // ═══════════════════════════════════════════════════════════════════════════
 const hotspotDefinitions = {
 
-    0: [ // Boot 1 — greens only
+    0: [ // Boot 1 — greens only (pink removed)
         ...SHARED_GREEN_HOTSPOTS
     ],
 
@@ -691,7 +691,7 @@ const hotspotDefinitions = {
         WALK_TO_WORK_BLUE,
         {
             id: 'boot1-1-switch-back-to-boot1',
-            localPosition: new THREE.Vector3(0.3, 0.5, 0),
+            localPosition: new THREE.Vector3(-0.505, 0.56, -0.284),
             minAngle: 0,
             maxAngle: 359,
             variant: 'pink',
@@ -705,7 +705,7 @@ const hotspotDefinitions = {
         ROCKBAG_BLUE,
         {
             id: 'boot2-switch-to-variant',
-            localPosition: new THREE.Vector3(0, 0, 0),
+            localPosition: new THREE.Vector3(-0.505, 0.56, -0.284),
             minAngle: 0,
             maxAngle: 359,
             variant: 'pink',
@@ -716,10 +716,13 @@ const hotspotDefinitions = {
 
     21: [ // Boot 2, variant 1
         ...SHARED_GREEN_HOTSPOTS,
-        ROCKBAG_BLUE,
+        {
+            ...ROCKBAG_BLUE,
+            localPosition: new THREE.Vector3(-1.25, 0.1, 0.03)
+        },
         {
             id: 'boot2-1-switch-back-to-boot2',
-            localPosition: new THREE.Vector3(0, 0, 0),
+            localPosition: new THREE.Vector3(-0.505, 0.56, -0.284),
             minAngle: 0,
             maxAngle: 359,
             variant: 'pink',
@@ -733,7 +736,7 @@ const hotspotDefinitions = {
         CFE_BLUE,
         {
             id: 'boot3-switch-to-variant',
-            localPosition: new THREE.Vector3(0, 0, 0),
+            localPosition: new THREE.Vector3(-0.505, 0.56, -0.284),
             minAngle: 0,
             maxAngle: 359,
             variant: 'pink',
@@ -744,10 +747,13 @@ const hotspotDefinitions = {
 
     31: [ // Boot 3, variant 1
         ...SHARED_GREEN_HOTSPOTS,
-        CFE_BLUE,
+        {
+            ...CFE_BLUE,
+            localPosition: new THREE.Vector3(-0.692, 0.39, -0.167)
+        },
         {
             id: 'boot3-1-switch-back-to-boot3',
-            localPosition: new THREE.Vector3(0, 0, 0),
+            localPosition: new THREE.Vector3(-0.505, 0.56, -0.284),
             minAngle: 0,
             maxAngle: 359,
             variant: 'pink',
@@ -761,7 +767,7 @@ const hotspotDefinitions = {
         PAYLOAD_BLUE,
         {
             id: 'boot4-switch-to-variant',
-            localPosition: new THREE.Vector3(0, 0, 0),
+            localPosition: new THREE.Vector3(-0.505, 0.56, -0.284),
             minAngle: 0,
             maxAngle: 359,
             variant: 'pink',
@@ -775,7 +781,7 @@ const hotspotDefinitions = {
         PAYLOAD_BLUE,
         {
             id: 'boot4-1-switch-back-to-boot4',
-            localPosition: new THREE.Vector3(0, 0, 0),
+            localPosition: new THREE.Vector3(-0.505, 0.56, -0.284),
             minAngle: 0,
             maxAngle: 359,
             variant: 'pink',
@@ -830,7 +836,7 @@ For cable repair the DO C-CSOV provides the following key capabilities:
         ROV_BLUE,
         {
             id: 'boot6-switch-to-variant',
-            localPosition: new THREE.Vector3(0, 0, 0),
+            localPosition: new THREE.Vector3(-0.545, 0.131, 0.134),
             minAngle: 0,
             maxAngle: 359,
             variant: 'pink',
@@ -844,7 +850,7 @@ For cable repair the DO C-CSOV provides the following key capabilities:
         ROV_BLUE,
         {
             id: 'boot6-1-switch-back-to-boot6',
-            localPosition: new THREE.Vector3(0, 0, 0),
+            localPosition: new THREE.Vector3(-0.545, 0.131, 0.134),
             minAngle: 0,
             maxAngle: 359,
             variant: 'pink',
@@ -853,17 +859,31 @@ For cable repair the DO C-CSOV provides the following key capabilities:
         }
     ],
 
-    6: [ // Boot 7 — Walk to Work (moved from Boot 1)
+    6: [ // Boot 7 — Walk to Work
         ...SHARED_GREEN_HOTSPOTS,
         WALK_TO_WORK_BLUE,
         {
             id: 'boot7-switch-to-variant',
-            localPosition: new THREE.Vector3(0.3, 0.5, 0),
+            localPosition: new THREE.Vector3(-0.37, 0.579, -1.064),
             minAngle: 0,
             maxAngle: 359,
             variant: 'pink',
             icon: 'static/images/icons/hotspot-icon-pink.png',
             linkedModelIndex: 71
+        }
+    ],
+
+    71: [ // Boot 7, variant 1
+        ...SHARED_GREEN_HOTSPOTS,
+        WALK_TO_WORK_BLUE,
+        {
+            id: 'boot7-1-switch-back-to-boot7',
+            localPosition: new THREE.Vector3(-0.37, 0.579, -1.064),
+            minAngle: 0,
+            maxAngle: 359,
+            variant: 'pink',
+            icon: 'static/images/icons/hotspot-icon-pink.png',
+            linkedModelIndex: 6
         }
     ],
 
@@ -894,7 +914,7 @@ Grouting operations can be combined with bolt tightening, as additional space is
         ...SHARED_GREEN_HOTSPOTS,
         {
             id: '9-1-holz-richtung-heck-2',
-            localPosition: new THREE.Vector3(-0.82, 0.32, 0),
+            localPosition: new THREE.Vector3(-1.07, 1, -0.735),
             minAngle: 0,
             maxAngle: 359,
             variant: 'blue',
@@ -912,6 +932,7 @@ The DO C-CSOV is able to support offshore construction with its unique capabilit
     ]
 
 };
+
 
 import * as THREE from 'three';
 
@@ -949,7 +970,11 @@ let mouseRotationToggleIconEl; // <-- moved up here
 let mouseRotationSavedCameraState = null; // camera position/rotation/target, restored on toggle-off
 
 
-
+// Global 3D offset applied to every hotspot marker, in the pivot's local space.
+// Adding (0.1, 0, 0) moves every marker 0.1 units along the pivot's +X axis —
+// same unit system the hotspot localPosition values use. Adjustable via the
+// debug overlay (press H). Persists across model switches.
+const hotspotOffset = new THREE.Vector3(-0.155, -0.265, 0);
 
 // Path to the two icon files — swap these to point at your own SVGs.
 // LOCKED = shown while the mode is OFF (camera fixed). UNLOCKED = shown while
@@ -1099,7 +1124,7 @@ function updateHotspots() {
       return;
     }
 
-    _worldPos.copy(hotspot.localPosition).applyMatrix4(hotspot.object.matrixWorld);
+ _worldPos.copy(hotspot.localPosition).add(hotspotOffset).applyMatrix4(hotspot.object.matrixWorld);
     _projected.copy(_worldPos).project(camera);
 
     if (_projected.z > 1) {
@@ -1107,8 +1132,8 @@ function updateHotspots() {
       return;
     }
 
-    const screenX = (_projected.x * 0.5 + 0.5) * window.innerWidth;
-    const screenY = (-_projected.y * 0.5 + 0.5) * window.innerHeight;
+const screenX = (_projected.x * 0.5 + 0.5) * window.innerWidth;
+const screenY = (-_projected.y * 0.5 + 0.5) * window.innerHeight;
 
     hotspot.el.style.display = 'block';
     hotspot.el.style.left = `${screenX}px`;
@@ -1133,6 +1158,7 @@ function updateHotspots() {
     await applyFinalModeOverrides();
 
     initLoadingOverlay();
+    initSwitchOverlay();       // ← moved up here, before init()
     await init();
 
     initLightControls();
@@ -1145,14 +1171,14 @@ function updateHotspots() {
     initHotspotEngine();
     initHotspotOverlay();
     initConnectionWarning();
-    initSwitchOverlay();
+    // initSwitchOverlay();   ← remove from here
     await initTrackingControls();
     initGreenToggle();
     initMouseRotationToggle();
-       initLogoClick();
+    initLogoClick();
+    initHotspotPlacementMode();
 
 })();
-
 
 // Queries the backend for --final mode and, if enabled, overrides the three
 // client-side flags that control the kiosk presentation:
@@ -1365,28 +1391,68 @@ function getSignedVolume(geometry) {
 }
 
 
-// Draws a texture's image onto an opaque white canvas, discarding any alpha channel
-// baked into the source file. Needed because registerToggleableModel keeps
-// mat.transparent = true, which means three.js still honors a texture's own
-// per-pixel alpha — this removes that data so a texture's alpha channel can't punch
-// holes in the model regardless of what mat.opacity is set to.
+// Caches per-texture-image whether flattening was actually needed, so a texture
+// shared across multiple meshes/materials only gets sniffed once.
+const _alphaFlattenCache = new WeakMap();
+
+// Cheap transparency check — draws the image once at a small, fixed size (not
+// full resolution) and samples every pixel's alpha channel from that downscaled
+// copy. Full-size getImageData on a 2K/4K texture is itself not free, so this
+// keeps the check itself fast regardless of source resolution.
+function textureHasRealAlpha(img) {
+
+    const SAMPLE_SIZE = 32; // small enough to be near-instant, large enough to catch real alpha
+
+    const sampleCanvas = document.createElement('canvas');
+    sampleCanvas.width = SAMPLE_SIZE;
+    sampleCanvas.height = SAMPLE_SIZE;
+
+    const ctx = sampleCanvas.getContext('2d', {willReadFrequently: true});
+    ctx.drawImage(img, 0, 0, SAMPLE_SIZE, SAMPLE_SIZE);
+
+    const data = ctx.getImageData(0, 0, SAMPLE_SIZE, SAMPLE_SIZE).data;
+
+    for (let i = 3; i < data.length; i += 4) {
+        if (data[i] < 255) return true; // found a non-opaque pixel
+    }
+
+    return false;
+
+}
+
 function flattenTextureAlpha(texture) {
 
     if (!texture || !texture.image || !texture.image.width) return;
 
     const img = texture.image;
+
+    if (_alphaFlattenCache.has(img)) {
+        if (!_alphaFlattenCache.get(img)) return; // already checked, no real alpha — skip
+    } else {
+
+        const hasAlpha = textureHasRealAlpha(img);
+        _alphaFlattenCache.set(img, hasAlpha);
+
+        if (!hasAlpha) return; // nothing to flatten — skip the full-size canvas entirely
+
+    }
+
+    // Only textures that actually had baked alpha reach this point.
     const canvas = document.createElement('canvas');
     canvas.width = img.width;
     canvas.height = img.height;
 
     const ctx = canvas.getContext('2d');
-    ctx.fillStyle = '#ffffff'; // fully-transparent source pixels become opaque white
+    ctx.fillStyle = '#ffffff';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     ctx.drawImage(img, 0, 0);
 
     texture.image = canvas;
     texture.needsUpdate = true;
+
 }
+
+
 
 // Flat/open geometry (railings, decals, thin panels) has no real "inside", so its
 // computed volume is just floating-point noise near zero — this checks whether the
@@ -1632,85 +1698,82 @@ cameraLight.target = cameraLightTarget;
     const enabledCount = modelsToLoad.length;
     let modelsLoadedSoFar = 0;
 
-    for (const {folderAndFile, modelIndex} of modelsToLoad) {
 
-        const folderPath = `static/models/${folderAndFile}/`;
+const CONCURRENCY = 4; // tune to your bandwidth/decode headroom — start at 3-4
+
+async function loadOneModel({folderAndFile, modelIndex}) {
+
+    const folderPath = `static/models/${folderAndFile}/`;
+
+    try {
+
+        const model = await loadBoatModel({
+            gltfLoader,
+            folderPath,
+            folderAndFile,
+            onProgress: (fileProgress) => updateLoadingProgress({
+                fileName: folderAndFile,
+                fileProgress,
+                modelsLoaded: modelsLoadedSoFar,
+                modelsTotal: enabledCount
+            })
+        });
+
+        fixInvertedWinding(model);
+
+        model.traverse((node) => {
+            if (node.isMesh) {
+                node.castShadow = true;
+                node.receiveShadow = true;
+            }
+        });
+
+        model.scale.setScalar(0.03);
+
+        const pivot = new THREE.Group();
+        pivot.add(model);
+        scene.add(pivot);
+
+        registerHotspotsForModel(modelIndex, pivot);
+        registerToggleableModel(modelIndex, folderAndFile, pivot);
+
+    } catch (error) {
+
+        console.error(`Failed to load model for ${folderAndFile}:`, error);
+
+    } finally {
+
+        modelsLoadedSoFar++;
 
         updateLoadingProgress({
             fileName: folderAndFile,
-            fileProgress: 0,
+            fileProgress: 1,
             modelsLoaded: modelsLoadedSoFar,
             modelsTotal: enabledCount
         });
 
-        try {
-
-            const model = await loadBoatModel({
-                gltfLoader,
-                folderPath,
-                folderAndFile,
-                onProgress: (fileProgress) => updateLoadingProgress({
-                    fileName: folderAndFile,
-                    fileProgress,
-                    modelsLoaded: modelsLoadedSoFar,
-                    modelsTotal: enabledCount
-                })
-            });
-
-            fixInvertedWinding(model);
-
-            model.traverse((node) => {
-                if (node.isMesh) {
-                    node.castShadow = true;
-                    node.receiveShadow = true;
-                }
-            });
-
-            model.scale.setScalar(0.03);
-
-            const pivot = new THREE.Group();
-            pivot.add(model);
-            scene.add(pivot);
-
-            registerHotspotsForModel(modelIndex, pivot);
-            registerToggleableModel(modelIndex, folderAndFile, pivot);
-
-            modelsLoadedSoFar++;
-
-            updateLoadingProgress({
-                fileName: folderAndFile,
-                fileProgress: 1,
-                modelsLoaded: modelsLoadedSoFar,
-                modelsTotal: enabledCount
-            });
-
-        } catch (error) {
-
-            console.error(`Failed to load model for ${folderAndFile}:`, error);
-            modelsLoadedSoFar++;
-
-        }
-
     }
 
-    // Preload every hotspot image/video/slideshow folder while the loading
-    // overlay is still up, so opening a hotspot later never has to wait on
-    // a network fetch.
-    updateLoadingProgress({
-        fileName: 'Hotspot-Medien',
-        fileProgress: 0,
-        modelsLoaded: enabledCount,
-        modelsTotal: enabledCount
-    });
+}
 
-    await preloadAllHotspotMedia({
-        onProgress: (done, total) => {
-            loadingCurrentFileEl.textContent = `Hotspot-Medien (${done} / ${total})`;
-            const percent = total > 0 ? Math.round((done / total) * 100) : 100;
-            loadingBarFillEl.style.width = `${percent}%`;
-            loadingProgressTextEl.textContent = `${percent}%`;
-        }
-    });
+// Keeps CONCURRENCY loads in flight instead of loading all boats one at a time.
+async function runWithConcurrencyLimit(items, limit, worker) {
+
+    const queue = [...items];
+
+    async function runNext() {
+        const item = queue.shift();
+        if (!item) return;
+        await worker(item);
+        await runNext();
+    }
+
+    const workers = Array.from({length: Math.min(limit, items.length)}, runNext);
+    await Promise.all(workers);
+
+}
+
+await runWithConcurrencyLimit(modelsToLoad, CONCURRENCY, loadOneModel);
 
 
 // Configure renderer to use shadow map
@@ -2282,7 +2345,62 @@ function initDebugOverlay() {
         }
 
     });
+    // ── Hotspot marker offset sliders (three.js units) ──
+    const offsetBlock = document.createElement('div');
+    offsetBlock.id = 'hotspot-offset-controls';
+    offsetBlock.style.cssText = 'margin-top: 8px; padding-top: 6px; border-top: 1px solid rgba(255,255,255,0.25);';
 
+    function makeOffsetRow(axis, initialValue, onChange) {
+        const row = document.createElement('label');
+        row.style.cssText = 'display:flex; align-items:center; gap:6px; margin:2px 0; font-weight:300;';
+
+        const label = document.createElement('span');
+        label.textContent = axis;
+        label.style.minWidth = '18px';
+        row.appendChild(label);
+
+        const slider = document.createElement('input');
+        slider.type = 'range';
+        slider.min = '-1';
+        slider.max = '1';
+        slider.step = '0.005';       // fine enough to nudge by half a centimetre
+        slider.value = String(initialValue);
+        slider.style.flex = '1';
+        slider.style.accentColor = '#00AC00';
+        row.appendChild(slider);
+
+        const valueEl = document.createElement('span');
+        valueEl.className = 'light-value';
+        valueEl.textContent = initialValue.toFixed(3);
+        row.appendChild(valueEl);
+
+        slider.addEventListener('input', () => {
+            const v = parseFloat(slider.value);
+            valueEl.textContent = v.toFixed(3);
+            onChange(v);
+        });
+
+        offsetBlock.appendChild(row);
+        return {slider, valueEl};
+    }
+
+    makeOffsetRow('X', hotspotOffset.x, (v) => { hotspotOffset.x = v; });
+    makeOffsetRow('Y', hotspotOffset.y, (v) => { hotspotOffset.y = v; });
+    makeOffsetRow('Z', hotspotOffset.z, (v) => { hotspotOffset.z = v; });
+
+    const resetBtn = document.createElement('button');
+    resetBtn.textContent = 'Reset offsets';
+    resetBtn.className = 'rotate-btn';
+    resetBtn.style.marginTop = '4px';
+    resetBtn.style.width = '100%';
+    resetBtn.addEventListener('click', () => {
+        hotspotOffset.set(0, 0, 0);
+        offsetBlock.querySelectorAll('input[type="range"]').forEach((s) => { s.value = '0'; });
+        offsetBlock.querySelectorAll('.light-value').forEach((el) => { el.textContent = '0.000'; });
+    });
+    offsetBlock.appendChild(resetBtn);
+
+    debugOverlayEl.appendChild(offsetBlock);
 }
 
 function updateDebugOverlay() {
@@ -3556,19 +3674,16 @@ function preloadVideo(src) {
 
     return new Promise((resolve) => {
         const video = document.createElement('video');
-        video.preload = 'auto';
+        video.preload = 'metadata'; // was 'auto' — don't force full buffering during startup
         video.muted = true;
         video.style.display = 'none';
-        video.addEventListener('canplaythrough', () => resolve(), {once: true});
+        video.addEventListener('loadedmetadata', () => resolve(), {once: true}); // was 'canplaythrough'
         video.addEventListener('error', () => resolve(), {once: true});
         video.src = src;
         document.body.appendChild(video);
-        // Leave it in the DOM — the browser keeps the buffered data tied to
-        // this element/its cache entry, and removing it can drop the buffer.
     });
 
 }
-
 async function preloadSlideshowDir(dirPath) {
 
     const imagePaths = await fetchSlideshowImages(dirPath); // already defined elsewhere in this file
