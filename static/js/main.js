@@ -2796,9 +2796,9 @@ function renderHotspotMedia(content) {
     } else {
         (content.images || []).forEach((src) => {
             const img = document.createElement('img');
-            img.className = 'hotspot-overlay-image';
-            const isPng = src.toLowerCase().endsWith('.png');
-            img.classList.add(isPng ? 'hotspot-overlay-image--contain' : 'hotspot-overlay-image--cover');
+            // All images now use `cover` — fills the container regardless of
+            // source format. No PNG/JPG distinction any more.
+            img.className = 'hotspot-overlay-image hotspot-overlay-image--cover';
             img.src = src;
             hotspotOverlayImagesEl.appendChild(img);
         });
