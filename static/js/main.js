@@ -1,77 +1,35 @@
-// Edit this to customize what each button shows and what the top-right status text
-// says when that button is clicked. Index matches modelEnabled / data-index (0 = button 1, etc).
-// "label" overrides the button's text — leave as null to just use the model's loaded name instead.
-// "statusText" is what appears top-right on click — leave as null to fall back to the model's name.
 const buttonConfig = {
     // ---- Base boats (indices 0-8) ----
-    0: {label: "Standard",         statusText: "Base Variant"},
+    0: {label: "Standard",             statusText: "Base Variant"},
     1: {label: "Rockbag Installation", statusText: "Rockbag Installation"},
-    2: {label: "CFE",              statusText: "Control Flow Excavator"},
+    2: {label: "CFE",                  statusText: "Control Flow Excavator"},
     3: {label: "Deck Payload",         statusText: "Deck Payload"},
-    4: {label: "Cable Repair\"", statusText: "Cable Repair Spread"},
-    5: {label: "ROV", statusText: "ROV Operations"},
-    6: {label: null, statusText: null},
-    7: {label: "Grouting", statusText: "Grouting"},
-    8: {label: "Monopile Cleaning", statusText: "Monopile Cleaning"},
+    4: {label: "Cable Repair",         statusText: "Cable Repair Spread"},
+    5: {label: "ROV",                  statusText: "ROV Operations"},
+    6: {label: null,                   statusText: null},
+    7: {label: "Grouting",             statusText: "Grouting"},
+    8: {label: "Monopile Cleaning",    statusText: "Monopile Cleaning"},
 
     // ---- Variants (index = boatNumber * 10 + variantNumber) ----
-    11: {label: "Walk to Work", statusText: "Extended Gangway"},
-    12: {label: "Walk to Work (Var. 2)", statusText: "Walk to Work – Variante 2"},
-    // e.g. Boot 2 variants:
-    21: {label: "Rockbag (Var. 1)",      statusText: "Rockbag – Variante 1"},
+    11: {label: "Walk to Work (Var. 1)",         statusText: "Extended Gangway"},
+    21: {label: "Rockbag Installation (Var. 1)", statusText: "Rockbag – Variante 1"},
+    31: {label: "CFE (Var. 1)",                  statusText: "CFE – Variante 1"},
+    41: {label: "Deck Payload (Var. 1)",         statusText: "Deck Payload – Variante 1"},
+    61: {label: "ROV (Var. 1)",                  statusText: "ROV – Variante 1"},
 };
 
+const hotspotDefinitions = (() => {
 
-const hotspotDefinitions = {
+    // ═══════════════════════════════════════════════════════════════════════
+    // SHARED HOTSPOT POOL — Boot 2
+    // Defined once, reused by base Boot 2 (index 1) and Boot 2 variant 1
+    // (index 21). The variant's copy gets '-v1' suffixed IDs via .map() below,
+    // so linkedHotspotId lookups within the variant resolve to the variant's
+    // own entries rather than leaking back into the base set.
+    // ═══════════════════════════════════════════════════════════════════════
+    const boot2Base = [
 
-    0: [ // Boot 1
-        {
-            id: '1-1-tower-oben-2',
-            localPosition: new THREE.Vector3(-0.134, 1, -0.03),
-            minAngle: 0,
-            maxAngle: 359,
-            variant: 'pink',
-            icon: 'static/images/icons/hotspot-icon-pink.png',
-            linkedModelIndex: 11 // jumps to "Boot 1_1"
-        },
-        {
-            id: '1-2-gangway-ende-2',
-            localPosition: new THREE.Vector3(0.458, 0.85, -0.215),
-            minAngle: 10,
-            maxAngle: 180,
-            variant: 'blue',
-            icon: 'static/images/icons/hotspot-icon-blue.png',
-            content: {
-                title: 'Walk to Work ',
-                text: '"Beyond its core W2W and accommodation role, the DO C-CSOV is configured to support a broad range of offshore scopes with the following key capabilities:\n' +
-                    '\n' +
-                    '•  Motion-compensated gangway with DP2 station-keeping for safe personnel transfer\n' +
-                    '•  Walk-to-Work tower, large modular deck and flexible crane for equipment handling and light construction works\n' +
-                    '•  HiPAP system for subsea positioning on operations such as grouting and inspection\n' +
-                    '•  Removable daughter craft to extend in-field reach\n' +
-                    '•  Helideck for rapid crew changes\n' +
-                    '•  Internal logistics layout linking deck, storage and gangway for efficient movement of cargo and personnel\n' +
-                    '\n' +
-                    'This configuration lets the vessel combine W2W, accommodation and additional offshore scopes within a single deployment, or serve as a dedicated project vessel for scopes such as grouting - creating synergies with installation vessels. Its W2W capability further provides in-field transfer capacity as project contingency when personnel transfer becomes a bottleneck for the primary W2W fleet."\n',
-                images: ['static/images/m1walktowork/walktowork1.jpg','static/images/m1walktowork/walktowork2.jpg']
-            }
-        }
-    ],
-
-    11: [ // Boot 1, variant 1 ("Boot 1_1")
-        {
-            id: 'boot1-1-switch-back-to-boot1',
-            localPosition: new THREE.Vector3(0.3, 0.5, 0),
-            minAngle: 0,
-            maxAngle: 359,
-            variant: 'pink',
-            icon: 'static/images/icons/hotspot-icon-pink.png',
-            linkedModelIndex: 0
-        }
-    ],
-
-    1: [ // Boot 2
-
+        // ---- Green hotspots ----
         {
             id: 'tower-mittig-2',
             localPosition: new THREE.Vector3(-0.134, 0.75, -0.24),
@@ -170,9 +128,6 @@ const hotspotDefinitions = {
                     '•  Sheltered transfer: Lee side access from the vessel side provides a safer, more comfortable transfer environment in challenging offshore conditions\n' +
                     '•  Removable design: Fully removable to maintain the vessel’s modularity and adapt the configuration to the operational requirement\n',
                 images: ['static/images/f11boatlanding/boatlanding1.png', 'static/images/f11boatlanding/boatlanding2.png']
-                // NOTE: previous deepDives here held the crane's KBC-M specs by
-                // mistake — those now live on kran-beuge-2. Add real Aukra
-                // boat-landing specs here when available.
             }
         },
         {
@@ -336,7 +291,7 @@ The VSP system requires approximately 15–22% less power than alternative propu
                 deepDives: [
                     {
                         title: 'Image Slideshow',
-                        slideshow: 'static/images/accommodation' // directory, not a single file
+                        slideshow: 'static/images/accommodation'
                     },
                     {
                         title: 'Specifications',
@@ -423,10 +378,10 @@ The 48 sqm changing room provides 88 lockers and can be divided into separate me
             maxAngle: 89,
             variant: 'green',
             icon: 'static/images/icons/hotspot-icon-green.png',
-            logo: 'static/images/logos/combined-logos.png',
             content: {
                 title: 'Daughter Craft ',
                 subtitle: 'Pick me up!',
+                logo: 'static/images/logos/combined-logos.png',
                 text: 'The DO C-CSOV is equipped with a Vestdavit launched Chartwell Catamaran Workboat. Its large deck space in combination with its modularity concept allows for carrying a high performance Daughter Craft without compromising on the asset\'s capabilities. The working deck remains spacious with sufficient capacity for containerized or bulk cargo. As the davit is skid mounted, quick mobilization and demobilization is catered for the event the additional space is required. \n' +
                     '\tBenefiting from the use of a Daughter Craft should not go along unacceptable risks. The Vestdavit PLD-15002 is DNV-ST-0498 certified, setting a baseline to deploy and retrieve Daughter Crafts safely. A telescopic painter boom ensures proper hull clearance and controlled motion at high sea states, safeguarding that a recovery can be conducted under any circumstances.\n',
                 images: ['static/images/f3daughtercraft/daughtercraft.png', 'static/images/f3daughtercraft/daughtercraft2.png'],
@@ -443,7 +398,6 @@ The 48 sqm changing room provides 88 lockers and can be divided into separate me
 •  Payload 1 t
 •  Operational transfer limit: Hs 1.5 m
 •  Lateral and vertical accelerations: Max 0.15 g RMS for Hs 1.5 m`
-
                     }
                 ]
             }
@@ -485,7 +439,7 @@ The 48 sqm changing room provides 88 lockers and can be divided into separate me
                     },
                     {
                         title: 'Operability',
-                        linkedHotspotId: 'bug-2' // jumps to that hotspot's content
+                        linkedHotspotId: 'bug-2'
                     }
                 ]
             }
@@ -610,6 +564,8 @@ The 48 sqm changing room provides 88 lockers and can be divided into separate me
                 images: ['static/images/f16operability/ops1.jpeg', 'static/images/f16operability/ops2.png']
             }
         },
+
+        // ---- Blue: Rockbag Installation ----
         {
             id: '3-1-kran-ausleger-2',
             localPosition: new THREE.Vector3(-0.81, 0.51, -0.755),
@@ -620,198 +576,417 @@ The 48 sqm changing room provides 88 lockers and can be divided into separate me
             content: {
                 title: 'Rockbag Installation',
                 subtitle: 'On the Rocks',
-                text: '`For rock bag installation the DO C-CSOV provides the following key capabilities:\n' +
-                    '\n' +
-                    '•  Large and strengthened deck area with 800 sqm and 10 t/m²\n' +
-                    '•  50 t AHC crane capacity\n' +
-                    '•  Warehouse (500 sqm) with 6 x 30 t TEU skidding system, for the storage of project specific tools and/or additional rock bags stored in open-top containers, accessible offshore via the main hatch\n' +
-                    '•  Utility stations and ROV infrastructure \n' +
-                    '•  Suitable stability and weight margins\n' +
-                    '•  Compatible with established rock bag deployment tools such as the UTILITY ROV RBDT, deploying either single 8 ton bags or 2 x 4 ton bags per lift\n' +
-                    '`',
+                text: `For rock bag installation the DO C-CSOV provides the following key capabilities:
+
+•  Large and strengthened deck area with 800 sqm and 10 t/m²
+•  50 t AHC crane capacity
+•  Warehouse (500 sqm) with 6 x 30 t TEU skidding system, for the storage of project specific tools and/or additional rock bags stored in open-top containers, accessible offshore via the main hatch
+•  Utility stations and ROV infrastructure 
+•  Suitable stability and weight margins
+•  Compatible with established rock bag deployment tools such as the UTILITY ROV RBDT, deploying either single 8 ton bags or 2 x 4 ton bags per lift
+`,
                 images: ['static/images/m3rockbag/rockbag2.jpg','static/images/m3rockbag/rockbag1.jpg']
             }
         }
-    ],
+    ];
 
-    2: [ // Boot 3
- {
-        id: '5-1-holz-richtung-r-2',
-        localPosition: new THREE.Vector3(-0.78, 0.32, 0.1),
-        minAngle: 0,
-        maxAngle: 359,
-        variant: 'blue',
-        icon: 'static/images/icons/hotspot-icon-blue.png',
-        content: {
-            title: 'Control Flow Excavator',
-            subtitle: 'Clear the way',
-            text: '`Removing sediment from around subsea structures is a recurring need throughout project construction and maintenance, for both planned campaigns and unplanned interventions. The DO C-CSOV can take on this scope directly, using its unique design features to run a controlled flow excavation spread. Ample deck space allows the works to run alongside other scopes - Absorbing the task on an existing vessel adds efficiency and gives the project valuable contingency.\n' +
-                '\n' +
-                'For CFE deployment our DO C-CSOV provides the following key capabilities:\n' +
-                '\n' +
-                '- Utility stations for power and services to the excavation spread\n' +
-                '- 10t 3D MCC or 50t AHC crane capacity and reach\n' +
-                '- Suitable stability and weight margins\n' +
-                '- HiPAP 502 for subsea positioning\n' +
-                '- Compatible with established CFE spreads such as the ROTECH TRS1\n' +
-                '`',
-            images: ['static/images/m5cfe/cfe1.png','static/images/m5cfe/cfe2.jpg']
-        }
-    },
+    // ═══════════════════════════════════════════════════════════════════════
+    // Final object
+    // ═══════════════════════════════════════════════════════════════════════
+    return {
 
-
-    {
-        id: '7-1-beiboot-ohne-dc-2',
-        localPosition: new THREE.Vector3(-0.305, 0.34, 0.23),
-        minAngle: 0,
-        maxAngle: 359,
-        variant: 'blue',
-        icon: 'static/images/icons/hotspot-icon-blue.png',
-        content: {
-            title: '7.1 Beiboot (ohne DC)',
-            text: 'PLATZHALTER Beschreibung für 7.1 Beiboot (ohne DC) PLATZHALTER',
-            images: ['static/images/hotspots/placeholder.jpg']
-        }
-    },
-
-    {
-        id: '9-1-reling-2',
-        localPosition: new THREE.Vector3(-0.295, 0.34, 0.29),
-        minAngle: 0,
-        maxAngle: 359,
-        variant: 'blue',
-        icon: 'static/images/icons/hotspot-icon-blue.png',
-        content: {
-            title: 'ROV Operations',
-            subtitle: 'Your hands & eyes underwater\n',
-            text: '`The DO C-CSOV is a flexible platform for work-class ROV support - from inspection, maintenance and repair to construction support and contingency work. Its low freeboard and modular railings enable safe, efficient over-the-side deployment of high-capacity WROVs for requirements demanding station keeping and special tooling. The result is greater operational efficiency, less reliance on dedicated ROV vessels and valuable extra contingency capacity, when and where it is needed - both during construction and the O&M phase.\n' +
-                '\n' +
-                'As such, the DO C-CSOV can facilitate various tasks such as foundation, cable and scour-protection inspection, cable route and burial surveys, cathodic-protection and anode checks; construction and lift support with touchdown monitoring as well as unplanned subsea interventions.\n' +
-                '\n' +
-                'For work-class ROV capability the DO C-CSOV provides the following key capabilities:\n' +
-                '\n' +
-                '•  High-capacity work-class ROV (WROV) for requirements beyond observation\n' +
-                '•  Permanent ROV mobilization by integration of ROV piloting into convertible charterer\'s office \n' +
-                '•  HiPAP 502 acoustic subsea positioning\n' +
-                '•  Ample space for ROV integration next to conventional CSOV scopes\n' +
-                '•  Large warehouse and workshop facilities to accommodate maintenance requirements for high spec underwater assets\n' +
-                '`',
-            images: ['static/images/m9rov/rov1.jpg','static/images/m9rov/rov2.png']
-        }
-    }
-
-
-
-    ],
-
-    3: [ // Boot 4
-        {
-            id: 'boot9-deck-payload',
-            //new THREE.Vector3(-0.7, 0.32, 0),
-            localPosition: new THREE.Vector3(-0.7, 0.32, 0),
-            minAngle: 260,
-            maxAngle: 80,
-            variant: 'blue',
-            icon: 'static/images/icons/hotspot-icon-blue.png',
-            content: {
-                title: 'Deck payload',
-                subtitle: 'When size matters',
-                text: 'When the job calls for size, the DO C-CSOV delivers. A vast, strengthened deck, generous payload and a powerful crane let big, bulky equipment - from generator sets with pre-filled fuel tanks to subsea corrosion-protection spreads - be mobilised, installed and operated from a single vessel, whether planned or unplanned. Bigger lifts mean fewer of them: less deck shuffling, fewer supply runs and less port time, so campaigns run leaner and faster. And when priorities shift, this flexibility turns into contingency - ready to pick up slack and keep the offshore programme moving without missing a beat.\n',
-                images: ['static/images/m6payload/deckpayload-a.jpg', 'static/images/m6payload/deckpayload-b.jpg']
-            }
-        }
-    ],
-
-    4: [ // Boot 5
-  {
-        id: '8-1-container-2',
-        localPosition: new THREE.Vector3(-1.2, 0.3, 0),
-        minAngle: 0,
-        maxAngle: 359,
-        variant: 'blue',
-        icon: 'static/images/icons/hotspot-icon-blue.png',
-        content: {
-            title: 'Cable Repair',
-            subtitle: 'Don\'t waste time',
-            text: '`Designed for rapid response, the DO C-CSOV provides a pre-engineered cable repair capability that is readily available and significantly reduces mobilization time when intervention is required. With offshore power cables forming part of critical energy infrastructure, fast deployment minimizes downtime, reduces opportunity costs and supports lower project risk. The integrated solution enables efficient cable repair operations without the delays associated with vessel and equipment availability.\n' +
-                '\n' +
-                'Maximising cable repair capability is at the core of the DO C-CSOV\'s design. The vessel suits both cable replacement and repair campaigns, for inter-array and common AC export cables. On deck utility stations support the cable-repair spread and ROV operations, while the technical layout allows the below-deck warehouse space to be used to its full extent, significantly enlarging the total space available on board.\n' +
-                '\n' +
-                'For cable repair the DO C-CSOV provides the following key capabilities:\n' +
-                '\n' +
-                '- Up to 400t cable capacity on a dual partition carousel or reel\n' +
-                '- Up to 20m highway length for suitable cable protection system installation\n' +
-                '- Minimum bending radius (MBR) of 5m \n' +
-                '- 15t tensioner\n' +
-                '- Quadrant deployment system with integrated joint handling crane\n' +
-                '`',
-            images: ['static/images/m8cablerepair/repair1.jpg','static/images/m8cablerepair/repair2.jpg']
-        }
-    },
-    {
-        id: '8-2-rettungsboot-2',
-        localPosition: new THREE.Vector3(-0.295, 0.34, -0.29),
-        minAngle: 0,
-        maxAngle: 359,
-        variant: 'blue',
-        icon: 'static/images/icons/hotspot-icon-blue.png',
-        content: {
-            title: 'Cable Repair Video',
-            video: ['static/images/m8cablerepair/video.mp4']
-        }
-    }
-    ],
-
-    5: [ // Boot 6
-
-    ],
-    6: [//Boot7
-         ],
-    7: [//Boot8
+        0: [ // Boot 1
             {
-        id: '6-1-holz-richtung-bug-2',
-                //7-1new THREE.Vector3(-0.305, 0.34, 0.23),
-        localPosition: new THREE.Vector3(-0.7, 0.32, 0),
-        minAngle: 0,
-        maxAngle: 359,
-        variant: 'blue',
-        icon: 'static/images/icons/hotspot-icon-blue.png',
-        content: {
-            title: 'Grouting spread',
-            subtitle: 'Close the gap',
-            text: '`The DO C-CSOV supports grouting operations as a complementary scope to HLV campaigns, significantly increasing overall project efficiency. By taking over the grouting and bolt fastening thus reducing the time CAPEX-intensive HLV needs to remain on location, the DO C-CSOV helps minimise costly idle time and enables heavy-lift assets to move on faster.\n' +
-                '\n' +
-                'Stability and weight margins as well as a working deck suitable to carry spacious and heavy equipment, enable the DO C-CSOV to mobilize up to 400 t of dry grout powder in combination with high output mixer (e.g. Found Ocean\'s HRJM 27) and other necessary infrastructure. Depending on project requirements, either 100 t / 50 t silos or container based silos can be deployed, enabling quick turnaround times in harbour.\n' +
-                '\n' +
-                'Grouting operations can be combined with bolt tightening, as additional space is both available on deck as well as below deck. The DO C-CSOVs W2W capability eliminates the need to mobilise a rental gangway, saving mobilisation time and cost while improving overall project efficiency.\n' +
-                '`',
-            images: ['static/images/m7grouting/grouting1.jpg','static/images/m7grouting/grouting2.png']
-        }
-    },
-         ],
-    8: [ { // Boot 9
-        id: '9-1-holz-richtung-heck-2',
-        localPosition: new THREE.Vector3(-0.82, 0.32, 0),
-        minAngle: 0,
-        maxAngle: 359,
-        variant: 'blue',
-        icon: 'static/images/icons/hotspot-icon-blue.png',
-        content: {
-            title: 'Monopile Cleaning',
-            subtitle:'Nice and shiny!',
-            text: `The DO C-CSOV offers the unique capability to support installation vessels with monopile and pile cleaning, a step required to remove marine growth prior to installation of the transition piece. Its large, strengthened working deck and AHC crane accommodate cleaning tools, skids and all ancillary equipment.
+                id: '1-1-tower-oben-2',
+                localPosition: new THREE.Vector3(-0.134, 1, -0.03),
+                minAngle: 0,
+                maxAngle: 359,
+                variant: 'pink',
+                icon: 'static/images/icons/hotspot-icon-pink.png',
+                linkedModelIndex: 11
+            },
+            {
+                id: '1-2-gangway-ende-2',
+                localPosition: new THREE.Vector3(0.458, 0.85, -0.215),
+                minAngle: 10,
+                maxAngle: 180,
+                variant: 'blue',
+                icon: 'static/images/icons/hotspot-icon-blue.png',
+                content: {
+                    title: 'Walk to Work ',
+                    text: '"Beyond its core W2W and accommodation role, the DO C-CSOV is configured to support a broad range of offshore scopes with the following key capabilities:\n' +
+                        '\n' +
+                        '•  Motion-compensated gangway with DP2 station-keeping for safe personnel transfer\n' +
+                        '•  Walk-to-Work tower, large modular deck and flexible crane for equipment handling and light construction works\n' +
+                        '•  HiPAP system for subsea positioning on operations such as grouting and inspection\n' +
+                        '•  Removable daughter craft to extend in-field reach\n' +
+                        '•  Helideck for rapid crew changes\n' +
+                        '•  Internal logistics layout linking deck, storage and gangway for efficient movement of cargo and personnel\n' +
+                        '\n' +
+                        'This configuration lets the vessel combine W2W, accommodation and additional offshore scopes within a single deployment, or serve as a dedicated project vessel for scopes such as grouting - creating synergies with installation vessels. Its W2W capability further provides in-field transfer capacity as project contingency when personnel transfer becomes a bottleneck for the primary W2W fleet."\n',
+                    images: ['static/images/m1walktowork/walktowork1.jpg','static/images/m1walktowork/walktowork2.jpg']
+                }
+            }
+        ],
+
+        11: [ // Boot 1, variant 1
+            // ---- Blue from base ----
+            {
+                id: '1-2-gangway-ende-2-v1',
+                localPosition: new THREE.Vector3(0.458, 0.85, -0.215),
+                minAngle: 10,
+                maxAngle: 180,
+                variant: 'blue',
+                icon: 'static/images/icons/hotspot-icon-blue.png',
+                content: {
+                    title: 'Walk to Work ',
+                    text: '"Beyond its core W2W and accommodation role, the DO C-CSOV is configured to support a broad range of offshore scopes with the following key capabilities:\n' +
+                        '\n' +
+                        '•  Motion-compensated gangway with DP2 station-keeping for safe personnel transfer\n' +
+                        '•  Walk-to-Work tower, large modular deck and flexible crane for equipment handling and light construction works\n' +
+                        '•  HiPAP system for subsea positioning on operations such as grouting and inspection\n' +
+                        '•  Removable daughter craft to extend in-field reach\n' +
+                        '•  Helideck for rapid crew changes\n' +
+                        '•  Internal logistics layout linking deck, storage and gangway for efficient movement of cargo and personnel\n' +
+                        '\n' +
+                        'This configuration lets the vessel combine W2W, accommodation and additional offshore scopes within a single deployment, or serve as a dedicated project vessel for scopes such as grouting - creating synergies with installation vessels. Its W2W capability further provides in-field transfer capacity as project contingency when personnel transfer becomes a bottleneck for the primary W2W fleet."\n',
+                    images: ['static/images/m1walktowork/walktowork1.jpg','static/images/m1walktowork/walktowork2.jpg']
+                }
+            },
+            // ---- Pink back to base ----
+            {
+                id: 'boot1-1-switch-back-to-boot1',
+                localPosition: new THREE.Vector3(0.3, 0.5, 0),
+                minAngle: 0,
+                maxAngle: 359,
+                variant: 'pink',
+                icon: 'static/images/icons/hotspot-icon-pink.png',
+                linkedModelIndex: 0
+            }
+        ],
+
+        1: [ // Boot 2
+            ...boot2Base,
+            // ---- Pink placeholder → variant ----
+            {
+                id: 'boot2-switch-to-variant',
+                localPosition: new THREE.Vector3(0, 0, 0),
+                minAngle: 0,
+                maxAngle: 359,
+                variant: 'pink',
+                icon: 'static/images/icons/hotspot-icon-pink.png',
+                linkedModelIndex: 21
+            }
+        ],
+
+        21: [ // Boot 2, variant 1
+            // Clone every base hotspot with a '-v1' suffixed ID, so any
+            // linkedHotspotId references inside the variant resolve to the
+            // variant's own version rather than leaking back to the base set.
+            ...boot2Base.map(h => ({ ...h, id: h.id + '-v1' })),
+            // ---- Pink back to base ----
+            {
+                id: 'boot2-1-switch-back-to-boot2',
+                localPosition: new THREE.Vector3(0, 0, 0),
+                minAngle: 0,
+                maxAngle: 359,
+                variant: 'pink',
+                icon: 'static/images/icons/hotspot-icon-pink.png',
+                linkedModelIndex: 1
+            }
+        ],
+
+        2: [ // Boot 3
+            {
+                id: '5-1-holz-richtung-r-2',
+                localPosition: new THREE.Vector3(-0.78, 0.32, 0.1),
+                minAngle: 0,
+                maxAngle: 359,
+                variant: 'blue',
+                icon: 'static/images/icons/hotspot-icon-blue.png',
+                content: {
+                    title: 'Control Flow Excavator',
+                    subtitle: 'Clear the way',
+                    text: `Removing sediment from around subsea structures is a recurring need throughout project construction and maintenance, for both planned campaigns and unplanned interventions. The DO C-CSOV can take on this scope directly, using its unique design features to run a controlled flow excavation spread. Ample deck space allows the works to run alongside other scopes - Absorbing the task on an existing vessel adds efficiency and gives the project valuable contingency.
+
+For CFE deployment our DO C-CSOV provides the following key capabilities:
+
+- Utility stations for power and services to the excavation spread
+- 10t 3D MCC or 50t AHC crane capacity and reach
+- Suitable stability and weight margins
+- HiPAP 502 for subsea positioning
+- Compatible with established CFE spreads such as the ROTECH TRS1
+`,
+                    images: ['static/images/m5cfe/cfe1.png','static/images/m5cfe/cfe2.jpg']
+                }
+            },
+            // ---- Pink placeholder → variant ----
+            {
+                id: 'boot3-switch-to-variant',
+                localPosition: new THREE.Vector3(0, 0, 0),
+                minAngle: 0,
+                maxAngle: 359,
+                variant: 'pink',
+                icon: 'static/images/icons/hotspot-icon-pink.png',
+                linkedModelIndex: 31
+            }
+        ],
+
+        31: [ // Boot 3, variant 1
+            // ---- Blue from base ----
+            {
+                id: '5-1-holz-richtung-r-2-v1',
+                localPosition: new THREE.Vector3(-0.78, 0.32, 0.1),
+                minAngle: 0,
+                maxAngle: 359,
+                variant: 'blue',
+                icon: 'static/images/icons/hotspot-icon-blue.png',
+                content: {
+                    title: 'Control Flow Excavator',
+                    subtitle: 'Clear the way',
+                    text: `Removing sediment from around subsea structures is a recurring need throughout project construction and maintenance, for both planned campaigns and unplanned interventions. The DO C-CSOV can take on this scope directly, using its unique design features to run a controlled flow excavation spread. Ample deck space allows the works to run alongside other scopes - Absorbing the task on an existing vessel adds efficiency and gives the project valuable contingency.
+
+For CFE deployment our DO C-CSOV provides the following key capabilities:
+
+- Utility stations for power and services to the excavation spread
+- 10t 3D MCC or 50t AHC crane capacity and reach
+- Suitable stability and weight margins
+- HiPAP 502 for subsea positioning
+- Compatible with established CFE spreads such as the ROTECH TRS1
+`,
+                    images: ['static/images/m5cfe/cfe1.png','static/images/m5cfe/cfe2.jpg']
+                }
+            },
+            // ---- Pink back to base ----
+            {
+                id: 'boot3-1-switch-back-to-boot3',
+                localPosition: new THREE.Vector3(0, 0, 0),
+                minAngle: 0,
+                maxAngle: 359,
+                variant: 'pink',
+                icon: 'static/images/icons/hotspot-icon-pink.png',
+                linkedModelIndex: 2
+            }
+        ],
+
+        3: [ // Boot 4
+            {
+                id: 'boot9-deck-payload',
+                localPosition: new THREE.Vector3(-0.7, 0.32, 0),
+                minAngle: 260,
+                maxAngle: 80,
+                variant: 'blue',
+                icon: 'static/images/icons/hotspot-icon-blue.png',
+                content: {
+                    title: 'Deck payload',
+                    subtitle: 'When size matters',
+                    text: 'When the job calls for size, the DO C-CSOV delivers. A vast, strengthened deck, generous payload and a powerful crane let big, bulky equipment - from generator sets with pre-filled fuel tanks to subsea corrosion-protection spreads - be mobilised, installed and operated from a single vessel, whether planned or unplanned. Bigger lifts mean fewer of them: less deck shuffling, fewer supply runs and less port time, so campaigns run leaner and faster. And when priorities shift, this flexibility turns into contingency - ready to pick up slack and keep the offshore programme moving without missing a beat.\n',
+                    images: ['static/images/m6payload/deckpayload-a.jpg', 'static/images/m6payload/deckpayload-b.jpg']
+                }
+            },
+            // ---- Pink placeholder → variant ----
+            {
+                id: 'boot4-switch-to-variant',
+                localPosition: new THREE.Vector3(0, 0, 0),
+                minAngle: 0,
+                maxAngle: 359,
+                variant: 'pink',
+                icon: 'static/images/icons/hotspot-icon-pink.png',
+                linkedModelIndex: 41
+            }
+        ],
+
+        41: [ // Boot 4, variant 1
+            // ---- Blue from base ----
+            {
+                id: 'boot9-deck-payload-v1',
+                localPosition: new THREE.Vector3(-0.7, 0.32, 0),
+                minAngle: 260,
+                maxAngle: 80,
+                variant: 'blue',
+                icon: 'static/images/icons/hotspot-icon-blue.png',
+                content: {
+                    title: 'Deck payload',
+                    subtitle: 'When size matters',
+                    text: 'When the job calls for size, the DO C-CSOV delivers. A vast, strengthened deck, generous payload and a powerful crane let big, bulky equipment - from generator sets with pre-filled fuel tanks to subsea corrosion-protection spreads - be mobilised, installed and operated from a single vessel, whether planned or unplanned. Bigger lifts mean fewer of them: less deck shuffling, fewer supply runs and less port time, so campaigns run leaner and faster. And when priorities shift, this flexibility turns into contingency - ready to pick up slack and keep the offshore programme moving without missing a beat.\n',
+                    images: ['static/images/m6payload/deckpayload-a.jpg', 'static/images/m6payload/deckpayload-b.jpg']
+                }
+            },
+            // ---- Pink back to base ----
+            {
+                id: 'boot4-1-switch-back-to-boot4',
+                localPosition: new THREE.Vector3(0, 0, 0),
+                minAngle: 0,
+                maxAngle: 359,
+                variant: 'pink',
+                icon: 'static/images/icons/hotspot-icon-pink.png',
+                linkedModelIndex: 3
+            }
+        ],
+
+        4: [ // Boot 5
+            {
+                id: '8-1-container-2',
+                localPosition: new THREE.Vector3(-1.2, 0.3, 0),
+                minAngle: 0,
+                maxAngle: 359,
+                variant: 'blue',
+                icon: 'static/images/icons/hotspot-icon-blue.png',
+                content: {
+                    title: 'Cable Repair',
+                    subtitle: 'Don\'t waste time',
+                    text: `Designed for rapid response, the DO C-CSOV provides a pre-engineered cable repair capability that is readily available and significantly reduces mobilization time when intervention is required. With offshore power cables forming part of critical energy infrastructure, fast deployment minimizes downtime, reduces opportunity costs and supports lower project risk. The integrated solution enables efficient cable repair operations without the delays associated with vessel and equipment availability.
+
+Maximising cable repair capability is at the core of the DO C-CSOV's design. The vessel suits both cable replacement and repair campaigns, for inter-array and common AC export cables. On deck utility stations support the cable-repair spread and ROV operations, while the technical layout allows the below-deck warehouse space to be used to its full extent, significantly enlarging the total space available on board.
+
+For cable repair the DO C-CSOV provides the following key capabilities:
+
+- Up to 400t cable capacity on a dual partition carousel or reel
+- Up to 20m highway length for suitable cable protection system installation
+- Minimum bending radius (MBR) of 5m 
+- 15t tensioner
+- Quadrant deployment system with integrated joint handling crane
+`,
+                    images: ['static/images/m8cablerepair/repair1.jpg','static/images/m8cablerepair/repair2.jpg']
+                }
+            },
+            {
+                id: '8-2-cable-repair-video-2',
+                localPosition: new THREE.Vector3(-0.295, 0.34, -0.29),
+                minAngle: 0,
+                maxAngle: 359,
+                variant: 'blue',
+                icon: 'static/images/icons/hotspot-icon-blue.png',
+                content: {
+                    title: 'Cable Repair Video',
+                    video: ['static/images/m8cablerepair/video.mp4']
+                }
+            }
+        ],
+
+        5: [ // Boot 6
+            {
+                id: '9-1-reling-2',
+                localPosition: new THREE.Vector3(-0.295, 0.34, 0.29),
+                minAngle: 0,
+                maxAngle: 359,
+                variant: 'blue',
+                icon: 'static/images/icons/hotspot-icon-blue.png',
+                content: {
+                    title: 'ROV Operations',
+                    subtitle: 'Your hands & eyes underwater\n',
+                    text: `The DO C-CSOV is a flexible platform for work-class ROV support - from inspection, maintenance and repair to construction support and contingency work. Its low freeboard and modular railings enable safe, efficient over-the-side deployment of high-capacity WROVs for requirements demanding station keeping and special tooling. The result is greater operational efficiency, less reliance on dedicated ROV vessels and valuable extra contingency capacity, when and where it is needed - both during construction and the O&M phase.
+
+As such, the DO C-CSOV can facilitate various tasks such as foundation, cable and scour-protection inspection, cable route and burial surveys, cathodic-protection and anode checks; construction and lift support with touchdown monitoring as well as unplanned subsea interventions.
+
+For work-class ROV capability the DO C-CSOV provides the following key capabilities:
+
+•  High-capacity work-class ROV (WROV) for requirements beyond observation
+•  Permanent ROV mobilization by integration of ROV piloting into convertible charterer's office 
+•  HiPAP 502 acoustic subsea positioning
+•  Ample space for ROV integration next to conventional CSOV scopes
+•  Large warehouse and workshop facilities to accommodate maintenance requirements for high spec underwater assets
+`,
+                    images: ['static/images/m9rov/rov1.jpg','static/images/m9rov/rov2.png']
+                }
+            },
+            // ---- Pink placeholder → variant ----
+            {
+                id: 'boot6-switch-to-variant',
+                localPosition: new THREE.Vector3(0, 0, 0),
+                minAngle: 0,
+                maxAngle: 359,
+                variant: 'pink',
+                icon: 'static/images/icons/hotspot-icon-pink.png',
+                linkedModelIndex: 61
+            }
+        ],
+
+        61: [ // Boot 6, variant 1
+            // ---- Blue from base ----
+            {
+                id: '9-1-reling-2-v1',
+                localPosition: new THREE.Vector3(-0.295, 0.34, 0.29),
+                minAngle: 0,
+                maxAngle: 359,
+                variant: 'blue',
+                icon: 'static/images/icons/hotspot-icon-blue.png',
+                content: {
+                    title: 'ROV Operations',
+                    subtitle: 'Your hands & eyes underwater\n',
+                    text: `The DO C-CSOV is a flexible platform for work-class ROV support - from inspection, maintenance and repair to construction support and contingency work. Its low freeboard and modular railings enable safe, efficient over-the-side deployment of high-capacity WROVs for requirements demanding station keeping and special tooling. The result is greater operational efficiency, less reliance on dedicated ROV vessels and valuable extra contingency capacity, when and where it is needed - both during construction and the O&M phase.
+
+As such, the DO C-CSOV can facilitate various tasks such as foundation, cable and scour-protection inspection, cable route and burial surveys, cathodic-protection and anode checks; construction and lift support with touchdown monitoring as well as unplanned subsea interventions.
+
+For work-class ROV capability the DO C-CSOV provides the following key capabilities:
+
+•  High-capacity work-class ROV (WROV) for requirements beyond observation
+•  Permanent ROV mobilization by integration of ROV piloting into convertible charterer's office 
+•  HiPAP 502 acoustic subsea positioning
+•  Ample space for ROV integration next to conventional CSOV scopes
+•  Large warehouse and workshop facilities to accommodate maintenance requirements for high spec underwater assets
+`,
+                    images: ['static/images/m9rov/rov1.jpg','static/images/m9rov/rov2.png']
+                }
+            },
+            // ---- Pink back to base ----
+            {
+                id: 'boot6-1-switch-back-to-boot6',
+                localPosition: new THREE.Vector3(0, 0, 0),
+                minAngle: 0,
+                maxAngle: 359,
+                variant: 'pink',
+                icon: 'static/images/icons/hotspot-icon-pink.png',
+                linkedModelIndex: 5
+            }
+        ],
+
+        6: [ // Boot 7
+        ],
+
+        7: [ // Boot 8
+            {
+                id: '6-1-holz-richtung-bug-2',
+                localPosition: new THREE.Vector3(-0.7, 0.32, 0),
+                minAngle: 0,
+                maxAngle: 359,
+                variant: 'blue',
+                icon: 'static/images/icons/hotspot-icon-blue.png',
+                content: {
+                    title: 'Grouting spread',
+                    subtitle: 'Close the gap',
+                    text: `The DO C-CSOV supports grouting operations as a complementary scope to HLV campaigns, significantly increasing overall project efficiency. By taking over the grouting and bolt fastening thus reducing the time CAPEX-intensive HLV needs to remain on location, the DO C-CSOV helps minimise costly idle time and enables heavy-lift assets to move on faster.
+
+Stability and weight margins as well as a working deck suitable to carry spacious and heavy equipment, enable the DO C-CSOV to mobilize up to 400 t of dry grout powder in combination with high output mixer (e.g. Found Ocean's HRJM 27) and other necessary infrastructure. Depending on project requirements, either 100 t / 50 t silos or container based silos can be deployed, enabling quick turnaround times in harbour.
+
+Grouting operations can be combined with bolt tightening, as additional space is both available on deck as well as below deck. The DO C-CSOVs W2W capability eliminates the need to mobilise a rental gangway, saving mobilisation time and cost while improving overall project efficiency.
+`,
+                    images: ['static/images/m7grouting/grouting1.jpg','static/images/m7grouting/grouting2.png']
+                }
+            }
+        ],
+
+        8: [ // Boot 9
+            {
+                id: '9-1-holz-richtung-heck-2',
+                localPosition: new THREE.Vector3(-0.82, 0.32, 0),
+                minAngle: 0,
+                maxAngle: 359,
+                variant: 'blue',
+                icon: 'static/images/icons/hotspot-icon-blue.png',
+                content: {
+                    title: 'Monopile Cleaning',
+                    subtitle: 'Nice and shiny!',
+                    text: `The DO C-CSOV offers the unique capability to support installation vessels with monopile and pile cleaning, a step required to remove marine growth prior to installation of the transition piece. Its large, strengthened working deck and AHC crane accommodate cleaning tools, skids and all ancillary equipment.
 
 The DO C-CSOV is able to support offshore construction with its unique capability set. By offering significantly increased deck space in combination with suitable crane capacity as well as power supply, monopile cleaning can be performed alongside regular W2W activities, either as a contingency measure, or as a preplanned scope. This offers cost saving potential compared to a WTIV deployed scenario, or removes the dependency on a dedicated construction vessel which needs to be chartered from the volatile spot market.
 `,
-            images: ['static/images/m4cleaning/cleaning1.jpg','static/images/m4cleaning/cleaning2.jpg']
-        }
-    }
-    ]
-
-};
-
-
-
+                    images: ['static/images/m4cleaning/cleaning1.jpg','static/images/m4cleaning/cleaning2.png']
+                }
+            }
+        ]
+    };
+})();
 
 
 
@@ -933,6 +1108,8 @@ let hotspotOverlayEl, hotspotOverlayContentEl, hotspotOverlayIconEl,
     hotspotOverlayTitleEl, hotspotOverlayTextEl, hotspotOverlayImagesEl,
     hotspotOverlaySubtitleEl, hotspotOverlayLogoEl, // <-- new
     deepDiveButtonsEl;
+
+let hotspotOverlayScrollEl;
 
 // Loading overlay - shown during startup while models are fetched
 let loadingOverlayEl, loadingTitleEl, loadingCurrentFileEl, loadingBarFillEl, loadingProgressTextEl,
@@ -2503,13 +2680,13 @@ function initHotspotOverlay() {
     hotspotOverlayLogoEl.draggable = false;
     topBar.appendChild(hotspotOverlayLogoEl);
 
-    // ── SCROLL AREA (Text + Images scroll together) ──
-    const scrollWrapper = document.createElement('div');
-    scrollWrapper.className = 'hotspot-overlay-scroll';
-    hotspotOverlayContentEl.insertBefore(scrollWrapper, hotspotOverlayTextEl);
+     // ── SCROLL AREA (Text + Images scroll together) ──
+    hotspotOverlayScrollEl = document.createElement('div');
+    hotspotOverlayScrollEl.className = 'hotspot-overlay-scroll';
+    hotspotOverlayContentEl.insertBefore(hotspotOverlayScrollEl, hotspotOverlayTextEl);
 
-    scrollWrapper.appendChild(hotspotOverlayTextEl);   // moves text into the scroll wrapper
-    scrollWrapper.appendChild(hotspotOverlayImagesEl); // moves images into the scroll wrapper
+    hotspotOverlayScrollEl.appendChild(hotspotOverlayTextEl);   // moves text into the scroll wrapper
+    hotspotOverlayScrollEl.appendChild(hotspotOverlayImagesEl); // moves images into the scroll wrapper
 
     // ── Deep dive buttons (bottom, absolute — unchanged) ──
     deepDiveButtonsEl = document.createElement('div');
@@ -2785,6 +2962,10 @@ function renderHotspotContent(content) {
     }
 
     renderHotspotMedia(content);
+        // Scroll back to the top whenever content changes — opening a hotspot,
+    // switching deep dives, or returning to the base content. Without this,
+    // a stale scroll position from a previous, longer hotspot would carry over.
+    if (hotspotOverlayScrollEl) hotspotOverlayScrollEl.scrollTop = 0;
 }
 
 // Splits the raw hotspot text on "\n" (and "\t", which the data uses as a
