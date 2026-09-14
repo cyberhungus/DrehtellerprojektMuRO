@@ -42,8 +42,8 @@ const SHARED_GREEN_HOTSPOTS = [
     {
         id: 'tower-mittig-2',
         localPosition: new THREE.Vector3(-0.134, 0.75, -0.24),
-        minAngle: 180,
-        maxAngle: 269,
+        minAngle: 120,
+        maxAngle: 20,
         variant: 'green',
         icon: 'static/images/icons/hotspot-icon-green.png',
         content: {
@@ -79,8 +79,8 @@ const SHARED_GREEN_HOTSPOTS = [
     {
         id: 'kran-beuge-2',
         localPosition: new THREE.Vector3(-0.788, 0.4, -0.26),
-        minAngle: 180,
-        maxAngle: 269,
+        minAngle: 90,
+        maxAngle: 10,
         variant: 'green',
         icon: 'static/images/icons/hotspot-icon-green.png',
         content: {
@@ -116,8 +116,8 @@ const SHARED_GREEN_HOTSPOTS = [
     {
         id: 'leiter-2',
         localPosition: new THREE.Vector3(-0.9, 0.35, -0.3),
-        minAngle: 180,
-        maxAngle: 269,
+        minAngle: 110,
+        maxAngle: 0,
         variant: 'green',
         icon: 'static/images/icons/hotspot-icon-green.png',
         content: {
@@ -139,8 +139,8 @@ const SHARED_GREEN_HOTSPOTS = [
     {
         id: 'heck-2',
         localPosition: new THREE.Vector3(-1.29, 0.3, 0),
-        minAngle: 180,
-        maxAngle: 269,
+        minAngle: 290,
+        maxAngle: 50,
         variant: 'green',
         icon: 'static/images/icons/hotspot-icon-green.png',
         content: {
@@ -166,8 +166,8 @@ const SHARED_GREEN_HOTSPOTS = [
     {
         id: 'holz-2',
         localPosition: new THREE.Vector3(-0.78, 0.32, 0),
-        minAngle: 270,
-        maxAngle: 359,
+        minAngle: 280,
+        maxAngle: 80,
         variant: 'green',
         icon: 'static/images/icons/hotspot-icon-green.png',
         content: {
@@ -188,9 +188,9 @@ const SHARED_GREEN_HOTSPOTS = [
     },
     {
         id: 'propeller-heck-2',
-  localPosition: new THREE.Vector3(-1.051, 0.1, 0.137),
-        minAngle: 270,
-        maxAngle: 359,
+        localPosition: new THREE.Vector3(-1.051, 0.1, 0.137),
+        minAngle: 310,
+        maxAngle: 50,
         variant: 'green',
         icon: 'static/images/icons/hotspot-icon-green.png',
         content: {
@@ -223,8 +223,8 @@ The VSP system requires approximately 15–22% less power than alternative propu
     {
         id: 'heck-l-2',
         localPosition: new THREE.Vector3(-0.67, 0.29, 0.29),
-        minAngle: 270,
-        maxAngle: 359,
+        minAngle: 340,
+        maxAngle: 260,
         variant: 'green',
         icon: 'static/images/icons/hotspot-icon-green.png',
         content: {
@@ -245,8 +245,8 @@ The VSP system requires approximately 15–22% less power than alternative propu
     {
         id: 'bruecke-l-seite-2',
         localPosition: new THREE.Vector3(0.285, 0.72, 0.33),
-        minAngle: 270,
-        maxAngle: 359,
+        minAngle: 320,
+        maxAngle: 220,
         variant: 'green',
         icon: 'static/images/icons/hotspot-icon-green.png',
         content: {
@@ -271,8 +271,8 @@ The VSP system requires approximately 15–22% less power than alternative propu
     {
         id: 'kabinen-r-2',
         localPosition: new THREE.Vector3(0.7, 0.32, -0.29),
-        minAngle: 90,
-        maxAngle: 179,
+        minAngle: 160,
+        maxAngle: 80,
         variant: 'green',
         icon: 'static/images/icons/hotspot-icon-green.png',
         content: {
@@ -332,8 +332,8 @@ The 48 sqm changing room provides 88 lockers and can be divided into separate me
     {
         id: 'propeller-front-2',
         localPosition: new THREE.Vector3(1.4, 0.1, 0),
-        minAngle: 90,
-        maxAngle: 179,
+        minAngle: 170,
+        maxAngle: 130,
         variant: 'green',
         icon: 'static/images/icons/hotspot-icon-green.png',
         content: {
@@ -365,8 +365,8 @@ The 48 sqm changing room provides 88 lockers and can be divided into separate me
     {
         id: 'beiboot-2',
         localPosition: new THREE.Vector3(-0.295, 0.34, 0.23),
-        minAngle: 0,
-        maxAngle: 89,
+        minAngle: 310,
+        maxAngle: 210,
         variant: 'green',
         icon: 'static/images/icons/hotspot-icon-green.png',
         content: {
@@ -396,8 +396,8 @@ The 48 sqm changing room provides 88 lockers and can be divided into separate me
     {
         id: 'bruecke-l-front-2',
         localPosition: new THREE.Vector3(0.45, 0.7, 0.2),
-        minAngle: 0,
-        maxAngle: 89,
+        minAngle: 270,
+        maxAngle: 190,
         variant: 'green',
         icon: 'static/images/icons/hotspot-icon-green.png',
         content: {
@@ -440,8 +440,8 @@ The 48 sqm changing room provides 88 lockers and can be divided into separate me
     {
         id: 'rumpf-l-mitte-2',
         localPosition: new THREE.Vector3(0, 0.2, 0.29),
-        minAngle: 0,
-        maxAngle: 89,
+        minAngle: 300,
+        maxAngle: 240,
         variant: 'green',
         icon: 'static/images/icons/hotspot-icon-green.png',
         content: {
@@ -463,8 +463,8 @@ The 48 sqm changing room provides 88 lockers and can be divided into separate me
     {
         id: 'rumpf-l-vorner-2',
         localPosition: new THREE.Vector3(0.54, 0.23, 0.29),
-        minAngle: 0,
-        maxAngle: 89,
+        minAngle: 280,
+        maxAngle: 200,
         variant: 'green',
         icon: 'static/images/icons/hotspot-icon-green.png',
         content: {
@@ -505,8 +505,8 @@ The 48 sqm changing room provides 88 lockers and can be divided into separate me
     {
         id: 'helipad-2',
         localPosition: new THREE.Vector3(0.89, 0.8, 0),
-        minAngle: 0,
-        maxAngle: 89,
+        minAngle: 100,
+        maxAngle: 260,
         variant: 'green',
         icon: 'static/images/icons/hotspot-icon-green.png',
         content: {
@@ -529,8 +529,8 @@ The 48 sqm changing room provides 88 lockers and can be divided into separate me
     {
         id: 'bug-2',
         localPosition: new THREE.Vector3(1.5, 0.477, 0),
-        minAngle: 0,
-        maxAngle: 89,
+        minAngle: 150,
+        maxAngle: 210,
         variant: 'green',
         icon: 'static/images/icons/hotspot-icon-green.png',
         content: {
@@ -713,22 +713,23 @@ const hotspotDefinitions = {
             linkedModelIndex: 21
         }
     ],
-21: [ // Boot 2, variant 1
-    ...SHARED_GREEN_HOTSPOTS,
-    {
-        ...ROCKBAG_BLUE,
-        localPosition: new THREE.Vector3(-1.1, 0.4, 0.03)
-    },
-    {
-        id: 'boot2-1-switch-back-to-boot2',
-        localPosition: new THREE.Vector3(-0.505, 0.56, -0.284),
-        minAngle: 0,
-        maxAngle: 359,
-        variant: 'pink',
-        icon: 'static/images/icons/hotspot-icon-pink.png',
-        linkedModelIndex: 1
-    }
-],
+
+    21: [ // Boot 2, variant 1
+        ...SHARED_GREEN_HOTSPOTS,
+        {
+            ...ROCKBAG_BLUE,
+            localPosition: new THREE.Vector3(-1.1, 0.4, 0.03)
+        },
+        {
+            id: 'boot2-1-switch-back-to-boot2',
+            localPosition: new THREE.Vector3(-0.505, 0.56, -0.284),
+            minAngle: 0,
+            maxAngle: 359,
+            variant: 'pink',
+            icon: 'static/images/icons/hotspot-icon-pink.png',
+            linkedModelIndex: 1
+        }
+    ],
 
     2: [ // Boot 3
         ...SHARED_GREEN_HOTSPOTS,
@@ -931,8 +932,6 @@ The DO C-CSOV is able to support offshore construction with its unique capabilit
     ]
 
 };
-
-
 import * as THREE from 'three';
 
 
