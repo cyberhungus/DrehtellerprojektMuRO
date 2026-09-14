@@ -188,7 +188,7 @@ const SHARED_GREEN_HOTSPOTS = [
     },
     {
         id: 'propeller-heck-2',
-        localPosition: new THREE.Vector3(-1.2, 0, 0.11),
+  localPosition: new THREE.Vector3(-1.241, -0.172, 0.137),
         minAngle: 270,
         maxAngle: 359,
         variant: 'green',
@@ -713,23 +713,22 @@ const hotspotDefinitions = {
             linkedModelIndex: 21
         }
     ],
-
-    21: [ // Boot 2, variant 1
-        ...SHARED_GREEN_HOTSPOTS,
-        {
-            ...ROCKBAG_BLUE,
-            localPosition: new THREE.Vector3(-1.25, 0.1, 0.03)
-        },
-        {
-            id: 'boot2-1-switch-back-to-boot2',
-            localPosition: new THREE.Vector3(-0.505, 0.56, -0.284),
-            minAngle: 0,
-            maxAngle: 359,
-            variant: 'pink',
-            icon: 'static/images/icons/hotspot-icon-pink.png',
-            linkedModelIndex: 1
-        }
-    ],
+21: [ // Boot 2, variant 1
+    ...SHARED_GREEN_HOTSPOTS,
+    {
+        ...ROCKBAG_BLUE,
+        localPosition: new THREE.Vector3(-1.1, 0.4, 0.03)
+    },
+    {
+        id: 'boot2-1-switch-back-to-boot2',
+        localPosition: new THREE.Vector3(-0.505, 0.56, -0.284),
+        minAngle: 0,
+        maxAngle: 359,
+        variant: 'pink',
+        icon: 'static/images/icons/hotspot-icon-pink.png',
+        linkedModelIndex: 1
+    }
+],
 
     2: [ // Boot 3
         ...SHARED_GREEN_HOTSPOTS,
