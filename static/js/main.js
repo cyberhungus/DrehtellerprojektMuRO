@@ -224,7 +224,7 @@ The VSP system requires approximately 15–22% less power than alternative propu
         id: 'heck-l-2',
         localPosition: new THREE.Vector3(-0.67, 0.29, 0.29),
         minAngle: 340,
-        maxAngle: 260,
+        maxAngle: 270,
         variant: 'green',
         icon: 'static/images/icons/hotspot-icon-green.png',
         content: {
@@ -246,7 +246,7 @@ The VSP system requires approximately 15–22% less power than alternative propu
         id: 'bruecke-l-seite-2',
         localPosition: new THREE.Vector3(0.285, 0.72, 0.33),
         minAngle: 320,
-        maxAngle: 220,
+        maxAngle: 180,
         variant: 'green',
         icon: 'static/images/icons/hotspot-icon-green.png',
         content: {
@@ -365,8 +365,8 @@ The 48 sqm changing room provides 88 lockers and can be divided into separate me
     {
         id: 'beiboot-2',
         localPosition: new THREE.Vector3(-0.295, 0.34, 0.23),
-        minAngle: 310,
-        maxAngle: 210,
+        minAngle: 200,
+        maxAngle: 270,
         variant: 'green',
         icon: 'static/images/icons/hotspot-icon-green.png',
         content: {
@@ -397,7 +397,7 @@ The 48 sqm changing room provides 88 lockers and can be divided into separate me
         id: 'bruecke-l-front-2',
         localPosition: new THREE.Vector3(0.45, 0.7, 0.2),
         minAngle: 270,
-        maxAngle: 190,
+        maxAngle: 180,
         variant: 'green',
         icon: 'static/images/icons/hotspot-icon-green.png',
         content: {
@@ -441,7 +441,7 @@ The 48 sqm changing room provides 88 lockers and can be divided into separate me
         id: 'rumpf-l-mitte-2',
         localPosition: new THREE.Vector3(0, 0.2, 0.29),
         minAngle: 300,
-        maxAngle: 240,
+        maxAngle: 180,
         variant: 'green',
         icon: 'static/images/icons/hotspot-icon-green.png',
         content: {
@@ -932,6 +932,8 @@ The DO C-CSOV is able to support offshore construction with its unique capabilit
     ]
 
 };
+
+
 import * as THREE from 'three';
 
 
