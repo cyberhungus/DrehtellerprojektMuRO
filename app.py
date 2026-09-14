@@ -778,39 +778,41 @@ def is_server_running(host='localhost', port=5000, timeout=1):
         return False
 
 
-import tempfile
-import uuid
-
 def open_browser_kiosk(url):
-    """Launch Chrome/Edge in restrictive kiosk with a fresh temporary profile."""
+    """Launch Chrome/Edge in restrictive kiosk with a persistent profile."""
     if platform.system() != 'Windows':
         webbrowser.open(url)
         return
 
-    # Create a unique temporary profile directory
-    # This ensures Chrome doesn't attach to an existing session
-    temp_profile = os.path.join(
-        tempfile.gettempdir(),
-        f"chrome_kiosk_{uuid.uuid4().hex[:8]}"
+    # Persistent profile directory — kept between launches so settings like
+    # translation preferences, cookies, and session state survive restarts.
+    # Sits next to app.py so it moves with the app.
+    profile_dir = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)),
+        'chrome-kiosk-profile'
     )
+    os.makedirs(profile_dir, exist_ok=True)
 
     extra_flags = [
         '--kiosk',
-        '--new-window',                     # force a new window
-        f'--user-data-dir={temp_profile}',  # ISOLATED PROFILE – this is the key fix
+        '--new-window',
+        f'--user-data-dir={profile_dir}',   # persistent, not temp
         '--disable-infobars',
         '--disable-session-crashed-bubble',
         '--disable-pinch',
         '--overscroll-history-navigation=0',
         '--no-first-run',
         '--no-default-browser-check',
-        '--disable-features=TranslateUI',
         '--disable-notifications',
         '--disable-save-password-bubble',
         '--disable-background-timer-throttling',
         '--disable-backgrounding-occluded-windows',
         '--disable-renderer-backgrounding',
         '--disable-popup-blocking',
+        '--hide-crash-restore-bubble',
+        # NOTE: '--disable-features=TranslateUI' was removed on purpose —
+        # it blocks the translate bubble entirely. Leave it out if you want
+        # Chrome to offer or auto-apply translation.
     ]
 
     # All common Windows install locations
@@ -825,8 +827,8 @@ def open_browser_kiosk(url):
 
     for path in browser_paths:
         if os.path.exists(path):
-            print(f"Launching kiosk with fresh profile: {path}")
-            print(f"Profile: {temp_profile}")
+            print(f"Launching kiosk with persistent profile: {path}")
+            print(f"Profile: {profile_dir}")
             subprocess.Popen([path] + extra_flags + [url])
             return
 
