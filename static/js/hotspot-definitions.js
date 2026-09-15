@@ -82,7 +82,7 @@ export const SHARED_GREEN_HOTSPOTS = [
                     •  ATEX prepared`,
                     images: ['static/images/f1gangway/gangwaydeepdive.png']
                 },
-                { title: 'In Operation', video: 'static/images/f1gangway/video.mp4' }
+                { title: 'Video', video: 'static/images/f1gangway/video.mp4' }
             ]
         }
     },
@@ -148,7 +148,7 @@ export const SHARED_GREEN_HOTSPOTS = [
     },
     {
         id: 'heck-2',
-        localPosition: new THREE.Vector3(-1.29, 0.3, 0),
+        localPosition: new THREE.Vector3(-1.29, 0.6, 0),
         minAngle: 290,
         maxAngle: 50,
         variant: 'green',
@@ -341,7 +341,7 @@ The 48 sqm changing room provides 88 lockers and can be divided into separate me
     },
     {
         id: 'propeller-front-2',
-        localPosition: new THREE.Vector3(1.4, 0.1, 0),
+        localPosition: new THREE.Vector3(1.4, -0.1, 0),
         minAngle: 150,
         maxAngle: 200,
         variant: 'green',
@@ -368,37 +368,6 @@ The 48 sqm changing room provides 88 lockers and can be divided into separate me
 •  Optimised thruster grids: Designed to maximise thrust performance and DP efficiency
 •  Split configuration: Maintains redundancy during DP operations`,
                     images: ['static/images/f8bowthruster/thrusterdeepdive.png']
-                }
-            ]
-        }
-    },
-    {
-        id: 'beiboot-2',
-        localPosition: new THREE.Vector3(-0.295, 0.34, 0.23),
-        minAngle: 200,
-        maxAngle: 270,
-        variant: 'green',
-        icon: 'static/images/icons/hotspot-icon-green.png',
-        content: {
-            title: 'Daughter Craft ',
-            subtitle: 'Pick me up!',
-            logo: 'static/images/logos/combined-logos.png',
-            text: 'The DO C-CSOV is equipped with a Vestdavit launched Chartwell Catamaran Workboat. Its large deck space in combination with its modularity concept allows for carrying a high performance Daughter Craft without compromising on the asset\'s capabilities. The working deck remains spacious with sufficient capacity for containerized or bulk cargo. As the davit is skid mounted, quick mobilization and demobilization is catered for the event the additional space is required. \n' +
-                '\tBenefiting from the use of a Daughter Craft should not go along unacceptable risks. The Vestdavit PLD-15002 is DNV-ST-0498 certified, setting a baseline to deploy and retrieve Daughter Crafts safely. A telescopic painter boom ensures proper hull clearance and controlled motion at high sea states, safeguarding that a recovery can be conducted under any circumstances.\n',
-            images: ['static/images/f3daughtercraft/daughtercraft.png', 'static/images/f3daughtercraft/daughtercraft2.png'],
-            deepDives: [
-                {
-                    title: 'Technical Specifications',
-                    text: `The DO C-CSOV is fitted with the Chartwell Marine Catamaran Workboat 12, amended to the DO requirements:
-
-•  Increased safety standards: UK Workboat Code Cat.1
-•  Length: 12.66 m
-•  Width: 4.1 m
-•  Max capacity: 12 + 2 PAX
-•  Speed: 25 kn
-•  Payload 1 t
-•  Operational transfer limit: Hs 1.5 m
-•  Lateral and vertical accelerations: Max 0.15 g RMS for Hs 1.5 m`
                 }
             ]
         }
@@ -500,8 +469,8 @@ The 48 sqm changing room provides 88 lockers and can be divided into separate me
                     title: 'Technical Specifications',
                     text: `The DO C-CSOV is fitted with DNV DYNPOS-AUTR-CB electric system designed by ABB:
 
-•  Blackout recovery within 45 s
-•  Enhanced monitoring and protection systems: 
+     ◦  Blackout recovery within 45 s
+     ◦  Enhanced monitoring and protection systems: 
      ◦  Additional protection relays are fitted for vital components to ensure discrimination of the bus‑tie in case of relevant fault modes
      ◦  Current and voltage transformer sensors serve as the core sensing elements for protection relays and measuring systems
      ◦  Arc detection system ensures that the bus‑tie has selective protection capability in case of arcing faults and other relevant fault modes
@@ -599,6 +568,38 @@ export const WALK_TO_WORK_BLUE = {
     }
 };
 
+export const DAUGHTER_CRAFT_BLUE = {
+    id: 'beiboot-2',
+    localPosition: new THREE.Vector3(-0.295, 0.34, 0.23),
+    minAngle: 200,
+    maxAngle: 270,
+    variant: 'blue',
+    icon: 'static/images/icons/hotspot-icon-blue.png',
+    content: {
+        title: 'Daughter Craft ',
+        subtitle: 'Pick me up!',
+        logo: 'static/images/logos/combined-logos.png',
+        text: 'The DO C-CSOV is equipped with a Vestdavit launched Chartwell Catamaran Workboat. Its large deck space in combination with its modularity concept allows for carrying a high performance Daughter Craft without compromising on the asset\'s capabilities. The working deck remains spacious with sufficient capacity for containerized or bulk cargo. As the davit is skid mounted, quick mobilization and demobilization is catered for the event the additional space is required. \n' +
+            '\tBenefiting from the use of a Daughter Craft should not go along unacceptable risks. The Vestdavit PLD-15002 is DNV-ST-0498 certified, setting a baseline to deploy and retrieve Daughter Crafts safely. A telescopic painter boom ensures proper hull clearance and controlled motion at high sea states, safeguarding that a recovery can be conducted under any circumstances.\n',
+        images: ['static/images/f3daughtercraft/daughtercraft.png', 'static/images/f3daughtercraft/daughtercraft2.png'],
+        deepDives: [
+            {
+                title: 'Technical Specifications',
+                text: `The DO C-CSOV is fitted with the Chartwell Marine Catamaran Workboat 12, amended to the DO requirements:
+
+•  Increased safety standards: UK Workboat Code Cat.1
+•  Length: 12.66 m
+•  Width: 4.1 m
+•  Max capacity: 12 + 2 PAX
+•  Speed: 25 kn
+•  Payload 1 t
+•  Operational transfer limit: Hs 1.5 m
+•  Lateral and vertical accelerations: Max 0.15 g RMS for Hs 1.5 m`
+            }
+        ]
+    }
+};
+
 export const ROCKBAG_BLUE = {
     id: '3-1-kran-ausleger-2',
     localPosition: new THREE.Vector3(-0.81, 0.51, -0.755),
@@ -671,10 +672,9 @@ export const ROV_BLUE = {
     content: {
         title: 'ROV Operations',
         subtitle: 'Your hands & eyes underwater\n',
-        text: `The DO C-CSOV is a flexible platform for work-class ROV support - from inspection, maintenance and repair to construction support and contingency work. Its low freeboard and modular railings enable safe, efficient over-the-side deployment of high-capacity WROVs for requirements demanding station keeping and special tooling. The result is greater operational efficiency, less reliance on dedicated ROV vessels and valuable extra contingency capacity, when and where it is needed - both during construction and the O&M phase.
+        text: `The DO C-CSOV is a flexible platform for work-class ROV support - from inspection, maintenance and repair to construction support and contingency work. Its low freeboard and modular railings enable safe, efficient over-the-side deployment of high-capacity WROVs for demanding station keeping and special tooling requirements. The result is greater operational efficiency, less reliance on dedicated ROV vessels and valuable extra contingency capacity, when and where it is needed- both during construction and the O&M phase.
 
-As such, the DO C-CSOV can facilitate various tasks such as foundation, cable and scour-protection inspection, cable route and burial surveys, cathodic-protection and anode checks; construction and lift support with touchdown monitoring as well as unplanned subsea interventions.
-
+As such, the DO C-CSOV can facilitate various tasks such as foundation, cable and scour-protection inspection, cable route and burial surveys, cathodic-protection and anode checks; construction and lift support with touchdown monitoring as well as unplanned subsea interventions
 For work-class ROV capability the DO C-CSOV provides the following key capabilities:
 
 •  High-capacity work-class ROV (WROV) for requirements beyond observation
@@ -700,6 +700,7 @@ export const hotspotDefinitions = {
     11: [ // Boot 1, variant 1
         ...SHARED_GREEN_HOTSPOTS,
         WALK_TO_WORK_BLUE,
+        DAUGHTER_CRAFT_BLUE,
         {
             id: 'boot1-1-switch-back-to-boot1',
             localPosition: new THREE.Vector3(-0.505, 0.56, -0.284),
@@ -819,18 +820,18 @@ Maximising cable repair capability is at the core of the DO C-CSOV's design. The
 
 For cable repair the DO C-CSOV provides the following key capabilities:
 
-- Up to 400t cable capacity on a dual partition carousel or reel
-- Up to 20m highway length for suitable cable protection system installation
-- Minimum bending radius (MBR) of 5m 
-- 15t tensioner
-- Quadrant deployment system with integrated joint handling crane
+• Up to 400t cable capacity on a dual partition carousel or reel
+• Up to 20m highway length for suitable cable protection system installation
+• Minimum bending radius (MBR) of 5m 
+• 15t tensioner
+• Quadrant deployment system with integrated joint handling crane
 `,
                 images: ['static/images/m8cablerepair/repair1.jpg','static/images/m8cablerepair/repair2.jpg']
             }
         },
         {
             id: '8-2-cable-repair-video-2',
-            localPosition: new THREE.Vector3(-0.295, 0.34, -0.29),
+            localPosition: new THREE.Vector3(-0.295, 0.44, -0.29),
             minAngle: 0,
             maxAngle: 359,
             variant: 'blue',
@@ -847,7 +848,7 @@ For cable repair the DO C-CSOV provides the following key capabilities:
         ROV_BLUE,
         {
             id: 'boot6-switch-to-variant',
-            localPosition: new THREE.Vector3(-0.545, 0.131, 0.134),
+            localPosition: new THREE.Vector3(-0.545, 0.231, 0.134),
             minAngle: 0,
             maxAngle: 359,
             variant: 'pink',
@@ -873,6 +874,7 @@ For cable repair the DO C-CSOV provides the following key capabilities:
     6: [ // Boot 7 — Walk to Work
         ...SHARED_GREEN_HOTSPOTS,
         WALK_TO_WORK_BLUE,
+        DAUGHTER_CRAFT_BLUE,
         {
             id: 'boot7-switch-to-variant',
             localPosition: new THREE.Vector3(-0.37, 0.579, -1.064),
@@ -887,6 +889,7 @@ For cable repair the DO C-CSOV provides the following key capabilities:
     71: [ // Boot 7, variant 1
         ...SHARED_GREEN_HOTSPOTS,
         WALK_TO_WORK_BLUE,
+        DAUGHTER_CRAFT_BLUE,
         {
             id: 'boot7-1-switch-back-to-boot7',
             localPosition: new THREE.Vector3(-0.37, 0.579, -1.064),

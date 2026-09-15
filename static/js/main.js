@@ -1886,6 +1886,7 @@ function renderHotspotMedia(content) {
             video.style.background = '#000';
 
             hotspotOverlayImagesEl.appendChild(video);
+                  video.play().catch(() => {});
         });
 
     } else if (content.slideshow) {
