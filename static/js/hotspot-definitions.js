@@ -637,11 +637,11 @@ export const CFE_BLUE = {
 
 For CFE deployment our DO C-CSOV provides the following key capabilities:
 
-- Utility stations for power and services to the excavation spread
-- 10t 3D MCC or 50t AHC crane capacity and reach
-- Suitable stability and weight margins
-- HiPAP 502 for subsea positioning
-- Compatible with established CFE spreads such as the ROTECH TRS1
+• Utility stations for power and services to the excavation spread
+• 10t 3D MCC or 50t AHC crane capacity and reach
+• Suitable stability and weight margins
+• HiPAP 502 for subsea positioning
+• Compatible with established CFE spreads such as the ROTECH TRS1
 `,
         images: ['static/images/m5cfe/cfe1.png','static/images/m5cfe/cfe2.jpg']
     }
