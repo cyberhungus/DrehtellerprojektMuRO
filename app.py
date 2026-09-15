@@ -855,7 +855,7 @@ def main():
     else:
         print("Flask server not ready, opening browser anyway...")
 
-    print("The Browser will open soon. Visit 127.0.0.1 for the interface. /debug can show you additional values for debugging.")
+    print("The Browser will open soon. Visit 127.0.0.1:5000 for the interface. /debug can show you additional values for debugging.")
     # Open the browser in kiosk mode (or fallback)
     if FINAL_MODE:
         open_browser_kiosk('http://localhost:5000/')

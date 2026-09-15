@@ -199,8 +199,8 @@ export const SHARED_GREEN_HOTSPOTS = [
     {
         id: 'propeller-heck-2',
         localPosition: new THREE.Vector3(-1.051, 0.1, 0.137),
-        minAngle: 310,
-        maxAngle: 50,
+        minAngle: 330,
+        maxAngle: 75,
         variant: 'green',
         icon: 'static/images/icons/hotspot-icon-green.png',
         content: {
@@ -281,8 +281,8 @@ The VSP system requires approximately 15–22% less power than alternative propu
     {
         id: 'kabinen-r-2',
         localPosition: new THREE.Vector3(0.7, 0.32, -0.29),
-        minAngle: 0,
-        maxAngle: 180,
+        minAngle: 105,
+        maxAngle: 195,
         variant: 'green',
         icon: 'static/images/icons/hotspot-icon-green.png',
         content: {
@@ -342,7 +342,7 @@ The 48 sqm changing room provides 88 lockers and can be divided into separate me
     {
         id: 'propeller-front-2',
         localPosition: new THREE.Vector3(1.4, 0.1, 0),
-        minAngle: 160,
+        minAngle: 150,
         maxAngle: 200,
         variant: 'green',
         icon: 'static/images/icons/hotspot-icon-green.png',
@@ -450,8 +450,8 @@ The 48 sqm changing room provides 88 lockers and can be divided into separate me
     {
         id: 'rumpf-l-mitte-2',
         localPosition: new THREE.Vector3(0, 0.2, 0.29),
-        minAngle: 10,
-        maxAngle: 170,
+        minAngle: 330,
+        maxAngle: 75,
         variant: 'green',
         icon: 'static/images/icons/hotspot-icon-green.png',
         content: {
@@ -473,8 +473,8 @@ The 48 sqm changing room provides 88 lockers and can be divided into separate me
     {
         id: 'rumpf-l-vorner-2',
         localPosition: new THREE.Vector3(0.54, 0.23, 0.29),
-        minAngle: 10,
-        maxAngle: 170,
+        minAngle: 330,
+        maxAngle: 75,
         variant: 'green',
         icon: 'static/images/icons/hotspot-icon-green.png',
         content: {
@@ -579,8 +579,8 @@ The 48 sqm changing room provides 88 lockers and can be divided into separate me
 export const WALK_TO_WORK_BLUE = {
     id: '1-2-gangway-ende-2',
     localPosition: new THREE.Vector3(-0.24, 0.7, -0.08),
-    minAngle: 10,
-    maxAngle: 180,
+    minAngle: 195,
+    maxAngle: 345,
     variant: 'blue',
     icon: 'static/images/icons/hotspot-icon-blue.png',
     content: {
@@ -602,7 +602,7 @@ export const WALK_TO_WORK_BLUE = {
 export const ROCKBAG_BLUE = {
     id: '3-1-kran-ausleger-2',
     localPosition: new THREE.Vector3(-0.81, 0.51, -0.755),
-    minAngle: 0,
+    minAngle: 100,
     maxAngle: 359,
     variant: 'blue',
     icon: 'static/images/icons/hotspot-icon-blue.png',
@@ -625,8 +625,8 @@ export const ROCKBAG_BLUE = {
 export const CFE_BLUE = {
     id: '5-1-holz-richtung-r-2',
     localPosition: new THREE.Vector3(-0.79, 0.52, -0.75),
-    minAngle: 0,
-    maxAngle: 359,
+    minAngle: 100,
+    maxAngle: 340,
     variant: 'blue',
     icon: 'static/images/icons/hotspot-icon-blue.png',
     content: {
@@ -649,8 +649,8 @@ For CFE deployment our DO C-CSOV provides the following key capabilities:
 export const PAYLOAD_BLUE = {
     id: 'boot9-deck-payload',
     localPosition: new THREE.Vector3(-1.023, 0.426, 0.003),
-    minAngle: 260,
-    maxAngle: 80,
+    minAngle: 180,
+    maxAngle: 30,
     variant: 'blue',
     icon: 'static/images/icons/hotspot-icon-blue.png',
     content: {
@@ -664,8 +664,8 @@ export const PAYLOAD_BLUE = {
 export const ROV_BLUE = {
     id: '9-1-reling-2',
     localPosition: new THREE.Vector3(-0.295, 0.34, 0.29),
-    minAngle: 0,
-    maxAngle: 359,
+    minAngle: 255,
+    maxAngle: 45,
     variant: 'blue',
     icon: 'static/images/icons/hotspot-icon-blue.png',
     content: {
@@ -806,8 +806,8 @@ export const hotspotDefinitions = {
         {
             id: '8-1-container-2',
             localPosition: new THREE.Vector3(-1.2, 0.3, 0),
-            minAngle: 0,
-            maxAngle: 359,
+            minAngle: 150,
+            maxAngle: 45,
             variant: 'blue',
             icon: 'static/images/icons/hotspot-icon-blue.png',
             content: {
@@ -903,8 +903,8 @@ For cable repair the DO C-CSOV provides the following key capabilities:
         {
             id: '6-1-holz-richtung-bug-2',
             localPosition: new THREE.Vector3(-0.7, 0.32, 0),
-            minAngle: 0,
-            maxAngle: 359,
+            minAngle: 180,
+            maxAngle: 45,
             variant: 'blue',
             icon: 'static/images/icons/hotspot-icon-blue.png',
             content: {
@@ -925,9 +925,9 @@ Grouting operations can be combined with bolt tightening, as additional space is
         ...SHARED_GREEN_HOTSPOTS,
         {
             id: '9-1-holz-richtung-heck-2',
-            localPosition: new THREE.Vector3(-1.07, 1, -0.735),
-            minAngle: 0,
-            maxAngle: 359,
+            localPosition: new THREE.Vector3(-0.75, 0.5, -0.735),
+            minAngle: 255,
+            maxAngle: 45,
             variant: 'blue',
             icon: 'static/images/icons/hotspot-icon-blue.png',
             content: {

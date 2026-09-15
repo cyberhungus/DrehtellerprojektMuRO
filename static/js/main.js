@@ -104,6 +104,16 @@ const _projected = new THREE.Vector3();
 // For Debug Overlay - press H:
 let debugOverlayVisible = false;
 let debugOverlayEl, debugModelNameEl, debugCamPosEl, debugCamRotEl, debugModelPosEl, debugModelRotEl;
+// Live snapshot of the base rotation used to decide which hotspots are
+// visible — the camera's azimuth around the active model, in the model's own
+// rotation frame. Written every frame by updateHotspots(), read by the debug
+// overlay (press H). Null while no model is active yet.
+let lastHotspotCameraAngle = null;
+
+// Reference to the debug overlay's angle readout element, created once in
+// initDebugOverlay() and only ever text-updated afterwards.
+let debugCamAngleEl;
+
 
 // For hotspot placement tool (Press P)
 let placementModeActive = false;
@@ -174,6 +184,7 @@ function updateHotspots() {
   if (!activeEntry || !activeEntry.object) return;
 
   const cameraAngle = getCameraAngleRelativeToObject(activeEntry.object);
+  lastHotspotCameraAngle = cameraAngle;
 
   hotspots.forEach((hotspot) => {
     if (hotspot.object !== activeEntry.object) {
@@ -1414,6 +1425,14 @@ function initDebugOverlay() {
         }
 
     });
+
+    // ── Hotspot cam-angle readout — created exactly ONCE here. The render loop
+    // only updates its text content, never creates new elements. ──
+    const camAngleRow = document.createElement('div');
+    camAngleRow.innerHTML = '<strong>Hotspot cam angle:</strong> <span id="debug-cam-angle">—</span>';
+    debugOverlayEl.insertBefore(camAngleRow, debugOverlayEl.firstChild);
+    debugCamAngleEl = camAngleRow.querySelector('#debug-cam-angle');
+
     // ── Hotspot marker offset sliders (three.js units) ──
     const offsetBlock = document.createElement('div');
     offsetBlock.id = 'hotspot-offset-controls';
@@ -1494,6 +1513,15 @@ function updateDebugOverlay() {
         debugModelPosEl.textContent = '—';
         debugModelRotEl.textContent = '—';
 
+    }
+
+    // Only the text is updated here — the element itself was created once in
+    // initDebugOverlay(). Guard against the case where initDebugOverlay hasn't
+    // run yet (shouldn't happen in practice, but cheap insurance).
+    if (debugCamAngleEl) {
+        debugCamAngleEl.textContent = (lastHotspotCameraAngle === null)
+            ? '—'
+            : `${lastHotspotCameraAngle.toFixed(1)}°`;
     }
 
 }
