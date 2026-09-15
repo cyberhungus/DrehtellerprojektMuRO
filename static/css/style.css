@@ -220,8 +220,8 @@ canvas {
     position: absolute;
     top: 45px;
     left: 0;
-    width: 95%;
-    height: calc(95% - 40px);
+    width: 90%;
+    height: calc(90% - 40px);
     object-fit: cover;
     pointer-events: none;
 }

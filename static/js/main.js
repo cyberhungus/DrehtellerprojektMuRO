@@ -17,7 +17,7 @@ let ambientLight, directionalLight, directionalLight2,cameraLight; // hoisted so
 let lightVisual1, lightVisual2; // small sphere+line shown per light while the debug overlay (H) is open
 
 // Initial camera settings (edit these to change the starting view)
-const initialCameraPosition = new THREE.Vector3(-2.35, 1, 0);
+const initialCameraPosition = new THREE.Vector3(-2.52, 0.67, 0);
 let initialTargetY = 0.25; // desired initial look height (controls.target.y)
 // Initial camera settings (edit these to change the starting view)
 
@@ -651,7 +651,7 @@ async function init() {
     scene.add(ambientLight);
 
     directionalLight = new THREE.DirectionalLight(0xffffff, 4); // warm, punchy key light
-    directionalLight.position.set(5.5, 7.5, -3.5); // low, angled position for longer, more dramatic shadows
+    directionalLight.position.set(5.5, 6.5, -3); // low, angled position for longer, more dramatic shadows
 
     directionalLight.castShadow = true;
 
@@ -672,7 +672,7 @@ directionalLight.shadow.normalBias = 0.02;
     scene.add(directionalLight);
 
         directionalLight2 = new THREE.DirectionalLight(0xd6d6d6, 6.5); // warm, punchy key light
-    directionalLight2.position.set(4.8, 5.9, 7.7); // low, angled position for longer, more dramatic shadows
+    directionalLight2.position.set(4.8, 3, 7.7); // low, angled position for longer, more dramatic shadows
     directionalLight2.castShadow = true;
 
     // Higher-res, tightly-fitted shadow camera — sharp shadow edges read as more
