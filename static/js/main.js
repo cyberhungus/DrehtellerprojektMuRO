@@ -2822,7 +2822,6 @@ function updateMouseRotationToggleVisual() {
 }
 
 
-
 function toggleMouseRotationMode() {
 
     mouseRotationEnabled = !mouseRotationEnabled;
@@ -2843,22 +2842,30 @@ function toggleMouseRotationMode() {
     } else {
 
         controls.enableRotate = false;
-        controls.enableZoom = cameraZoomEnabled;   // <-- was: true
+        controls.enableZoom = cameraZoomEnabled;
 
         if (mouseRotationSavedCameraState) {
 
-            // Kill OrbitControls' damping momentum BEFORE restoring the camera.
-            // With enableDamping = true, update() only *decays* the internal
-            // sphericalDelta / panOffset by dampingFactor each frame — so the
-            // residual inertia from the last drag keeps nudging the camera
-            // after the reset, which is exactly the drift you were seeing.
-            // With damping off, a single update() zeroes those deltas outright.
             const savedDamping = controls.enableDamping;
             controls.enableDamping = false;
 
+            // FIRST update — with damping off, this applies the entire
+            // remaining sphericalDelta / panOffset in one shot and zeroes
+            // them. It also jolts the camera to wherever the momentum was
+            // heading, but we overwrite that on the next line, so it's just
+            // the mechanism for clearing the pending delta.
+            controls.update();
+
+            // Now that the delta is zeroed, place the camera exactly where it
+            // was saved. This is the state the second update() will leave
+            // untouched, because there's no residual inertia left to apply.
             camera.position.copy(mouseRotationSavedCameraState.position);
             camera.rotation.copy(mouseRotationSavedCameraState.rotation);
             controls.target.copy(mouseRotationSavedCameraState.target);
+
+            // SECOND update — rebuilds the internal spherical from the new
+            // position/target. With no delta to apply, it's a no-op for the
+            // camera, which is exactly what we want.
             controls.update();
 
             controls.enableDamping = savedDamping;
@@ -2872,6 +2879,9 @@ function toggleMouseRotationMode() {
     updateMouseRotationToggleVisual();
 
 }
+
+
+
 // Walks hotspotDefinitions (including nested deepDives) and collects every
 // media reference so it can be preloaded. Returns { images, videos, slideshowDirs }.
 function collectAllHotspotMedia() {
