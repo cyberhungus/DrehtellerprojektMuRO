@@ -2843,13 +2843,26 @@ function toggleMouseRotationMode() {
     } else {
 
         controls.enableRotate = false;
-           controls.enableZoom = cameraZoomEnabled;   // <-- was: true
+        controls.enableZoom = cameraZoomEnabled;   // <-- was: true
 
         if (mouseRotationSavedCameraState) {
+
+            // Kill OrbitControls' damping momentum BEFORE restoring the camera.
+            // With enableDamping = true, update() only *decays* the internal
+            // sphericalDelta / panOffset by dampingFactor each frame — so the
+            // residual inertia from the last drag keeps nudging the camera
+            // after the reset, which is exactly the drift you were seeing.
+            // With damping off, a single update() zeroes those deltas outright.
+            const savedDamping = controls.enableDamping;
+            controls.enableDamping = false;
+
             camera.position.copy(mouseRotationSavedCameraState.position);
             camera.rotation.copy(mouseRotationSavedCameraState.rotation);
             controls.target.copy(mouseRotationSavedCameraState.target);
             controls.update();
+
+            controls.enableDamping = savedDamping;
+
         }
 
         mouseRotationSavedCameraState = null;
@@ -2859,8 +2872,6 @@ function toggleMouseRotationMode() {
     updateMouseRotationToggleVisual();
 
 }
-
-
 // Walks hotspotDefinitions (including nested deepDives) and collects every
 // media reference so it can be preloaded. Returns { images, videos, slideshowDirs }.
 function collectAllHotspotMedia() {
