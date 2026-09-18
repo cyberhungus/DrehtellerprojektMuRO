@@ -45,7 +45,7 @@ let currentModelZ = 0;
 
 // Toggle which boat models are loaded/active — index 0 = Boot 1, index 1 = Boot 2, etc.
 // Set to false to skip loading that model entirely (useful for testing/debugging).
-let modelEnabled = [true, true, true,false,false,false,false,false,false];
+let modelEnabled = [true, true, true, true, true,true,true,true,true];
 
 
 
@@ -133,6 +133,12 @@ let toggleableModels = []; // populated once models are loaded, see below
 let extraModels = []; // { name, object, materials }
 let activeModelIndex = null; // tracks most recently toggled-on model
 let hasSetInitialActiveModel = false;
+
+// Tracks whichever entry currently has its textures disposed (video playing).
+// Needed because disposeModelTextures() sets object.visible = false, which
+// makes getActiveModelEntry() unable to find it — so restore paths can't rely
+// on that lookup and must use this instead.
+let currentlyDisposedEntry = null;
 
 //For Hotspot Overlay
 let hotspotLayer;
@@ -1333,11 +1339,12 @@ function registerToggleableModel(index, name, object3D) {
 
     const isFirstRegistered = !hasSetInitialActiveModel;
 
-    toggleableModels[index] = {
-        name,
-        object: object3D,
-        materials // cached — no more re-traversal needed
-    };
+toggleableModels[index] = {
+    name,
+    object: object3D,
+    materials,
+    texturesDisposed: false   // NEW
+};
 
     object3D.visible = isFirstRegistered;
 
@@ -1384,6 +1391,11 @@ function selectModel(index) {
 
     const entry = toggleableModels[index];
     if (!entry) return;
+
+    // If a video left a model mid-restore, flush it before we swap — otherwise
+    // the disposed model stays invisible and gets skipped by the visibility
+    // loop below (its texturesDisposed flag never clears).
+    restoreModelTextures(toggleableModels[activeModelIndex]);
 
     if (index === activeModelIndex || switchInProgress) {
 
@@ -1975,10 +1987,28 @@ function renderHotspotMedia(content) {
             video.style.height = 'auto';
             video.style.maxHeight = '60vh';
             video.style.objectFit = 'contain';
-            video.style.background = '#000';
 
             hotspotOverlayImagesEl.appendChild(video);
-                  video.play().catch(() => {});
+
+            // ---- Dispose/restore hooks ----
+            // Dispose on play via the direct toggleableModels lookup — NOT
+            // getActiveModelEntry(), which can't find a model once it's been
+            // hidden by disposeModelTextures(). Restore calls use no argument
+            // and fall back to `currentlyDisposedEntry` for the same reason.
+            video.addEventListener('play', () => {
+                const entry = toggleableModels[activeModelIndex];
+                if (entry) disposeModelTextures(entry);
+            });
+
+            video.addEventListener('pause', () => {
+                restoreModelTextures();
+            });
+
+            video.addEventListener('ended', () => {
+                restoreModelTextures();
+            });
+
+            video.play().catch(() => {});
         });
 
     } else if (content.slideshow) {
@@ -2345,6 +2375,11 @@ function closeHotspotOverlay() {
 
     const video = hotspotOverlayImagesEl.querySelector('video');
     if (video) video.pause();
+
+    // No argument — falls back to whichever entry was disposed. Do NOT use
+    // getActiveModelEntry() here: the disposed entry's visible flag is false,
+    // so that lookup can't find it.
+    restoreModelTextures();
 
 }
 
@@ -3027,4 +3062,114 @@ function getVariantFoldersForBase(allFolders, baseName) {
         .sort((a, b) => a.suffix - b.suffix)
         .map((entry) => entry.name);
 
+}
+
+// Walks every material on the model, records the source image and settings of
+// each texture, then disposes the GPU-side texture objects. Geometries and
+// materials are left untouched — they're cheap.
+function disposeModelTextures(entry) {
+    if (!entry || entry.texturesDisposed) return;
+
+    entry.textureSlots = [];
+
+    entry.object.traverse((node) => {
+        if (!node.isMesh) return;
+
+        const mats = Array.isArray(node.material) ? node.material : [node.material];
+
+        mats.forEach((mat) => {
+            for (const key in mat) {
+                const tex = mat[key];
+                if (!tex || !tex.isTexture) continue;
+
+                // Keep the image OBJECT, not tex.image.src. GLTFLoader revokes
+                // its internal blob: URLs after a texture is uploaded, so a
+                // URL-based reload silently fails for anything embedded or
+                // Draco-compressed — which is exactly why shared textures were
+                // coming back blank.
+                const img = tex.image;
+                if (!img) continue;
+
+                entry.textureSlots.push({
+                    material: mat,
+                    key,
+                    image: img,                 // HTMLImageElement / HTMLCanvasElement / ImageBitmap
+                    wrapS: tex.wrapS,
+                    wrapT: tex.wrapT,
+                    magFilter: tex.magFilter,
+                    minFilter: tex.minFilter,
+                    anisotropy: tex.anisotropy,
+                    colorSpace: tex.colorSpace,
+                    flipY: tex.flipY,
+                    repeat: tex.repeat.clone(),
+                    offset: tex.offset.clone(),
+                    rotation: tex.rotation,
+                    center: tex.center.clone()
+                });
+
+                mat[key] = null;
+                tex.dispose();
+            }
+
+            mat.needsUpdate = true;
+        });
+    });
+
+    entry.object.visible = false;
+    entry.texturesDisposed = true;
+    currentlyDisposedEntry = entry;
+
+    console.log(`Disposed ${entry.textureSlots.length} texture(s) for "${entry.name}"`);
+}
+
+// Rebuilds every texture from the snapshot and re-attaches it to its material.
+// Synchronous — no loading, no fetching, just a fresh GPU upload of image data
+// the browser already has decoded in memory.
+function restoreModelTextures(entry) {
+    if (!entry) entry = currentlyDisposedEntry;
+    if (!entry || !entry.texturesDisposed) return;
+
+    // Textures are often shared across several materials in GLTF exports.
+    // Cache the rebuilt texture by source image so a shared image only
+    // uploads to the GPU once instead of N times.
+    const texByImage = new Map();
+
+    entry.textureSlots.forEach((slot) => {
+        const img = slot.image;
+
+        let tex = texByImage.get(img);
+
+        if (!tex) {
+            if (img instanceof HTMLCanvasElement) {
+                tex = new THREE.CanvasTexture(img);
+            } else {
+                tex = new THREE.Texture(img);
+            }
+
+            tex.wrapS = slot.wrapS;
+            tex.wrapT = slot.wrapT;
+            tex.magFilter = slot.magFilter;
+            tex.minFilter = slot.minFilter;
+            tex.anisotropy = slot.anisotropy;
+            tex.colorSpace = slot.colorSpace;
+            tex.flipY = slot.flipY;
+            tex.repeat.copy(slot.repeat);
+            tex.offset.copy(slot.offset);
+            tex.rotation = slot.rotation;
+            tex.center.copy(slot.center);
+            tex.needsUpdate = true;
+
+            texByImage.set(img, tex);
+        }
+
+        slot.material[slot.key] = tex;
+        slot.material.needsUpdate = true;
+    });
+
+    entry.textureSlots = null;
+    entry.texturesDisposed = false;
+    entry.object.visible = true;
+    if (currentlyDisposedEntry === entry) currentlyDisposedEntry = null;
+
+    console.log(`Restored textures for "${entry.name}"`);
 }

@@ -14,40 +14,71 @@ import * as THREE from 'three';
 // ─────────────────────────────────────────────────────────────────────────
 export const buttonConfig = {
     // ---- Base boats (indices 0-8) ----
-    0: {label: "Base",                statusText: "Base Variant",
-        image: 'static/images/shipicons/basis.png'},
-    1: {label: "Rockbags", statusText: "Rockbag Installation",
-        image: 'static/images/shipicons/rockbag.png'},
-    2: {label: "CFE",                  statusText: "Control Flow Excavator",
-        image: 'static/images/shipicons/cfe.png'},
-    3: {label: "Deck Payload",         statusText: "Deck Payload",
-        image: 'static/images/shipicons/deckpayload.png'},
-    4: {label: "Cable Repair",         statusText: "Cable Repair Spread",
-        image: 'static/images/shipicons/cable.png'},
-    5: {label: "ROV",                  statusText: "ROV Operations",
-        image: 'static/images/shipicons/rov.png'},
-    6: {label: "Walk to work",         statusText: "Daughter Craft",
-        image: 'static/images/shipicons/walktowork.png'},
-    7: {label: "Grouting",             statusText: "Grouting",
-        image: 'static/images/shipicons/grouting.png'},
-    8: {label: "Monopile Cleaning",    statusText: "Monopile Cleaning",
-        image: 'static/images/shipicons/cleaning.png'},
+    0: {
+        label: "Base", statusText: "Base Variant",
+        image: 'static/images/shipicons/basis.png'
+    },
+    1: {
+        label: "Rockbags", statusText: "Rockbag Installation",
+        image: 'static/images/shipicons/rockbag.png'
+    },
+    2: {
+        label: "CFE", statusText: "Control Flow Excavator",
+        image: 'static/images/shipicons/cfe.png'
+    },
+    3: {
+        label: "Deck Payload", statusText: "Deck Payload",
+        image: 'static/images/shipicons/deckpayload.png'
+    },
+    4: {
+        label: "Cable Repair", statusText: "Cable Repair Spread",
+        image: 'static/images/shipicons/cable.png'
+    },
+    5: {
+        label: "ROV", statusText: "ROV Operations",
+        image: 'static/images/shipicons/rov.png'
+    },
+    6: {
+        label: "Walk to work", statusText: "Daughter Craft",
+        image: 'static/images/shipicons/walktowork.png'
+    },
+    7: {
+        label: "Grouting", statusText: "Grouting",
+        image: 'static/images/shipicons/grouting.png'
+    },
+    8: {
+        label: "Monopile Cleaning", statusText: "Monopile Cleaning",
+        image: 'static/images/shipicons/cleaning.png'
+    },
 
     // ---- Variants (index = boatNumber * 10 + variantNumber) ----
 // These carry the same label/statusText/image as the base they replace, so
 // the buttons don't relabel themselves when the variant model is loaded.
-11: {label: "Base",          statusText: "Base Variant",
-     image: 'static/images/shipicons/basis.png'},
-71: {label: "Walk to work",  statusText: "Daughter Craft",
-     image: 'static/images/shipicons/walktowork.png'},
-21: {label: "Rockbags",      statusText: "Rockbag Installation",
-     image: 'static/images/shipicons/rockbag.png'},
-31: {label: "CFE",           statusText: "Control Flow Excavator",
-     image: 'static/images/shipicons/cfe.png'},
-41: {label: "Deck Payload",  statusText: "Deck Payload",
-     image: 'static/images/shipicons/deckpayload.png'},
-61: {label: "ROV",           statusText: "ROV Operations",
-     image: 'static/images/shipicons/rov.png'},};
+    11: {
+        label: "Base", statusText: "Base Variant",
+        image: 'static/images/shipicons/basis.png'
+    },
+    71: {
+        label: "Walk to work", statusText: "Daughter Craft",
+        image: 'static/images/shipicons/walktowork.png'
+    },
+    21: {
+        label: "Rockbags", statusText: "Rockbag Installation",
+        image: 'static/images/shipicons/rockbag.png'
+    },
+    31: {
+        label: "CFE", statusText: "Control Flow Excavator",
+        image: 'static/images/shipicons/cfe.png'
+    },
+    41: {
+        label: "Deck Payload", statusText: "Deck Payload",
+        image: 'static/images/shipicons/deckpayload.png'
+    },
+    61: {
+        label: "ROV", statusText: "ROV Operations",
+        image: 'static/images/shipicons/rov.png'
+    },
+};
 
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -73,7 +104,7 @@ export const SHARED_GREEN_HOTSPOTS = [
             images: ['static/images/f1gangway/TAB-L.jpg', 'static/images/f1gangway/TAB-L2.png'],
             deepDives: [
                 {
-                    title: 'Technical Specifications',
+                    title: 'Deep Dive',
                     text: `Technical Main Data:
                     
                     •  Large safety distance: >12 m safety distance between offshore structure and vessel at all times
@@ -89,7 +120,7 @@ export const SHARED_GREEN_HOTSPOTS = [
                     •  ATEX prepared`,
                     images: ['static/images/f1gangway/gangwaydeepdive.png']
                 },
-                { title: 'Video', video: 'static/images/f1gangway/video.mp4' }
+                {title: 'Video', video: 'static/images/f1gangway/video.mp4'}
             ]
         }
     },
@@ -104,15 +135,20 @@ export const SHARED_GREEN_HOTSPOTS = [
             title: 'Crane',
             subtitle: 'Switch it!',
             logo: 'static/images/logos/smst-logo.webp',
-            text: 'One crane, many missions. At the heart of the DO C-CSOV sits flexibility: The SMST KBC-M modular knuckle-boom crane is engineered around a concept that turns a single asset into many. Its knuckle configuration spear heads the modularity concept: the boom reconfigures for different tasks quickly and without external lifts. \n' +
-                '\n' +
-                'For the charterer, that means one crane that adapts to the mission at hand - higher efficiency, less downtime, and the confidence to have contingency to switch between tasks without adding vessels.\n' +
-                '\n' +
-                '\t50 t Active heave compensation or 10 t 3D motion control deliver precise and safe load handling in live seaways. Live collision-avoidance technology enhances safety by accounting for structures and preventing interference with construction spreads. Continuous condition monitoring safeguards uptime on equipment the whole campaign depends on.\n',
-            images: ['static/images/f2crane/crane1.jpg', 'static/images/f2crane/crane2.png'],
+            text: 'Flexibility sits at the heart of the DO C-CSOV\'s crane: the SMST modular knuckle-boom is built around a concept that turns a single asset into many, reconfiguring for different tasks quickly and without external lifts. That adaptability is where the value lies - one crane that flexes to the mission at hand keeps efficiency high and downtime low, and provides the contingency to switch between scopes without bringing in another vessel. Precise, motion-compensated load handling backed by continuous condition monitoring keeps lifts safe and uptime high on the equipment the whole campaign depends on.\n' +
+        '\n' +
+        'Precise and safe load handling in live seaways — the DO C-CSOV delivers:\n' +
+        '\n' +
+        '•  Modular knuckle-boom crane, engineered for capacity, precision and uptime\n' +
+        '•  50 t active heave compensation or 10 t 3D motion control for precise, safe load handling in live seaways\n' +
+        '•  Rig-up within 48 h without external lifts\n' +
+        '•  Live collision-avoidance technology accounting for surrounding structures and preventing interference with construction spreads\n' +
+        '•  Continuous condition monitoring to safeguard uptime on equipment the whole campaign depends on'
+ ,
+            images: ['static/images/f2crane/crane2.png', 'static/images/f2crane/crane1.jpg'],
             deepDives: [
                 {
-                    title: 'Technical Specifications',
+                    title: 'Deep Dive',
                     text: `The DO C-CSOV is fitted with the SMST KBC-M modular knuckle-boom crane, engineered for capacity, precision and uptime:
 
 •  Construction mode: 50 t @ 12 m outreach for heavy lifts
@@ -125,7 +161,7 @@ export const SHARED_GREEN_HOTSPOTS = [
 •  smartACTIONS Condition monitoring enables predictive maintenance for high uptime on critical equipment
 •  smartENERGY for energy storage and power balancing 
 •  smartCRANE Modular knuckle boom: rig-up within ~48 h without external lifts - the main driver of the vessel's modularity`,
-                    images: ['static/images/f2crane/cranedeepdive.jpg','static/images/f2crane/cranedeepdive2.png']
+                    images: ['static/images/f2crane/cranedeepdive.jpg', 'static/images/f2crane/cranedeepdive2.png']
                 }
             ]
         }
@@ -224,9 +260,9 @@ export const SHARED_GREEN_HOTSPOTS = [
                 '\n',
             images: ['static/images/f7voith/voith1.png', 'static/images/f7voith/voith2.png'],
             deepDives: [
-                { title: 'Keeping Steady - Video', video: ['static/images/f7voith/video.mp4'] },
+                {title: 'Video', video: ['static/images/f7voith/video.mp4']},
                 {
-                    title: 'Technical Specifications',
+                    title: 'Deep Dive',
                     text: `DP Performance: 
 The VSP propulsion system delivers a DP footprint of less than 2 m, in conditions up to 3.5 m Hs, 1.5 kn current and approximately 30 m/s wind at 45% ASOG power utilisation. This supports safe, reliable and precision operations such as W2W, crane and cable repair.
 
@@ -282,7 +318,7 @@ The VSP system requires approximately 15–22% less power than alternative propu
                 '•  Improved decision-making: Combining measured conditions with predicted vessel response provides greater transparency when assessing operational limits\n' +
                 '•  Reduced downtime: Better understanding of short-term conditions can help avoid unnecessary interruptions and maximise productive operating time\n',
             images: ['static/images/f13waveradar/waveradar1.jpg', 'static/images/f13waveradar/waveradar2.jpg'],
-            deepDives: [ { title: 'Video', video: ['static/images/f13waveradar/video.mp4'] } ]
+            deepDives: [{title: 'Video', video: ['static/images/f13waveradar/video.mp4']}]
         }
     },
     {
@@ -296,7 +332,7 @@ The VSP system requires approximately 15–22% less power than alternative propu
         content: {
             title: 'Accommodation',
             subtitle: 'A home at sea',
-              logo: "static/images/logos/rm-logo.png",
+            logo: "static/images/logos/rm-logo.png",
             text: 'Skilled and experienced personnel are becoming scarce across the industry. They are the single most important factor in achieving high-quality progress offshore. Crew and charterer personnel need to be well-rested to perform safely, thus the vessel is their safe haven after a hard day\'s work, the foundation for all and the reason every small detail has been considered in the design of the interior, facilities, and layout of the DO C-CSOV.\t •  99 cabins, each over 11 sqm, with 76 daylight cabins dedicated to charterer personnel\n' +
                 '•  Flexible 1+1 cabin concept, allowing selected single cabins to be converted into doubles with a ceiling-mounted Pullman bed - without compromising comfort or space\n' +
                 '•  140 sqm dedicated office wing, comprising four offices, 17 workstations and two combinable meeting rooms accommodating up to 24 people\n' +
@@ -305,46 +341,46 @@ The VSP system requires approximately 15–22% less power than alternative propu
                 '•  Dedicated C-Deck leisure area with library, sports bar and lounge, providing space to switch off and recharge',
             images: ['static/images/f6acommodations/cabins-a.jpg', 'static/images/f6acommodations/cabins-b.jpg'],
             deepDives: [
-                { title: 'Image Slideshow', slideshow: 'static/images/accommodation' },
+                {title: 'Slideshow', slideshow: 'static/images/accommodation'},
                 {
-                    title: 'Specifications',
-                    text:  'The DO C-CSOV offers a comprehensive range of state-of-the-art facilities and amenities, providing a comfortable, productive and flexible environment for crew and charterer personnel.\n' +
-    '\n' +
-    '<span style="font-weight:700">Accommodation</span>\n' +
-    '\n' +
-    '99 cabins are provided, including 76 daylight cabins dedicated to charterer personnel. Each exceeds 11 sqm and features natural light, private bathroom, individual temperature control, high-bandwidth Wi-Fi for private video calls, video-on-demand and multiple resting positions (bed and day bed). Standard beds measure 0.9 × 2.1 m, with larger beds available in selected state cabins.\n' +
-    '\n' +
-    'A flexible 1+1 cabin concept allows selected cabins to be converted to double occupancy using a ceiling-mounted Pullman bed, discreetly integrated into the ceiling, providing additional capacity without compromising comfort or space.\n' +
-    '\n' +
-    '<span style="font-weight:700">Recreation</span>\n' +
-    '\n' +
-    '300 sqm including: \n' +
-    '\n' +
-    '•  Two games rooms with PlayStation and 4D simulators\n' +
-    '•  Sports bar, library and TV entertainment with VoD and satellite\n' +
-    '•  Lounges and recreational balcony\n' +
-    '•  Lobby with coffee bar, main mess and duty messes\n' +
-    '•  Sauna and treatment area\n' +
-    '•  Dedicated smoking room\n' +
-    '\n' +
-    '<span style="font-weight:700">Fitness</span>\n' +
-    '\n' +
-    'A two-floor 180 sqm gym includes cardio equipment, an extensive free-weights area with dumbbells and barbells, and a multifunctional cable tower. The adjacent sauna and spa provide dedicated post-workout relaxation facilities.\n' +
-    '\n' +
-    '<span style="font-weight:700">Offices &amp; Meeting Facilities</span>\n' +
-    '\n' +
-    'Four client offices and 17 workstations are provided in flexible 4/8/3/2 configurations. The main office overlooks the aft deck and gangway operations.\n' +
-    'Two 16.2 sqm meeting rooms accommodate 12 persons each and can be combined into a 32.4 sqm room for 24 seated persons. Both feature screens and video-conferencing systems with integrated speakers and microphones.\n' +
-    '\n' +
-    '<span style="font-weight:700">Medical Facilities</span>\n' +
-    '\n' +
-    'A 16 sqm hospital and 12 sqm sick bay include a separate adjoining ward, treatment room and dedicated toilet/bathroom facilities. Medical equipment and medicines are tailored to the vessel\'s operational profile, trading area and risk assessment.\n' +
-    '\n' +
-    '<span style="font-weight:700">Changing &amp; Drying Facilities</span>\n' +
-    '\n' +
-    'The 48 sqm changing room provides 88 lockers and can be divided into separate men\'s and women\'s areas, accommodating up to 20 lockers in the women\'s area and a minimum of 68 in the men\'s area. A separate 44 sqm drying room is provided for suits, footwear, gloves and PPE. Crew members have dedicated facilities and do not share these areas.',
+                    title: 'Deep Dive',
+                    text: 'The DO C-CSOV offers a comprehensive range of state-of-the-art facilities and amenities, providing a comfortable, productive and flexible environment for crew and charterer personnel.\n' +
+                        '\n' +
+                        '<span style="font-weight:700">Accommodation</span>\n' +
+                        '\n' +
+                        '99 cabins are provided, including 76 daylight cabins dedicated to charterer personnel. Each exceeds 11 sqm and features natural light, private bathroom, individual temperature control, high-bandwidth Wi-Fi for private video calls, video-on-demand and multiple resting positions (bed and day bed). Standard beds measure 0.9 × 2.1 m, with larger beds available in selected state cabins.\n' +
+                        '\n' +
+                        'A flexible 1+1 cabin concept allows selected cabins to be converted to double occupancy using a ceiling-mounted Pullman bed, discreetly integrated into the ceiling, providing additional capacity without compromising comfort or space.\n' +
+                        '\n' +
+                        '<span style="font-weight:700">Recreation</span>\n' +
+                        '\n' +
+                        '300 sqm including: \n' +
+                        '\n' +
+                        '•  Two games rooms with PlayStation and 4D simulators\n' +
+                        '•  Sports bar, library and TV entertainment with VoD and satellite\n' +
+                        '•  Lounges and recreational balcony\n' +
+                        '•  Lobby with coffee bar, main mess and duty messes\n' +
+                        '•  Sauna and treatment area\n' +
+                        '•  Dedicated smoking room\n' +
+                        '\n' +
+                        '<span style="font-weight:700">Fitness</span>\n' +
+                        '\n' +
+                        'A two-floor 180 sqm gym includes cardio equipment, an extensive free-weights area with dumbbells and barbells, and a multifunctional cable tower. The adjacent sauna and spa provide dedicated post-workout relaxation facilities.\n' +
+                        '\n' +
+                        '<span style="font-weight:700">Offices &amp; Meeting Facilities</span>\n' +
+                        '\n' +
+                        'Four client offices and 17 workstations are provided in flexible 4/8/3/2 configurations. The main office overlooks the aft deck and gangway operations.\n' +
+                        'Two 16.2 sqm meeting rooms accommodate 12 persons each and can be combined into a 32.4 sqm room for 24 seated persons. Both feature screens and video-conferencing systems with integrated speakers and microphones.\n' +
+                        '\n' +
+                        '<span style="font-weight:700">Medical Facilities</span>\n' +
+                        '\n' +
+                        'A 16 sqm hospital and 12 sqm sick bay include a separate adjoining ward, treatment room and dedicated toilet/bathroom facilities. Medical equipment and medicines are tailored to the vessel\'s operational profile, trading area and risk assessment.\n' +
+                        '\n' +
+                        '<span style="font-weight:700">Changing &amp; Drying Facilities</span>\n' +
+                        '\n' +
+                        'The 48 sqm changing room provides 88 lockers and can be divided into separate men\'s and women\'s areas, accommodating up to 20 lockers in the women\'s area and a minimum of 68 in the men\'s area. A separate 44 sqm drying room is provided for suits, footwear, gloves and PPE. Crew members have dedicated facilities and do not share these areas.',
                 },
-                { title: 'Video', video: 'static/images/f6acommodations/video.mp4' }
+                {title: 'Video', video: 'static/images/f6acommodations/video.mp4'}
             ]
         }
     },
@@ -367,16 +403,17 @@ The VSP system requires approximately 15–22% less power than alternative propu
                 '•  Three-thruster configuration: Two tunnel thrusters and one retractable azimuth thruster provide high levels of manoeuvrability and redundancy\n' +
                 '•  High power: 3x 1,500 kW provides strong thrust for demanding DP and manoeuvring conditions\n' +
                 '•  Resiliently mounted thrusters for minimal noise and vibration emissions during DP\n',
+            images: ['static/images/f8bowthruster/thruster1.png','static/images/f8bowthruster/thruster2.png'],
             deepDives: [
                 {
-                    title: 'Technical Specifications',
+                    title: 'Deep Dive',
                     text: `•  Enlarged tunnel thrusters: 2.5 m diameter propellers deliver increased thrust and improved efficiency
 •  Rapid thrust response: 20–80% thrust ramp-up in 4 seconds enables fast response to changing environmental forces
 •  High rotational speed: 5 rpm provides faster thrust agility to match operational advantage of Voith propellers
 •  Retractable azimuth thruster: Provides additional control and reduced thrust deduction when operating in high-current environments
 •  Optimised thruster grids: Designed to maximise thrust performance and DP efficiency
 •  Split configuration: Maintains redundancy during DP operations`,
-                    images: ['static/images/f8bowthruster/thrusterdeepdive.png']
+                    images: ['static/images/f8bowthruster/bowthrusterdeepdive.jpg']
                 }
             ]
         }
@@ -409,7 +446,7 @@ The VSP system requires approximately 15–22% less power than alternative propu
             images: ['static/images/f4dynpos/DOS1.png', 'static/images/f4dynpos/DOS2.png'],
             deepDives: [
                 {
-                    title: 'Technical Specifications',
+                    title: 'Deep Dive CB',
                     text: `The DO C-CSOV is fitted with DNV DYNPOS-AUTR-CB electric system designed by ABB:
 
 •  Blackout recovery within 45 s
@@ -421,7 +458,7 @@ The VSP system requires approximately 15–22% less power than alternative propu
      ◦  A stringent verification regime with FMEA and simulation modelling , such as short circuit ride-through study and arc flash study`,
                     images: ['static/images/f4dynpos/dynposdeepdive.png']
                 },
-                { title: 'Operability', linkedHotspotId: 'bug-2' }
+                {title: 'Operability', linkedHotspotId: 'bug-2'}
             ]
         }
     },
@@ -475,7 +512,7 @@ The VSP system requires approximately 15–22% less power than alternative propu
             images: ['static/images/f10electrics/electrics1.png', 'static/images/f10electrics/electrics2.png'],
             deepDives: [
                 {
-                    title: 'Technical Specifications',
+                    title: 'Deep Dive CB',
                     text: `The DO C-CSOV is fitted with DNV DYNPOS-AUTR-CB electric system designed by ABB:
 
      ◦  Blackout recovery within 45 s
@@ -542,7 +579,26 @@ The VSP system requires approximately 15–22% less power than alternative propu
                 '\n' +
                 'Human Factor\n' +
                 'Motion sickness analysis indicates that less than 10% of personnel are expected to experience motion sickness up to 3.0 m Hs, supporting safe and comfortable offshore operations.',
-            images: ['static/images/f16operability/ops1.jpeg', 'static/images/f16operability/ops2.png']
+            images: ['static/images/f16operability/ops1.jpeg', 'static/images/f16operability/ops2.png'],
+            deepDives: [
+                {
+                    title: 'Case Study',
+                    text: '<span style="font-weight:700">Case Study — Operability vs Weather Data (German Bight)</span>\n' +
+                        '\n' +
+                        'Operability verified against real-world conditions — the DO C-CSOV delivers:\n' +
+                        '\n' +
+                        '•  Verification method: DNV L3 time-domain analysis, assessed against actual 2025 German Bight metocean data\n' +
+                        '•  W2W availability: approximately 98% annual availability\n' +
+                        '•  W2W envelope: up to 3.5 m Hs at ±20° headings and 3.25 m Hs at ±30°\n' +
+                        '•  Wind conditions: at mean wind speeds up to 16 m/s\n' +
+                        '•  DP position-keeping: demonstrated up to 4.0 m Hs at ±30° from head seas',
+                    images: ['static/images/f16operability/deepdiveops.png']
+                },
+                {
+                    title: 'Voith Schneider Propulsion',
+                    linkedHotspotId: 'propeller-heck-2'
+                }
+            ]
         }
     }
 
@@ -563,7 +619,7 @@ export const WALK_TO_WORK_BLUE = {
     icon: 'static/images/icons/hotspot-icon-blue.png',
     content: {
         title: 'Walk to Work ',
-        text: '"Beyond its core W2W and accommodation role, the DO C-CSOV is configured to support a broad range of offshore scopes with the following key capabilities:\n' +
+        text: 'Beyond its core W2W and accommodation role, the DO C-CSOV is configured to support a broad range of offshore scopes with the following key capabilities:\n' +
             '\n' +
             '•  Motion-compensated gangway with DP2 station-keeping for safe personnel transfer\n' +
             '•  Walk-to-Work tower, large modular deck and flexible crane for equipment handling and light construction works\n' +
@@ -572,8 +628,8 @@ export const WALK_TO_WORK_BLUE = {
             '•  Helideck for rapid crew changes\n' +
             '•  Internal logistics layout linking deck, storage and gangway for efficient movement of cargo and personnel\n' +
             '\n' +
-            'This configuration lets the vessel combine W2W, accommodation and additional offshore scopes within a single deployment, or serve as a dedicated project vessel for scopes such as grouting - creating synergies with installation vessels. Its W2W capability further provides in-field transfer capacity as project contingency when personnel transfer becomes a bottleneck for the primary W2W fleet."\n',
-        images: ['static/images/m1walktowork/walktowork1.jpg','static/images/m1walktowork/walktowork2.jpg']
+            'This configuration lets the vessel combine W2W, accommodation and additional offshore scopes within a single deployment, or serve as a dedicated project vessel for scopes such as grouting - creating synergies with installation vessels. Its W2W capability further provides in-field transfer capacity as project contingency when personnel transfer becomes a bottleneck for the primary W2W fleet.\n',
+        images: ['static/images/m1walktowork/walktowork1.jpg', 'static/images/m1walktowork/walktowork2.jpg']
     }
 };
 
@@ -619,16 +675,18 @@ export const ROCKBAG_BLUE = {
     content: {
         title: 'Rockbag Installation',
         subtitle: 'On the Rocks',
-        text: `For rock bag installation the DO C-CSOV provides the following key capabilities:
-
-•  Large and strengthened deck area with 800 sqm and 10 t/m²
-•  50 t AHC crane capacity
-•  Warehouse (500 sqm) with 6 x 30 t TEU skidding system, for the storage of project specific tools and/or additional rock bags stored in open-top containers, accessible offshore via the main hatch
-•  Utility stations and ROV infrastructure 
-•  Suitable stability and weight margins
-•  Compatible with established rock bag deployment tools such as the UTILITY ROV RBDT, deploying either single 8 ton bags or 2 x 4 ton bags per lift
-`,
-        images: ['static/images/m3rockbag/rockbag2.jpg','static/images/m3rockbag/rockbag1.jpg']
+        text: 'The DO C-CSOV takes on rock bag installation for scour and cable protection as part of the same deployment - no separate campaign, no dedicated vessel. Its large, strengthened working deck and crane handle and place rock bags efficiently alongside W2W activities, and compatibility with established deployment tools keeps installation fast and reliable. For the charterer, folding this scope into the vessel removes the need for costly short-term tonnage, cuts the number of assets in the field and keeps scour and cable protection on schedule with the rest of the campaign.\n' +
+        '\n' +
+        'Rock bag installation, done from a single vessel — the DO C-CSOV delivers:\n' +
+        '\n' +
+        '•  Large and strengthened deck area with 800 sqm and 10 t/m² as storage area for rock bags and installations tool\n' +
+        '•  50 t AHC crane capacity for rock bag handling\n' +
+        '•  Warehouse (500 sqm) with 6 x 30 t TEU skidding system, for the storage of project specific tools and/or additional rock bags stored in open-top containers, accessible offshore via the main hatch\n' +
+        '•  Utility stations for ROV infrastructure \n' +
+        '•  HiPAP 502 for subsea operation positioning\n' +
+        '•  Suitable stability and weight margins ( >700 t)\n' +
+        '•  Compatible with established rock bag deployment tools such as the UTILITY ROV RBDT, deploying either single 8 t bags or 2 x 4 t bags per lift',
+        images: ['static/images/m3rockbag/rockbag2.jpg', 'static/images/m3rockbag/rockbag1.jpg']
     }
 };
 
@@ -652,7 +710,7 @@ For CFE deployment our DO C-CSOV provides the following key capabilities:
 • HiPAP 502 for subsea positioning
 • Compatible with established CFE spreads such as the ROTECH TRS1
 `,
-        images: ['static/images/m5cfe/cfe1.png','static/images/m5cfe/cfe2.jpg']
+        images: ['static/images/m5cfe/cfe1.png', 'static/images/m5cfe/cfe2.jpg']
     }
 };
 
@@ -666,7 +724,15 @@ export const PAYLOAD_BLUE = {
     content: {
         title: 'Deck payload',
         subtitle: 'When size matters',
-        text: 'When the job calls for size, the DO C-CSOV delivers. A vast, strengthened deck, generous payload and a powerful crane let big, bulky equipment - from generator sets with pre-filled fuel tanks to subsea corrosion-protection spreads - be mobilised, installed and operated from a single vessel, whether planned or unplanned. Bigger lifts mean fewer of them: less deck shuffling, fewer supply runs and less port time, so campaigns run leaner and faster. And when priorities shift, this flexibility turns into contingency - ready to pick up slack and keep the offshore programme moving without missing a beat.\n',
+        text: 'When the job calls for size, the DO C-CSOV delivers. A vast, strengthened deck, generous payload and a powerful crane let big, bulky equipment - from generator sets with pre-filled fuel tanks to subsea corrosion-protection spreads - be mobilised, installed and operated from a single vessel, whether planned or unplanned. Bigger lifts mean fewer of them: less deck shuffling, fewer supply runs and less port time, so campaigns run leaner and faster. And when priorities shift, this flexibility turns into contingency - ready to pick up slack and keep the offshore programme moving without missing a beat.\n' +
+        '\n' +
+        'When the deck does the heavy lifting — the DO C-CSOV delivers:\n' +
+        '\n' +
+        '•  Large and strengthened deck area with 800 sqm and 10 t/m²\n' +
+        '•  Warehouse with storage areas (500 sqm) with skidding system (6 x 30 t TEU) and shelving for Euro pallets accessible via hatches\n' +
+        '•  Utility station (2x) with electrical power (690/ 440/ 230 V) and additional infrastructure (compressed air, IT, FW, SW, Intercom)\n' +
+        '•  Crane capacity (50 t AHC)\n' +
+        '•  Stability and weight margins',
         images: ['static/images/m6payload/deckpayload-a.jpg', 'static/images/m6payload/deckpayload-b.jpg']
     }
 };
@@ -681,18 +747,18 @@ export const ROV_BLUE = {
     content: {
         title: 'ROV Operations',
         subtitle: 'Your hands & eyes underwater\n',
-        text: `The DO C-CSOV is a flexible platform for work-class ROV support - from inspection, maintenance and repair to construction support and contingency work. Its low freeboard and modular railings enable safe, efficient over-the-side deployment of high-capacity WROVs for demanding station keeping and special tooling requirements. The result is greater operational efficiency, less reliance on dedicated ROV vessels and valuable extra contingency capacity, when and where it is needed- both during construction and the O&M phase.
-
-As such, the DO C-CSOV can facilitate various tasks such as foundation, cable and scour-protection inspection, cable route and burial surveys, cathodic-protection and anode checks; construction and lift support with touchdown monitoring as well as unplanned subsea interventions
-For work-class ROV capability the DO C-CSOV provides the following key capabilities:
-
-•  High-capacity work-class ROV (WROV) for requirements beyond observation
-•  Permanent ROV mobilization by integration of ROV piloting into convertible charterer's office 
-•  HiPAP 502 acoustic subsea positioning
-•  Ample space for ROV integration next to conventional CSOV scopes
-•  Large warehouse and workshop facilities to accommodate maintenance requirements for high spec underwater assets
-`,
-        images: ['static/images/m9rov/rov1.jpg','static/images/m9rov/rov2.png']
+        text: 'The DO C-CSOV is a flexible platform for work-class ROV support - from inspection, maintenance and repair to construction support and contingency work. Its low freeboard and modular railings enable safe, efficient over-the-side deployment of high-capacity WROVs for demanding station keeping and special tooling requirements. The result is greater operational efficiency, less reliance on dedicated ROV vessels and valuable extra contingency capacity, when and where it is needed- both during construction and the O&M phase.\n' +
+        '\n' +
+        'As such, the DO C-CSOV can facilitate various tasks such as foundation, cable and scour-protection inspection, cable route and burial surveys, cathodic-protection and anode checks; construction and lift support with touchdown monitoring as well as unplanned subsea interventions.\n' +
+        '\n' +
+        'Work-class ROV support, ready when you are — the DO C-CSOV delivers:\n' +
+        '\n' +
+        '•  High-capacity work-class ROV (WROV) for requirements beyond observation\n' +
+        '•  Permanent ROV mobilization by integration of ROV piloting into convertible charterer\'s office\n' +
+        '•  HiPAP 502 acoustic subsea positioning\n' +
+        '•  Ample space for ROV integration next to conventional CSOV scopes\n' +
+        '•  Large warehouse and workshop facilities to accommodate maintenance requirements for high spec underwater assets',
+        images: ['static/images/m9rov/rov1.jpg', 'static/images/m9rov/rov2.png']
     }
 };
 
@@ -835,7 +901,7 @@ For cable repair the DO C-CSOV provides the following key capabilities:
 • 15t tensioner
 • Quadrant deployment system with integrated joint handling crane
 `,
-                images: ['static/images/m8cablerepair/repair1.jpg','static/images/m8cablerepair/repair2.jpg']
+                images: ['static/images/m8cablerepair/repair1.jpg', 'static/images/m8cablerepair/repair2.jpg']
             }
         },
         {
@@ -928,7 +994,7 @@ Stability and weight margins as well as a working deck suitable to carry spaciou
 
 Grouting operations can be combined with bolt tightening, as additional space is both available on deck as well as below deck. The DO C-CSOVs W2W capability eliminates the need to mobilise a rental gangway, saving mobilisation time and cost while improving overall project efficiency.
 `,
-                images: ['static/images/m7grouting/grouting1.jpg','static/images/m7grouting/grouting2.png']
+                images: ['static/images/m7grouting/grouting1.jpg', 'static/images/m7grouting/grouting2.png']
             }
         }
     ],
@@ -945,11 +1011,16 @@ Grouting operations can be combined with bolt tightening, as additional space is
             content: {
                 title: 'Monopile Cleaning',
                 subtitle: 'Nice and shiny!',
-                text: `The DO C-CSOV offers the unique capability to support installation vessels with monopile and pile cleaning, a step required to remove marine growth prior to installation of the transition piece. Its large, strengthened working deck and AHC crane accommodate cleaning tools, skids and all ancillary equipment.
-
-The DO C-CSOV is able to support offshore construction with its unique capability set. By offering significantly increased deck space in combination with suitable crane capacity as well as power supply, monopile cleaning can be performed alongside regular W2W activities, either as a contingency measure, or as a preplanned scope. This offers cost saving potential compared to a WTIV deployed scenario, or removes the dependency on a dedicated construction vessel which needs to be chartered from the volatile spot market.
-`,
-                images: ['static/images/m4cleaning/cleaning1.jpg','static/images/m4cleaning/cleaning2.png']
+                text:  'The DO C-CSOV takes on monopile and pile cleaning - the removal of marine growth ahead of transition-piece installation - as part of the same deployment, supporting installation vessels without a separate mobilisation. Its large, strengthened working deck and AHC crane accommodate the cleaning tools, skids and ancillary equipment the scope demands, and can run it alongside regular W2W activities. For the charterer, folding this scope into the vessel unlocks cost savings against a WTIV-based scenario and removes the dependency on a dedicated construction vessel chartered from the volatile spot market.\n' +
+        '\n' +
+        'For monopile cleaning — the DO C-CSOV delivers:\n' +
+        '\n' +
+        '•  Large and strengthened deck area with 800 sqm and 10 t/m² as storage area for equipment\n' +
+        '•  50 t AHC crane capacity for tool handling\n' +
+        '•  Warehouse (500 sqm) with 6 x 30 t TEU skidding system, for the storage of project specific tools/spares, accessible offshore via the main hatch\n' +
+        '•  Utility stations for ROV infrastructure \n' +
+        '•  Suitable stability and weight margins ( >700 t)',
+                images: ['static/images/m4cleaning/cleaning1.jpg', 'static/images/m4cleaning/cleaning2.png']
             }
         }
     ]

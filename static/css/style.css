@@ -1120,6 +1120,10 @@ canvas {
     background: #000;
 }
 
+.hotspot-overlay-video {
+    background: transparent;
+}
+
 /* ═══════════════════════════════════════════════════════════
    TEXT-FULL MODE — text with no media fills the whole box
    ═══════════════════════════════════════════════════════════ */
