@@ -102,19 +102,33 @@ ANTICIPATION_LOOKAHEAD_MARKERS = 15
 ROTATION_DIRECTION = -1
 
 
+
+# Which physical marker ID is treated as the 0° reference ("model forward"),
+# instead of always marker 0. This is a permanent calibration constant — unlike
+# a client-side rotation offset, it lives here in code so it survives restarts,
+# and it's applied before angular_delta/anticipation math ever runs, so encoder
+# clamping and camera correction stay consistent with the visual zero point too.
+# To calibrate: rotate the physical object so its true "front" faces the camera's
+# reference direction, note which marker ID is currently being read (check /debug
+# or the last_marker_id field in /api/state), and set it here.
+ZERO_MARKER_ID = 0
+
 def marker_id_to_angle(marker_id, total_markers):
     """Map a marker ID to its absolute position on a 360-degree circle.
 
     Assumes markers are evenly spaced and numbered sequentially in angular
     order starting at 0 degrees, adjusted by ROTATION_DIRECTION to match the
-    physical mounting orientation. Returns None if total_markers is invalid.
+    physical mounting orientation, and shifted so ZERO_MARKER_ID reads as 0°.
+    Returns None if total_markers is invalid.
     """
     if not total_markers or total_markers <= 0:
         return None
 
     degrees_per_marker = 360.0 / total_markers
-    raw_angle = (marker_id % total_markers) * degrees_per_marker
+    relative_id = (marker_id - ZERO_MARKER_ID) % total_markers
+    raw_angle = relative_id * degrees_per_marker
     return (ROTATION_DIRECTION * raw_angle) % 360.0
+
 
 
 # ---- Helper functions for the anticipation logic ----
@@ -243,6 +257,7 @@ debug_state = {
     "marker_snap_threshold_deg": MARKER_SNAP_THRESHOLD_DEG,
     "last_confirmed_marker_id": None,
     "marker_correction_applied": None,
+    "zero_marker_id": ZERO_MARKER_ID,
 }
 
 
@@ -585,10 +600,22 @@ def api_settings():
       - "marker_correction_alpha" / "marker_snap_threshold_deg"
     to tune tracking behavior dynamically.
     """
+
     global ROTATION_MULTIPLIER, TOTAL_MARKERS, ANTICIPATION_BUFFER_FRACTION, ANTICIPATION_BUFFER_MAX_DEG
-    global MARKER_CORRECTION_ALPHA, MARKER_SNAP_THRESHOLD_DEG, ANTICIPATION_LOOKAHEAD_MARKERS
+    global MARKER_CORRECTION_ALPHA, MARKER_SNAP_THRESHOLD_DEG, ANTICIPATION_LOOKAHEAD_MARKERS, ZERO_MARKER_ID
 
     data = request.get_json(silent=True) or {}
+    if "zero_marker_id" in data:
+        try:
+            value = int(data["zero_marker_id"])
+        except (TypeError, ValueError):
+            return jsonify({"error": "zero_marker_id must be an integer"}), 400
+
+        with settings_lock:
+            ZERO_MARKER_ID = value
+
+        update_debug(zero_marker_id=ZERO_MARKER_ID)
+
 
     if "rotation_multiplier" in data:
         try:

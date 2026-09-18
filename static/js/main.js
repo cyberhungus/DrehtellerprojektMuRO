@@ -45,14 +45,11 @@ let currentModelZ = 0;
 
 // Toggle which boat models are loaded/active — index 0 = Boot 1, index 1 = Boot 2, etc.
 // Set to false to skip loading that model entirely (useful for testing/debugging).
-let modelEnabled = [true, true, true, true, true, true,true,true,true];
+let modelEnabled = [true, true, true,false,false,false,false,false,false];
 
 
 
-// Added on top of targetYaw every frame — lets you correct a model whose forward
-// axis doesn't line up with the tracked yaw, without touching the tracking math
-// itself. Radians internally; the debug overlay slider (press H) edits it in degrees.
-let modelRotationOffset = 119;
+
 
 // Live-editable min/max controls for the active model's hotspots (debug overlay)
 let hotspotRangeControlsEl;
@@ -74,8 +71,21 @@ const hotspotOffset = new THREE.Vector3(-0.155, -0.265, 0);
 // Path to the two icon files — swap these to point at your own SVGs.
 // LOCKED = shown while the mode is OFF (camera fixed). UNLOCKED = shown while
 // the mode is ON (free mouse rotation).
-let mouseRotationIconLockedSrc = 'static/images/icons/camera-video-off.svg';
-let mouseRotationIconUnlockedSrc = 'static/images/icons/camera-video.svg';
+let mouseRotationIconLockedSrc = 'static/images/icons/camera-video.svg';
+let mouseRotationIconUnlockedSrc = 'static/images/icons/camera-video-off.svg';
+
+// Base modelIndex for the "Extra" model and its variants. Loaded unconditionally
+// (not gated by modelEnabled, which only controls Boot 1-9) — Extra and every one
+// of its variants always load. Chosen high enough (100+) to never collide with
+// boat indices (0-8) or boat-variant indices (11-98, from i*10+v).
+const EXTRA_MODEL_BASE_INDEX = 100;
+
+
+
+// Folder name of the "Extra" model on disk — static/models/<this>/<this>.gltf,
+// with variants at static/models/<this>_1/, <this>_2/, etc. Change this to load
+// a different model as the always-visible extra layer.
+const EXTRA_MODEL_FOLDER_NAME = 'Extra';
 
 // Whether OrbitControls zoom (wheel/pinch) is allowed in the default
 // (rotation-off) state. Final mode locks this off so the kiosk view is
@@ -116,6 +126,11 @@ let screensaverImgA, screensaverImgB; // two stacked, crossfadable images
 
 // Model visibility toggling — index matches button data-index
 let toggleableModels = []; // populated once models are loaded, see below
+// "Extra" model + its variants — always visible alongside whichever boat is
+// currently active, never hidden by selectModel()'s visibility swapping.
+// Separate from toggleableModels on purpose: that array is what selectModel()
+// shows/hides one-of, and Extra should never be part of that swap.
+let extraModels = []; // { name, object, materials }
 let activeModelIndex = null; // tracks most recently toggled-on model
 let hasSetInitialActiveModel = false;
 
@@ -861,6 +876,21 @@ cameraLight.target = cameraLightTarget;
 
     }
 
+    // ---- "Extra" model — always loaded in full, independent of modelEnabled ----
+    modelsToLoad.push({folderAndFile: EXTRA_MODEL_FOLDER_NAME, modelIndex: EXTRA_MODEL_BASE_INDEX});
+
+    const extraVariants = getVariantFoldersForBase(availableModelFolders, EXTRA_MODEL_FOLDER_NAME);
+
+    extraVariants.forEach((folderAndFile) => {
+
+        const match = folderAndFile.match(/_(\d+)$/);
+        const variantNumber = match ? parseInt(match[1], 10) : 1;
+        const modelIndex = EXTRA_MODEL_BASE_INDEX + variantNumber;
+
+        modelsToLoad.push({folderAndFile, modelIndex});
+
+    });
+
     const enabledCount = modelsToLoad.length;
     let modelsLoadedSoFar = 0;
 
@@ -899,9 +929,14 @@ async function loadOneModel({folderAndFile, modelIndex}) {
         const pivot = new THREE.Group();
         pivot.add(model);
         scene.add(pivot);
-
         registerHotspotsForModel(modelIndex, pivot);
-        registerToggleableModel(modelIndex, folderAndFile, pivot);
+
+        if (modelIndex >= EXTRA_MODEL_BASE_INDEX) {
+            registerExtraModel(modelIndex, folderAndFile, pivot);
+            console.log("EXTRAEXTRAEXTRA");
+        } else {
+            registerToggleableModel(modelIndex, folderAndFile, pivot);
+        }
 
     } catch (error) {
 
@@ -1278,65 +1313,23 @@ function hideLoadingOverlay() {
 
 }
 
+// Registers an "Extra" model (or one of its variants) as an always-visible
+// layer that sits alongside whatever boat is currently active. Deliberately
+// does NOT go through toggleableModels/selectModel()'s visibility swap, and
+// doesn't touch the drawer buttons — it's not independently selectable.
+function registerExtraModel(index, name, object3D) {
+
+    const materials = applyStandardMaterialFixes(object3D);
+
+    extraModels[index] = {name, object: object3D, materials};
+
+    object3D.visible = true; // always on, regardless of which boat is active
+
+}
+
 function registerToggleableModel(index, name, object3D) {
 
-    const materials = []; // cache once
-
-    object3D.traverse((node) => {
-
-        if (node.isMesh) {
-
-            const nodeMaterials = Array.isArray(node.material) ? node.material : [node.material];
-
-            nodeMaterials.forEach((mat) => {
-                mat.transparent = true;
-                mat.opacity = 1;
-                mat.side = THREE.DoubleSide; // FrontSide culled thin/open geometry (railings, ladders) depending on view angle
-
-                // Kill baked-in glass/physical transparency from GLTF extensions like
-                // KHR_materials_transmission — this is what made bridge "windows" see-through.
-                if ('transmission' in mat) mat.transmission = 0;
-
-                mat.alphaTest = 0; // don't let per-pixel alpha punch discard-holes independently
-                mat.blending = THREE.NormalBlending; // Additive/Subtractive would make black pixels vanish
-
-                // GLTFLoader auto-disables this for any material exported with alphaMode: BLEND
-                // (Blender's "Blend" material blend mode) — without it, this single continuous hull
-                // mesh can't correctly self-occlude, since triangles draw in export order rather than
-                // camera-distance order, letting far-side geometry paint over near-side by draw order.
-                mat.depthWrite = true;
-
-                // Strip any baked alpha channel from the diffuse texture — see comment above.
-                if (mat.map) flattenTextureAlpha(mat.map);
-
-                // ---- glass material grey ----
-                if (mat.name === 'Scheiben' || node.name === 'Glass_22') {
-                    mat.color.setHex(0x000000);  // light grey, adjust as desired
-                    // If you want it darker: 0x888888 or 0x666666
-                }
-                if (mat.name === 'PaintHull_PS' || mat.name === 'PaintHull_SB' ) {
-                    console.log("Found Painthull, changing scaler");
-                   // mat.color.multiplyScalar(0.75);  // 0.7 = 30% darker; lower = darker still
-                }
-                //Heliport
-                   if (mat.name === 'PaintDeck_DOS_RAL_9023.003' ) {
-                    console.log("Found Painthull, changing scaler");
-                     mat.color.setHex(0x505050);
-                   // mat.color.multiplyScalar(0.75);  // 0.7 = 30% darker; lower = darker still
-                }
-                // Relinge
-                               if (mat.name === 'PaintDeck_DOS_RAL_9023.002' ) {
-                    console.log("Found Painthull, changing scaler");
-                     mat.color.setHex(0x606060);
-                   // mat.color.multiplyScalar(0.75);  // 0.7 = 30% darker; lower = darker still
-                }
-
-                materials.push(mat);
-            });
-
-        }
-
-    });
+    const materials = applyStandardMaterialFixes(object3D);
 
     const isFirstRegistered = !hasSetInitialActiveModel;
 
@@ -1355,32 +1348,33 @@ function registerToggleableModel(index, name, object3D) {
 
     }
 
-const btn = document.querySelector(`.model-toggle-btn[data-index="${index}"]`);
-if (btn) {
+    const btn = document.querySelector(`.model-toggle-btn[data-index="${index}"]`);
+    if (btn) {
 
-    const labelEl = btn.querySelector('.model-toggle-label');
-    const configEntry = buttonConfig[index];
-    if (labelEl) labelEl.textContent = (configEntry && configEntry.label) ? configEntry.label : name;
+        const labelEl = btn.querySelector('.model-toggle-label');
+        const configEntry = buttonConfig[index];
+        if (labelEl) labelEl.textContent = (configEntry && configEntry.label) ? configEntry.label : name;
 
-    // ---- Per-button image (optional) ----
-    // If the config has an `image`, set it on the button's background <img>.
-    // Otherwise leave whatever icon the HTML template provides.
-    if (configEntry && configEntry.image) {
-        let iconEl = btn.querySelector('.model-toggle-icon');
-        if (!iconEl) {
-            iconEl = document.createElement('img');
-            iconEl.className = 'model-toggle-icon';
-            iconEl.alt = '';
-            iconEl.draggable = false;
-            btn.insertBefore(iconEl, btn.firstChild);
+        // ---- Per-button image (optional) ----
+        // If the config has an `image`, set it on the button's background <img>.
+        // Otherwise leave whatever icon the HTML template provides.
+        if (configEntry && configEntry.image) {
+            let iconEl = btn.querySelector('.model-toggle-icon');
+            if (!iconEl) {
+                iconEl = document.createElement('img');
+                iconEl.className = 'model-toggle-icon';
+                iconEl.alt = '';
+                iconEl.draggable = false;
+                btn.insertBefore(iconEl, btn.firstChild);
+            }
+            iconEl.src = configEntry.image;
         }
-        iconEl.src = configEntry.image;
-    }
 
-    btn.classList.remove('inactive');
-    btn.classList.toggle('active', isFirstRegistered);
+        btn.classList.remove('inactive');
+        btn.classList.toggle('active', isFirstRegistered);
+    }
 }
-}
+
 
 // Switches the active model by covering the screen with an opaque overlay, hard-swapping
 // visibility underneath (no blending, so no white-wash from overlapping translucent
@@ -1583,60 +1577,7 @@ function initDebugOverlay() {
 
     debugOverlayEl.appendChild(offsetBlock);
 
-        // ── Model rotation offset (degrees, added on top of targetYaw) ──
-    const rotationOffsetBlock = document.createElement('div');
-    rotationOffsetBlock.id = 'rotation-offset-controls';
-    rotationOffsetBlock.style.cssText = 'margin-top: 8px; padding-top: 6px; border-top: 1px solid rgba(255,255,255,0.25);';
 
-    const rotationOffsetTitle = document.createElement('div');
-    rotationOffsetTitle.textContent = 'Rotation offset';
-    rotationOffsetTitle.style.cssText = 'font-weight:600; margin-bottom:4px;';
-    rotationOffsetBlock.appendChild(rotationOffsetTitle);
-
-    const rotationOffsetRow = document.createElement('label');
-    rotationOffsetRow.style.cssText = 'display:flex; align-items:center; gap:6px; margin:2px 0; font-weight:300;';
-
-    const rotationOffsetLabel = document.createElement('span');
-    rotationOffsetLabel.textContent = '°';
-    rotationOffsetLabel.style.minWidth = '18px';
-    rotationOffsetRow.appendChild(rotationOffsetLabel);
-
-    const rotationOffsetSlider = document.createElement('input');
-    rotationOffsetSlider.type = 'range';
-    rotationOffsetSlider.min = '-180';
-    rotationOffsetSlider.max = '180';
-    rotationOffsetSlider.step = '1';
-    rotationOffsetSlider.value = String(THREE.MathUtils.radToDeg(modelRotationOffset));
-    rotationOffsetSlider.style.flex = '1';
-    rotationOffsetSlider.style.accentColor = '#00AC00';
-    rotationOffsetRow.appendChild(rotationOffsetSlider);
-
-    const rotationOffsetVal = document.createElement('span');
-    rotationOffsetVal.className = 'light-value';
-    rotationOffsetVal.textContent = THREE.MathUtils.radToDeg(modelRotationOffset).toFixed(0);
-    rotationOffsetRow.appendChild(rotationOffsetVal);
-
-    rotationOffsetSlider.addEventListener('input', () => {
-        const deg = parseFloat(rotationOffsetSlider.value);
-        modelRotationOffset = THREE.MathUtils.degToRad(deg);
-        rotationOffsetVal.textContent = deg.toFixed(0);
-    });
-
-    rotationOffsetBlock.appendChild(rotationOffsetRow);
-
-    const resetRotationOffsetBtn = document.createElement('button');
-    resetRotationOffsetBtn.textContent = 'Reset rotation offset';
-    resetRotationOffsetBtn.className = 'rotate-btn';
-    resetRotationOffsetBtn.style.marginTop = '4px';
-    resetRotationOffsetBtn.style.width = '100%';
-    resetRotationOffsetBtn.addEventListener('click', () => {
-        modelRotationOffset = 0;
-        rotationOffsetSlider.value = '0';
-        rotationOffsetVal.textContent = '0';
-    });
-    rotationOffsetBlock.appendChild(resetRotationOffsetBtn);
-
-    debugOverlayEl.appendChild(rotationOffsetBlock);
 }
 
 function updateDebugOverlay() {
@@ -1759,14 +1700,17 @@ function updateModelRotations(delta) {
     const t = 1 - Math.exp(-rotationLerpSpeed * delta);
 
     toggleableModels.forEach((entry) => {
-
         if (!entry) return;
+        entry.object.rotation.y = lerpAngle(entry.object.rotation.y, targetYaw, t);
+    });
 
-        entry.object.rotation.y = lerpAngle(entry.object.rotation.y, targetYaw + modelRotationOffset, t);
-
+    extraModels.forEach((entry) => {
+        if (!entry) return;
+        entry.object.rotation.y = lerpAngle(entry.object.rotation.y, targetYaw, t);
     });
 
 }
+
 
 function initHotspotEngine() {
 
@@ -2259,10 +2203,6 @@ function renderHotspotContent(content) {
     if (hotspotOverlayScrollEl) hotspotOverlayScrollEl.scrollTop = 0;
 }
 
-// Splits the raw hotspot text on "\n" (and "\t", which the data uses as a
-// soft paragraph separator), turning any line starting with "•" into a
-// proper <li> inside a <ul>. Non-bullet lines become <p> paragraphs.
-// Returns a DocumentFragment ready to append.
 function parseHotspotText(rawText) {
 
     const fragment = document.createDocumentFragment();
@@ -2294,14 +2234,14 @@ function parseHotspotText(rawText) {
                 }
 
                 const li = document.createElement('li');
-                li.textContent = line.slice(1).trim(); // drop the "•" and any following spaces
+                li.innerHTML = line.slice(1).trim(); // was textContent — now parses inline HTML
                 currentList.appendChild(li);
 
             } else {
 
                 flushList();
                 const p = document.createElement('p');
-                p.textContent = line;
+                p.innerHTML = line;                  // was textContent — now parses inline HTML
                 fragment.appendChild(p);
 
             }
@@ -2314,7 +2254,6 @@ function parseHotspotText(rawText) {
     return fragment;
 
 }
-
 function renderHotspotText(rawText) {
     hotspotOverlayTextEl.innerHTML = '';
     hotspotOverlayTextEl.appendChild(parseHotspotText(rawText || ''));
@@ -3021,5 +2960,71 @@ function initLogoClick() {
         event.stopPropagation();     // don't trigger drawer-close-on-outside-click logic
         selectModel(0);
     });
+
+}
+
+// Shared by registerToggleableModel() and registerExtraModel() — applies the
+// same transparency/glass/paint-color fixes to every mesh's material(s) and
+// returns the flat list of materials touched, so both registration paths look
+// visually consistent.
+function applyStandardMaterialFixes(object3D) {
+
+    const materials = [];
+
+    object3D.traverse((node) => {
+
+        if (node.isMesh) {
+
+            const nodeMaterials = Array.isArray(node.material) ? node.material : [node.material];
+
+            nodeMaterials.forEach((mat) => {
+                mat.transparent = true;
+                mat.opacity = 1;
+                mat.side = THREE.DoubleSide;
+
+                if ('transmission' in mat) mat.transmission = 0;
+
+                mat.alphaTest = 0;
+                mat.blending = THREE.NormalBlending;
+                mat.depthWrite = true;
+
+                if (mat.map) flattenTextureAlpha(mat.map);
+
+                if (mat.name === 'Scheiben' || node.name === 'Glass_22') {
+                    mat.color.setHex(0x000000);
+                }
+                if (mat.name === 'PaintDeck_DOS_RAL_9023.003') {
+                    mat.color.setHex(0x505050);
+                }
+                if (mat.name === 'PaintDeck_DOS_RAL_9023.002') {
+                    mat.color.setHex(0x606060);
+                }
+
+                materials.push(mat);
+            });
+
+        }
+
+    });
+
+    return materials;
+
+}
+
+// Same idea as getVariantFoldersForBoat(), but for any base folder name rather
+// than a numbered boat — matches "<baseName>_<n>" folders, e.g. "Extra_1",
+// "Extra_2", sorted numerically by suffix.
+function getVariantFoldersForBase(allFolders, baseName) {
+
+    const pattern = new RegExp(`^${baseName}_(\\d+)$`);
+
+    return allFolders
+        .map((name) => {
+            const match = name.match(pattern);
+            return match ? {name, suffix: parseInt(match[1], 10)} : null;
+        })
+        .filter(Boolean)
+        .sort((a, b) => a.suffix - b.suffix)
+        .map((entry) => entry.name);
 
 }

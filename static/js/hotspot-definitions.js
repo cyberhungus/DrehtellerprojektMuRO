@@ -155,7 +155,7 @@ export const SHARED_GREEN_HOTSPOTS = [
     },
     {
         id: 'heck-2',
-        localPosition: new THREE.Vector3(-1.29, 0.4, 0),
+        localPosition: new THREE.Vector3(-0.125, 1, 0.036),
         minAngle: 290,
         maxAngle: 50,
         variant: 'green',
@@ -292,9 +292,11 @@ The VSP system requires approximately 15–22% less power than alternative propu
         maxAngle: 195,
         variant: 'green',
         icon: 'static/images/icons/hotspot-icon-green.png',
+
         content: {
             title: 'Accommodation',
             subtitle: 'A home at sea',
+              logo: "static/images/logos/rm-logo.png",
             text: 'Skilled and experienced personnel are becoming scarce across the industry. They are the single most important factor in achieving high-quality progress offshore. Crew and charterer personnel need to be well-rested to perform safely, thus the vessel is their safe haven after a hard day\'s work, the foundation for all and the reason every small detail has been considered in the design of the interior, facilities, and layout of the DO C-CSOV.\t •  99 cabins, each over 11 sqm, with 76 daylight cabins dedicated to charterer personnel\n' +
                 '•  Flexible 1+1 cabin concept, allowing selected single cabins to be converted into doubles with a ceiling-mounted Pullman bed - without compromising comfort or space\n' +
                 '•  140 sqm dedicated office wing, comprising four offices, 17 workstations and two combinable meeting rooms accommodating up to 24 people\n' +
@@ -306,41 +308,41 @@ The VSP system requires approximately 15–22% less power than alternative propu
                 { title: 'Image Slideshow', slideshow: 'static/images/accommodation' },
                 {
                     title: 'Specifications',
-                    text: `The DO C-CSOV offers a comprehensive range of state-of-the-art facilities and amenities, providing a comfortable, productive and flexible environment for crew and charterer personnel.
-
-Accommodation 
-
-99 cabins are provided, including 76 daylight cabins dedicated to charterer personnel. Each exceeds 11 sqm and features natural light, private bathroom, individual temperature control, high-bandwidth Wi-Fi for private video calls, video-on-demand and multiple resting positions (bed and day bed). Standard beds measure 0.9 × 2.1 m, with larger beds available in selected state cabins.
-
-A flexible 1+1 cabin concept allows selected cabins to be converted to double occupancy using a ceiling-mounted Pullman bed, discreetly integrated into the ceiling, providing additional capacity without compromising comfort or space.
-
-Recreation 
-
-300 sqm including: 
-
-•  Two games rooms with PlayStation and 4D simulators
-•  Sports bar, library and TV entertainment with VoD and satellite
-•  Lounges and recreational balcony
-•  Lobby with coffee bar, main mess and duty messes
-•  Sauna and treatment area
-•  Dedicated smoking room
-
-Fitness
-
-A two-floor 180 sqm gym includes cardio equipment, an extensive free-weights area with dumbbells and barbells, and a multifunctional cable tower. The adjacent sauna and spa provide dedicated post-workout relaxation facilities.
-
-Offices & Meeting Facilities 
-
-Four client offices and 17 workstations are provided in flexible 4/8/3/2 configurations. The main office overlooks the aft deck and gangway operations.
-Two 16.2 sqm meeting rooms accommodate 12 persons each and can be combined into a 32.4 sqm room for 24 seated persons. Both feature screens and video-conferencing systems with integrated speakers and microphones.
-
-Medical Facilities
-
-A 16 sqm hospital and 12 sqm sick bay include a separate adjoining ward, treatment room and dedicated toilet/bathroom facilities. Medical equipment and medicines are tailored to the vessel's operational profile, trading area and risk assessment.
-
-Changing & Drying Facilities
-
-The 48 sqm changing room provides 88 lockers and can be divided into separate men's and women's areas, accommodating up to 20 lockers in the women's area and a minimum of 68 in the men's area. A separate 44 sqm drying room is provided for suits, footwear, gloves and PPE. Crew members have dedicated facilities and do not share these areas.`
+                    text:  'The DO C-CSOV offers a comprehensive range of state-of-the-art facilities and amenities, providing a comfortable, productive and flexible environment for crew and charterer personnel.\n' +
+    '\n' +
+    '<span style="font-weight:700">Accommodation</span>\n' +
+    '\n' +
+    '99 cabins are provided, including 76 daylight cabins dedicated to charterer personnel. Each exceeds 11 sqm and features natural light, private bathroom, individual temperature control, high-bandwidth Wi-Fi for private video calls, video-on-demand and multiple resting positions (bed and day bed). Standard beds measure 0.9 × 2.1 m, with larger beds available in selected state cabins.\n' +
+    '\n' +
+    'A flexible 1+1 cabin concept allows selected cabins to be converted to double occupancy using a ceiling-mounted Pullman bed, discreetly integrated into the ceiling, providing additional capacity without compromising comfort or space.\n' +
+    '\n' +
+    '<span style="font-weight:700">Recreation</span>\n' +
+    '\n' +
+    '300 sqm including: \n' +
+    '\n' +
+    '•  Two games rooms with PlayStation and 4D simulators\n' +
+    '•  Sports bar, library and TV entertainment with VoD and satellite\n' +
+    '•  Lounges and recreational balcony\n' +
+    '•  Lobby with coffee bar, main mess and duty messes\n' +
+    '•  Sauna and treatment area\n' +
+    '•  Dedicated smoking room\n' +
+    '\n' +
+    '<span style="font-weight:700">Fitness</span>\n' +
+    '\n' +
+    'A two-floor 180 sqm gym includes cardio equipment, an extensive free-weights area with dumbbells and barbells, and a multifunctional cable tower. The adjacent sauna and spa provide dedicated post-workout relaxation facilities.\n' +
+    '\n' +
+    '<span style="font-weight:700">Offices &amp; Meeting Facilities</span>\n' +
+    '\n' +
+    'Four client offices and 17 workstations are provided in flexible 4/8/3/2 configurations. The main office overlooks the aft deck and gangway operations.\n' +
+    'Two 16.2 sqm meeting rooms accommodate 12 persons each and can be combined into a 32.4 sqm room for 24 seated persons. Both feature screens and video-conferencing systems with integrated speakers and microphones.\n' +
+    '\n' +
+    '<span style="font-weight:700">Medical Facilities</span>\n' +
+    '\n' +
+    'A 16 sqm hospital and 12 sqm sick bay include a separate adjoining ward, treatment room and dedicated toilet/bathroom facilities. Medical equipment and medicines are tailored to the vessel\'s operational profile, trading area and risk assessment.\n' +
+    '\n' +
+    '<span style="font-weight:700">Changing &amp; Drying Facilities</span>\n' +
+    '\n' +
+    'The 48 sqm changing room provides 88 lockers and can be divided into separate men\'s and women\'s areas, accommodating up to 20 lockers in the women\'s area and a minimum of 68 in the men\'s area. A separate 44 sqm drying room is provided for suits, footwear, gloves and PPE. Crew members have dedicated facilities and do not share these areas.',
                 },
                 { title: 'Video', video: 'static/images/f6acommodations/video.mp4' }
             ]
@@ -509,7 +511,7 @@ The 48 sqm changing room provides 88 lockers and can be divided into separate me
                 '•   Three access points: For efficient access and egress\n' +
                 '•   Direct MCC gangway connection: Enables step-free transfer of personnel and materials throughout the vessel as well as elevator redundancy\n' +
                 '•   Fully certified Helideck monitoring system',
-            images: ['static/images/f15heliport/heliport1.jpg', 'static/images/f15heliport/heliport2.jpg']
+            images: ['static/images/f15heliport/heliport1.png', 'static/images/f15heliport/heliport2.jpg']
         }
     },
     {
