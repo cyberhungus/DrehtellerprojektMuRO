@@ -52,7 +52,7 @@ let modelEnabled = [true, true, true, true, true, true,true,true,true];
 // Added on top of targetYaw every frame — lets you correct a model whose forward
 // axis doesn't line up with the tracked yaw, without touching the tracking math
 // itself. Radians internally; the debug overlay slider (press H) edits it in degrees.
-let modelRotationOffset = 0;
+let modelRotationOffset = 115;
 
 // Live-editable min/max controls for the active model's hotspots (debug overlay)
 let hotspotRangeControlsEl;
