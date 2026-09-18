@@ -60,7 +60,7 @@ export const SHARED_GREEN_HOTSPOTS = [
         id: 'tower-mittig-2',
         localPosition: new THREE.Vector3(-0.134, 0.75, -0.24),
         minAngle: 120,
-        maxAngle: 20,
+        maxAngle: 255,
         variant: 'green',
         icon: 'static/images/icons/hotspot-icon-green.png',
         content: {
@@ -155,7 +155,7 @@ export const SHARED_GREEN_HOTSPOTS = [
     },
     {
         id: 'heck-2',
-        localPosition: new THREE.Vector3(-1.29, 0.6, 0),
+        localPosition: new THREE.Vector3(-1.29, 0.4, 0),
         minAngle: 290,
         maxAngle: 50,
         variant: 'green',
