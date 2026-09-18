@@ -34,7 +34,7 @@ let camera, scene, renderer, controls;
 let ambientLight, directionalLight, directionalLight2,cameraLight; // hoisted so the debug-overlay light controls can reach them
 let lightVisual1, lightVisual2; // small sphere+line shown per light while the debug overlay (H) is open
 
-
+let renderLoopRunning = true;
 
 // Initial camera settings (edit these to change the starting view)
 const initialCameraPosition = new THREE.Vector3(-2.52, 0.67, 0);
@@ -2372,7 +2372,13 @@ function openHotspotOverlay(content, variant, iconSrc) {
 
     hotspotOverlayEl.style.display = 'flex';
 
-
+    // Stop the WebGL render loop while the overlay is up — the 3D scene is
+    // fully covered, so drawing it every frame just steals main-thread time
+    // from the scroll handler. Restarted in closeHotspotOverlay().
+    if (renderLoopRunning) {
+        renderer.setAnimationLoop(null);
+        renderLoopRunning = false;
+    }
 }
 
 function closeHotspotOverlay() {
@@ -2389,7 +2395,11 @@ function closeHotspotOverlay() {
     // Restart the loop only if we're the ones who stopped it. Flush the
     // accumulated pause time first so the first frame back doesn't see a
     // huge delta and snap the model rotation.
-
+    if (!renderLoopRunning) {
+        clock.getDelta();
+        renderer.setAnimationLoop(animate);
+        renderLoopRunning = true;
+    }
 }
 
 
