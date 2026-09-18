@@ -111,7 +111,7 @@ ROTATION_DIRECTION = -1
 # To calibrate: rotate the physical object so its true "front" faces the camera's
 # reference direction, note which marker ID is currently being read (check /debug
 # or the last_marker_id field in /api/state), and set it here.
-ZERO_MARKER_ID = 100
+ZERO_MARKER_ID = 102
 
 def marker_id_to_angle(marker_id, total_markers):
     """Map a marker ID to its absolute position on a 360-degree circle.
