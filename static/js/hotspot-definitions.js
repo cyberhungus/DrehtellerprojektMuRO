@@ -34,13 +34,20 @@ export const buttonConfig = {
         image: 'static/images/shipicons/cleaning.png'},
 
     // ---- Variants (index = boatNumber * 10 + variantNumber) ----
-    71: {label: "Walk to Work (Var. 1)",         statusText: "Extended Gangway",
-         image: 'static/images/buttons/w2w_var1.jpg'},
-    21: {label: "Rockbag Installation (Var. 1)", statusText: "Rockbag – Variante 1"},
-    31: {label: "CFE (Var. 1)",                  statusText: "CFE – Variante 1"},
-    41: {label: "Deck Payload (Var. 1)",         statusText: "Deck Payload – Variante 1"},
-    61: {label: "ROV (Var. 1)",                  statusText: "ROV – Variante 1"},
-};
+// These carry the same label/statusText/image as the base they replace, so
+// the buttons don't relabel themselves when the variant model is loaded.
+11: {label: "Base",          statusText: "Base Variant",
+     image: 'static/images/shipicons/basis.png'},
+71: {label: "Walk to work",  statusText: "Daughter Craft",
+     image: 'static/images/shipicons/walktowork.png'},
+21: {label: "Rockbags",      statusText: "Rockbag Installation",
+     image: 'static/images/shipicons/rockbag.png'},
+31: {label: "CFE",           statusText: "Control Flow Excavator",
+     image: 'static/images/shipicons/cfe.png'},
+41: {label: "Deck Payload",  statusText: "Deck Payload",
+     image: 'static/images/shipicons/deckpayload.png'},
+61: {label: "ROV",           statusText: "ROV Operations",
+     image: 'static/images/shipicons/rov.png'},};
 
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -118,7 +125,7 @@ export const SHARED_GREEN_HOTSPOTS = [
 •  smartACTIONS Condition monitoring enables predictive maintenance for high uptime on critical equipment
 •  smartENERGY for energy storage and power balancing 
 •  smartCRANE Modular knuckle boom: rig-up within ~48 h without external lifts - the main driver of the vessel's modularity`,
-                    images: ['static/images/f2crane/cranedeepdive.jpg']
+                    images: ['static/images/f2crane/cranedeepdive.jpg','static/images/f2crane/cranedeepdive2.jpg']
                 }
             ]
         }
@@ -176,8 +183,8 @@ export const SHARED_GREEN_HOTSPOTS = [
     {
         id: 'holz-2',
         localPosition: new THREE.Vector3(-0.78, 0.32, 0),
-        minAngle: 280,
-        maxAngle: 80,
+        minAngle: 255,
+        maxAngle: 30,
         variant: 'green',
         icon: 'static/images/icons/hotspot-icon-green.png',
         content: {
@@ -193,14 +200,14 @@ export const SHARED_GREEN_HOTSPOTS = [
                 '•  Utility stations: distributed supply of water, communications, electrical power and high pressure for demanding spreads (e.g. WROV / cable repair) without temporary infrastructure\n' +
                 '•  Warehouse access: dedicated hatch enables operations at sea and effectively extends the working deck via the warehouse below\n' +
                 '•  Functional layout: 5.2 m low freeboard with removable railings for easy overboard access\n',
-            images: ['static/images/f5deck/workingdecktopview.png']
+            images: ['static/images/f5deck/workingdeck.png']
         }
     },
     {
         id: 'propeller-heck-2',
         localPosition: new THREE.Vector3(-1.051, 0.1, 0.137),
-        minAngle: 330,
-        maxAngle: 75,
+        minAngle: 255,
+        maxAngle: 45,
         variant: 'green',
         icon: 'static/images/icons/hotspot-icon-green.png',
         content: {
@@ -233,8 +240,8 @@ The VSP system requires approximately 15–22% less power than alternative propu
     {
         id: 'heck-l-2',
         localPosition: new THREE.Vector3(-0.67, 0.29, 0.29),
-        minAngle: 340,
-        maxAngle: 270,
+        minAngle: 255,
+        maxAngle: 45,
         variant: 'green',
         icon: 'static/images/icons/hotspot-icon-green.png',
         content: {
@@ -255,8 +262,8 @@ The VSP system requires approximately 15–22% less power than alternative propu
     {
         id: 'bruecke-l-seite-2',
         localPosition: new THREE.Vector3(0.285, 0.72, 0.33),
-        minAngle: 320,
-        maxAngle: 180,
+        minAngle: 310,
+        maxAngle: 75,
         variant: 'green',
         icon: 'static/images/icons/hotspot-icon-green.png',
         content: {
@@ -342,8 +349,8 @@ The 48 sqm changing room provides 88 lockers and can be divided into separate me
     {
         id: 'propeller-front-2',
         localPosition: new THREE.Vector3(1.4, -0.1, 0),
-        minAngle: 150,
-        maxAngle: 200,
+        minAngle: 345,
+        maxAngle: 180,
         variant: 'green',
         icon: 'static/images/icons/hotspot-icon-green.png',
         content: {
@@ -484,8 +491,8 @@ The 48 sqm changing room provides 88 lockers and can be divided into separate me
     {
         id: 'helipad-2',
         localPosition: new THREE.Vector3(0.89, 0.8, 0),
-        minAngle: 100,
-        maxAngle: 260,
+        minAngle: 15,
+        maxAngle: 165,
         variant: 'green',
         icon: 'static/images/icons/hotspot-icon-green.png',
         content: {
@@ -508,8 +515,8 @@ The 48 sqm changing room provides 88 lockers and can be divided into separate me
     {
         id: 'bug-2',
         localPosition: new THREE.Vector3(1.5, 0.477, 0),
-        minAngle: 150,
-        maxAngle: 210,
+        minAngle: 20,
+        maxAngle: 130,
         variant: 'green',
         icon: 'static/images/icons/hotspot-icon-green.png',
         content: {

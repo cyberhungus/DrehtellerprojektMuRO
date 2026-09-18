@@ -6,6 +6,24 @@ import {
 import * as THREE from 'three';
 
 
+// Maps a loaded model index to the drawer button that should appear active.
+// Base models whose only UI entry is a variant button point back at that
+// variant, so clicking a pink from a variant to reach the base keeps the
+// correct button lit instead of leaving every button inactive.
+const activeButtonForModel = {
+    0: 0,     // Base — its own button
+    1: 21,    // base reachable only via the Rockbags variant button
+    2: 31,    // CFE variant button
+    3: 41,    // Deck Payload variant button
+    4: 4,     // no variant — its own button
+    5: 61,    // ROV variant button
+    6: 71,    // Walk-to-Work variant button
+    7: 7,     // no variant — its own button
+    8: 8,     // no variant — its own button
+    // Variants map to themselves:
+    11: 0, 21: 21, 31: 31, 41: 41, 61: 61, 71: 71,
+};
+
 
 import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
@@ -31,6 +49,14 @@ let modelEnabled = [true, true, true, true, true, true,true,true,true];
 
 
 
+// Added on top of targetYaw every frame — lets you correct a model whose forward
+// axis doesn't line up with the tracked yaw, without touching the tracking math
+// itself. Radians internally; the debug overlay slider (press H) edits it in degrees.
+let modelRotationOffset = 0;
+
+// Live-editable min/max controls for the active model's hotspots (debug overlay)
+let hotspotRangeControlsEl;
+let hotspotRangeRows = new Map(); // id -> {minInput, maxInput}
 
 // Mouse-driven camera rotation toggle (top-right button) — starts OFF.
 let mouseRotationEnabled = false;
@@ -222,6 +248,66 @@ const screenY = (-_projected.y * 0.5 + 0.5) * window.innerHeight;
 }
 
 
+
+function buildHotspotRangeControls() {
+    if (!hotspotRangeControlsEl) return;
+
+    hotspotRangeControlsEl.innerHTML = '';
+    hotspotRangeRows.clear();
+
+    const activeEntry = getActiveModelEntry();
+    if (!activeEntry) return;
+
+    const relevantHotspots = hotspots.filter(h => h.object === activeEntry.object);
+
+    relevantHotspots.forEach((hotspot) => {
+
+        const row = document.createElement('div');
+        row.style.cssText = 'display:flex; align-items:center; gap:4px; margin:2px 0; font-weight:300; font-size:11px;';
+
+        const label = document.createElement('span');
+        label.textContent = hotspot.id;
+        label.style.cssText = 'flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;';
+        row.appendChild(label);
+
+        const minInput = document.createElement('input');
+        minInput.type = 'number';
+        minInput.min = '0';
+        minInput.max = '360';
+        minInput.step = '1';
+        minInput.value = hotspot.minAngle;
+        minInput.style.width = '48px';
+        row.appendChild(minInput);
+
+        const sep = document.createElement('span');
+        sep.textContent = '–';
+        row.appendChild(sep);
+
+        const maxInput = document.createElement('input');
+        maxInput.type = 'number';
+        maxInput.min = '0';
+        maxInput.max = '360';
+        maxInput.step = '1';
+        maxInput.value = hotspot.maxAngle;
+        maxInput.style.width = '48px';
+        row.appendChild(maxInput);
+
+        minInput.addEventListener('input', () => {
+            hotspot.minAngle = THREE.MathUtils.euclideanModulo(parseFloat(minInput.value) || 0, 360);
+            updateHotspots();
+        });
+
+        maxInput.addEventListener('input', () => {
+            hotspot.maxAngle = THREE.MathUtils.euclideanModulo(parseFloat(maxInput.value) || 0, 360);
+            updateHotspots();
+        });
+
+        hotspotRangeControlsEl.appendChild(row);
+        hotspotRangeRows.set(hotspot.id, {minInput, maxInput});
+
+    });
+
+}
 
 
 // -------------------------------------------------------------------
@@ -1329,21 +1415,27 @@ function selectModel(index) {
     setTimeout(() => {
 
         // Screen is fully covered here — hard-swap visibility, no blending involved.
-        toggleableModels.forEach((otherEntry, otherIndex) => {
-
+       toggleableModels.forEach((otherEntry, otherIndex) => {
             if (!otherEntry) return;
-
             otherEntry.object.visible = (otherIndex === index);
+        });
 
-            const otherBtn = document.querySelector(`.model-toggle-btn[data-index="${otherIndex}"]`);
-            if (otherBtn) {
-                otherBtn.classList.toggle('active', otherIndex === index);
-                otherBtn.classList.toggle('inactive', otherIndex !== index);
-            }
+        // Which drawer button should appear active for the loaded model —
+        // for a base loaded via its variant's pink, this is the variant's
+        // button, so the drawer state stays consistent.
+        const activeBtnIndex = (activeButtonForModel[index] !== undefined)
+            ? activeButtonForModel[index]
+            : index;
 
+        document.querySelectorAll('.model-toggle-btn').forEach((btn) => {
+            const btnIndex = parseInt(btn.dataset.index, 10);
+            btn.classList.toggle('active', btnIndex === activeBtnIndex);
+            btn.classList.toggle('inactive', btnIndex !== activeBtnIndex);
         });
 
        activeModelIndex = index;
+
+       if (debugOverlayVisible) buildHotspotRangeControls(); // ← added
 
 // Apply the current model Z offset to the newly active model
 const newEntry = toggleableModels[index];
@@ -1418,10 +1510,11 @@ function initDebugOverlay() {
     window.addEventListener('keydown', (event) => {
 
         if (event.code === 'KeyH') {
-            debugOverlayVisible = !debugOverlayVisible;
+                   debugOverlayVisible = !debugOverlayVisible;
             debugOverlayEl.style.display = debugOverlayVisible ? 'block' : 'none';
-                        lightVisual1.group.visible = debugOverlayVisible;
+            lightVisual1.group.visible = debugOverlayVisible;
             lightVisual2.group.visible = debugOverlayVisible;
+            if (debugOverlayVisible) buildHotspotRangeControls(); // ← added
         }
 
     });
@@ -1489,6 +1582,61 @@ function initDebugOverlay() {
     offsetBlock.appendChild(resetBtn);
 
     debugOverlayEl.appendChild(offsetBlock);
+
+        // ── Model rotation offset (degrees, added on top of targetYaw) ──
+    const rotationOffsetBlock = document.createElement('div');
+    rotationOffsetBlock.id = 'rotation-offset-controls';
+    rotationOffsetBlock.style.cssText = 'margin-top: 8px; padding-top: 6px; border-top: 1px solid rgba(255,255,255,0.25);';
+
+    const rotationOffsetTitle = document.createElement('div');
+    rotationOffsetTitle.textContent = 'Rotation offset';
+    rotationOffsetTitle.style.cssText = 'font-weight:600; margin-bottom:4px;';
+    rotationOffsetBlock.appendChild(rotationOffsetTitle);
+
+    const rotationOffsetRow = document.createElement('label');
+    rotationOffsetRow.style.cssText = 'display:flex; align-items:center; gap:6px; margin:2px 0; font-weight:300;';
+
+    const rotationOffsetLabel = document.createElement('span');
+    rotationOffsetLabel.textContent = '°';
+    rotationOffsetLabel.style.minWidth = '18px';
+    rotationOffsetRow.appendChild(rotationOffsetLabel);
+
+    const rotationOffsetSlider = document.createElement('input');
+    rotationOffsetSlider.type = 'range';
+    rotationOffsetSlider.min = '-180';
+    rotationOffsetSlider.max = '180';
+    rotationOffsetSlider.step = '1';
+    rotationOffsetSlider.value = String(THREE.MathUtils.radToDeg(modelRotationOffset));
+    rotationOffsetSlider.style.flex = '1';
+    rotationOffsetSlider.style.accentColor = '#00AC00';
+    rotationOffsetRow.appendChild(rotationOffsetSlider);
+
+    const rotationOffsetVal = document.createElement('span');
+    rotationOffsetVal.className = 'light-value';
+    rotationOffsetVal.textContent = THREE.MathUtils.radToDeg(modelRotationOffset).toFixed(0);
+    rotationOffsetRow.appendChild(rotationOffsetVal);
+
+    rotationOffsetSlider.addEventListener('input', () => {
+        const deg = parseFloat(rotationOffsetSlider.value);
+        modelRotationOffset = THREE.MathUtils.degToRad(deg);
+        rotationOffsetVal.textContent = deg.toFixed(0);
+    });
+
+    rotationOffsetBlock.appendChild(rotationOffsetRow);
+
+    const resetRotationOffsetBtn = document.createElement('button');
+    resetRotationOffsetBtn.textContent = 'Reset rotation offset';
+    resetRotationOffsetBtn.className = 'rotate-btn';
+    resetRotationOffsetBtn.style.marginTop = '4px';
+    resetRotationOffsetBtn.style.width = '100%';
+    resetRotationOffsetBtn.addEventListener('click', () => {
+        modelRotationOffset = 0;
+        rotationOffsetSlider.value = '0';
+        rotationOffsetVal.textContent = '0';
+    });
+    rotationOffsetBlock.appendChild(resetRotationOffsetBtn);
+
+    debugOverlayEl.appendChild(rotationOffsetBlock);
 }
 
 function updateDebugOverlay() {
@@ -1614,7 +1762,7 @@ function updateModelRotations(delta) {
 
         if (!entry) return;
 
-        entry.object.rotation.y = lerpAngle(entry.object.rotation.y, targetYaw, t);
+        entry.object.rotation.y = lerpAngle(entry.object.rotation.y, targetYaw + modelRotationOffset, t);
 
     });
 
