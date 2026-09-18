@@ -36,6 +36,12 @@ let lightVisual1, lightVisual2; // small sphere+line shown per light while the d
 
 let renderLoopRunning = true;
 
+// Set to true by applyFinalModeOverrides() when the backend reports --final.
+// Read once controls exist (in init()) to lock down every camera-movement
+// gesture — including OrbitControls' two-finger pan, which otherwise stays
+// live in final mode because enablePan defaults to true and is never toggled.
+let finalModeActive = false;
+
 // Initial camera settings (edit these to change the starting view)
 const initialCameraPosition = new THREE.Vector3(-2.52, 0.67, 0);
 let initialTargetY = 0.25; // desired initial look height (controls.target.y)
@@ -389,6 +395,7 @@ async function applyFinalModeOverrides() {
 
             console.log('FINAL mode active — overriding client settings');
 
+            finalModeActive = true;              // ← read by init() when it builds controls
             modelEnabled = modelEnabled.map(() => true);
             mouseRotationAllowZoom = false;
                 cameraZoomEnabled = false;          // <-- add this
@@ -1012,6 +1019,14 @@ await runWithConcurrencyLimit(modelsToLoad, CONCURRENCY, loadOneModel);
 
      controls.enableRotate = false;
      controls.enableZoom = cameraZoomEnabled;   // <-- was implicitly OrbitControls' default (true)
+
+    // Kill two-finger pan in final mode. OrbitControls maps TOUCH.TWO to
+    // DOLLY_PAN, and the pan half of that gesture runs whenever enablePan is
+    // true — independent of enableZoom. Without this line, two-finger drag
+    // keeps shifting the camera even with every other gesture locked down.
+    if (finalModeActive) {
+        controls.enablePan = false;
+    }
 
     // ----- CAMERA CONTROLS (X, Y, Target Y, Model Z) -----
 const camXSlider = document.getElementById('cam-pos-x');
