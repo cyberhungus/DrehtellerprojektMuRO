@@ -125,7 +125,7 @@ export const SHARED_GREEN_HOTSPOTS = [
 •  smartACTIONS Condition monitoring enables predictive maintenance for high uptime on critical equipment
 •  smartENERGY for energy storage and power balancing 
 •  smartCRANE Modular knuckle boom: rig-up within ~48 h without external lifts - the main driver of the vessel's modularity`,
-                    images: ['static/images/f2crane/cranedeepdive.jpg','static/images/f2crane/cranedeepdive2.jpg']
+                    images: ['static/images/f2crane/cranedeepdive.jpg','static/images/f2crane/cranedeepdive2.png']
                 }
             ]
         }
