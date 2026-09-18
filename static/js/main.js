@@ -2021,6 +2021,11 @@ function renderHotspotMedia(content) {
             // source format. No PNG/JPG distinction any more.
             img.className = 'hotspot-overlay-image hotspot-overlay-image--cover';
             img.src = src;
+            // Decode off the main thread and don't decode offscreen images at
+            // all — decoding a large image synchronously mid-scroll is a
+            // guaranteed dropped frame on touchscreens.
+            img.decoding = 'async';
+            img.loading = 'lazy';
             hotspotOverlayImagesEl.appendChild(img);
         });
     }
@@ -2107,6 +2112,7 @@ async function renderSlideshow(dirPath) {
 
     const imgEl = document.createElement('img');
     imgEl.className = 'slideshow-image';
+    imgEl.decoding = 'async';  // decode off the main thread — smoother slideshow advance
     imgWrapper.appendChild(imgEl);
 
     const prevBtn = document.createElement('button');
@@ -2363,6 +2369,12 @@ function openHotspotOverlay(content, variant, iconSrc) {
     buildDeepDiveButtons(content);
 
     hotspotOverlayEl.style.display = 'flex';
+
+    // Stop the WebGL render loop while the overlay is up. The 3D scene is
+    // completely covered, so drawing it every frame just steals main-thread
+    // time from the scroll handler and makes touch scrolling stutter. The
+    // loop is restarted in closeHotspotOverlay().
+    renderer.setAnimationLoop(null);
 }
 
 
@@ -2380,6 +2392,15 @@ function closeHotspotOverlay() {
     // getActiveModelEntry() here: the disposed entry's visible flag is false,
     // so that lookup can't find it.
     restoreModelTextures();
+
+    // Flush the accumulated pause time before restarting the loop — otherwise
+    // the first frame back gets a huge delta and the model rotation snaps.
+    // Guard against being called twice (click handler + Escape) so the loop
+    // isn't restarted over an already-running one.
+    if (renderer && !renderer.getAnimationLoop()) {
+        clock.getDelta();
+        renderer.setAnimationLoop(animate);
+    }
 
 }
 

@@ -43,6 +43,9 @@ body {
 }
 canvas {
     display: block;
+    /* OrbitControls handles all touch gestures itself — stop the browser from
+       also trying to interpret pans/pinches as scrolls or zooms. */
+    touch-action: none;
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -717,6 +720,19 @@ canvas {
     grid-template-columns: 1fr 1fr;
     column-gap: 30px;
     align-items: start;
+
+    /* ── Touchscreen scroll performance ──
+       Only vertical scroll is allowed here — no pinch, no horizontal pan, no
+       browser-interpreted rotation. This lets the compositor commit the scroll
+       immediately instead of waiting to disambiguate the gesture first. */
+    touch-action: pan-y;
+    /* Contain scroll chaining: reaching an end doesn't bounce the page behind. */
+    overscroll-behavior: contain;
+    /* Legacy iOS momentum scrolling; harmless on other platforms. */
+    -webkit-overflow-scrolling: touch;
+    /* Promote to its own compositor layer so scrolling runs off the main
+       thread even while other things (image decode, model restore) happen. */
+    will-change: transform;
 }
 #hotspot-overlay-text {
     grid-column: 1;
@@ -728,6 +744,16 @@ canvas {
 }
 #hotspot-overlay-text > :first-child {
     margin-top: 0;
+}
+
+/* Skip layout and paint for paragraphs that are scrolled offscreen. For the
+   long deep-dive texts (e.g. Accommodation Specifications) this avoids the
+   browser measuring and drawing content the user can't see — a real win
+   when scrolling on a weak GPU. contain-intrinsic-size is a placeholder
+   height so the scrollbar doesn't jump as content is measured on entry. */
+#hotspot-overlay-text > * {
+    content-visibility: auto;
+    contain-intrinsic-size: 1px 300px;
 }
 
 #hotspot-overlay-images {

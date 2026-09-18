@@ -339,7 +339,7 @@ The VSP system requires approximately 15–22% less power than alternative propu
                 '•  Clear separation of work, recreation and private living, with the layout designed around the daily workflow of personnel\n' +
                 '•  Over 180 sqm of gym and wellness facilities across two decks, including a dedicated spa and treatment area, supporting health, mobility and recovery\n' +
                 '•  Dedicated C-Deck leisure area with library, sports bar and lounge, providing space to switch off and recharge',
-            images: ['static/images/f6acommodations/cabins-a.jpg', 'static/images/f6acommodations/cabins-b.jpg'],
+            images: ['static/images/f6acommodations/collage.jpg'],
             deepDives: [
                 {title: 'Slideshow', slideshow: 'static/images/accommodation'},
                 {
