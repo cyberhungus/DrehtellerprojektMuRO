@@ -34,6 +34,8 @@ let camera, scene, renderer, controls;
 let ambientLight, directionalLight, directionalLight2,cameraLight; // hoisted so the debug-overlay light controls can reach them
 let lightVisual1, lightVisual2; // small sphere+line shown per light while the debug overlay (H) is open
 
+let renderLoopRunning = true;
+
 // Initial camera settings (edit these to change the starting view)
 const initialCameraPosition = new THREE.Vector3(-2.52, 0.67, 0);
 let initialTargetY = 0.25; // desired initial look height (controls.target.y)
@@ -45,7 +47,7 @@ let currentModelZ = 0;
 
 // Toggle which boat models are loaded/active — index 0 = Boot 1, index 1 = Boot 2, etc.
 // Set to false to skip loading that model entirely (useful for testing/debugging).
-let modelEnabled = [true, true, true, true, true,true,true,true,true];
+let modelEnabled = [true, true, true, false,false,false,true,false,false];
 
 
 
@@ -2370,14 +2372,14 @@ function openHotspotOverlay(content, variant, iconSrc) {
 
     hotspotOverlayEl.style.display = 'flex';
 
-    // Stop the WebGL render loop while the overlay is up. The 3D scene is
-    // completely covered, so drawing it every frame just steals main-thread
-    // time from the scroll handler and makes touch scrolling stutter. The
-    // loop is restarted in closeHotspotOverlay().
-    renderer.setAnimationLoop(null);
+    // Stop the WebGL render loop while the overlay is up — the 3D scene is
+    // fully covered, so drawing it every frame just steals main-thread time
+    // from the scroll handler. Restarted in closeHotspotOverlay().
+    if (renderLoopRunning) {
+        renderer.setAnimationLoop(null);
+        renderLoopRunning = false;
+    }
 }
-
-
 
 function closeHotspotOverlay() {
 
@@ -2388,21 +2390,19 @@ function closeHotspotOverlay() {
     const video = hotspotOverlayImagesEl.querySelector('video');
     if (video) video.pause();
 
-    // No argument — falls back to whichever entry was disposed. Do NOT use
-    // getActiveModelEntry() here: the disposed entry's visible flag is false,
-    // so that lookup can't find it.
     restoreModelTextures();
 
-    // Flush the accumulated pause time before restarting the loop — otherwise
-    // the first frame back gets a huge delta and the model rotation snaps.
-    // Guard against being called twice (click handler + Escape) so the loop
-    // isn't restarted over an already-running one.
-    if (renderer && !renderer.getAnimationLoop()) {
+    // Restart the loop only if we're the ones who stopped it. Flush the
+    // accumulated pause time first so the first frame back doesn't see a
+    // huge delta and snap the model rotation.
+    if (!renderLoopRunning) {
         clock.getDelta();
         renderer.setAnimationLoop(animate);
+        renderLoopRunning = true;
     }
-
 }
+
+
 
 function registerHotspotsForModel(modelIndex, object3D) {
 

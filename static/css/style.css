@@ -223,9 +223,9 @@ canvas {
     position: absolute;
     top: 45px;
     left: 0;
-    width: 90%;
-    height: calc(90% - 40px);
-    object-fit: cover;
+    width: 100%;
+    height: calc(100% - 40px);
+    object-fit: scale-down;
     pointer-events: none;
 }
 .model-toggle-label {

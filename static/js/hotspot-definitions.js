@@ -612,7 +612,8 @@ The VSP system requires approximately 15–22% less power than alternative propu
 
 export const WALK_TO_WORK_BLUE = {
     id: '1-2-gangway-ende-2',
-    localPosition: new THREE.Vector3(-0.24, 0.7, -0.08),
+    // "Gangway blue — normal" position (base Walk-to-Work model, index 6)
+    localPosition: new THREE.Vector3(-0.218, 0.57, -0.56),
     minAngle: 195,
     maxAngle: 345,
     variant: 'blue',
@@ -774,7 +775,11 @@ export const hotspotDefinitions = {
 
     11: [ // Boot 1, variant 1
         ...SHARED_GREEN_HOTSPOTS,
-        WALK_TO_WORK_BLUE,
+        // "Gangway blue — variant" position for this model
+        {
+            ...WALK_TO_WORK_BLUE,
+            localPosition: new THREE.Vector3(0.061, 0.57, -0.217)
+        },
         DAUGHTER_CRAFT_BLUE,
         {
             id: 'boot1-1-switch-back-to-boot1',
@@ -948,11 +953,12 @@ For cable repair the DO C-CSOV provides the following key capabilities:
 
     6: [ // Boot 7 — Walk to Work
         ...SHARED_GREEN_HOTSPOTS,
-        WALK_TO_WORK_BLUE,
+        WALK_TO_WORK_BLUE,           // "Gangway blue — normal" position
         DAUGHTER_CRAFT_BLUE,
         {
             id: 'boot7-switch-to-variant',
-            localPosition: new THREE.Vector3(-0.37, 0.579, -1.064),
+            // "Gangway pink" position
+            localPosition: new THREE.Vector3(-0.208, 0.587, -0.899),
             minAngle: 0,
             maxAngle: 359,
             variant: 'pink',
@@ -963,11 +969,16 @@ For cable repair the DO C-CSOV provides the following key capabilities:
 
     71: [ // Boot 7, variant 1
         ...SHARED_GREEN_HOTSPOTS,
-        WALK_TO_WORK_BLUE,
+        // "Gangway blue — variant" position for this model
+        {
+            ...WALK_TO_WORK_BLUE,
+            localPosition: new THREE.Vector3(0.061, 0.57, -0.217)
+        },
         DAUGHTER_CRAFT_BLUE,
         {
             id: 'boot7-1-switch-back-to-boot7',
-            localPosition: new THREE.Vector3(-0.37, 0.579, -1.064),
+            // "Gangway pink" position
+            localPosition: new THREE.Vector3(-0.208, 0.587, -0.899),
             minAngle: 0,
             maxAngle: 359,
             variant: 'pink',
