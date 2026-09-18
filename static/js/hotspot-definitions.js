@@ -613,9 +613,9 @@ The VSP system requires approximately 15–22% less power than alternative propu
 export const WALK_TO_WORK_BLUE = {
     id: '1-2-gangway-ende-2',
     // "Gangway blue — normal" position (base Walk-to-Work model, index 6)
-    localPosition: new THREE.Vector3(-0.218, 0.57, -0.56),
-    minAngle: 195,
-    maxAngle: 345,
+     localPosition: new THREE.Vector3(0.091, 0.8, -0.217),
+    minAngle: 130,
+    maxAngle: 250,
     variant: 'blue',
     icon: 'static/images/icons/hotspot-icon-blue.png',
     content: {
@@ -958,7 +958,7 @@ For cable repair the DO C-CSOV provides the following key capabilities:
         {
             id: 'boot7-switch-to-variant',
             // "Gangway pink" position
-            localPosition: new THREE.Vector3(-0.208, 0.587, -0.899),
+            localPosition: new THREE.Vector3(-0.15, 1, -1.05),
             minAngle: 0,
             maxAngle: 359,
             variant: 'pink',
@@ -978,7 +978,7 @@ For cable repair the DO C-CSOV provides the following key capabilities:
         {
             id: 'boot7-1-switch-back-to-boot7',
             // "Gangway pink" position
-            localPosition: new THREE.Vector3(-0.208, 0.587, -0.899),
+       localPosition: new THREE.Vector3(-0.15, 1, -1.05),
             minAngle: 0,
             maxAngle: 359,
             variant: 'pink',
