@@ -58,7 +58,6 @@ let modelEnabled = [true, true, true, false,false,false,true,false,false];
 
 
 
-
 // Live-editable min/max controls for the active model's hotspots (debug overlay)
 let hotspotRangeControlsEl;
 let hotspotRangeRows = new Map(); // id -> {minInput, maxInput}
@@ -118,6 +117,29 @@ const moveSpeed = 5; // units per second, tune to your scene scale
 // keyboard-driven camera movement entirely (e.g. for kiosk deployments where
 // only mouse rotation or the encoder should control the camera).
 let keyboardMovementEnabled = true;
+
+// One press of a rotate button (or N/M key) nudges targetYaw by this much.
+// The existing lerp in updateModelRotations() smooths the motion, so the
+// model glides to the new angle instead of snapping. 45° = 8 presses per
+// full turn — adjust to taste.
+const ROTATION_STEP = THREE.MathUtils.degToRad(45);
+
+// -------------------------------------------------------------------------
+// RECORDING / PERFORMANCE TUNING
+// -------------------------------------------------------------------------
+// TIME_SCALE slows every delta-driven animation (model rotation, camera
+// movement, rotate buttons). 0.1 = one-tenth speed → record, then speed the
+// footage back up 10× in your editor. Motion stays perfectly smooth after
+// the speed-up because every animation is delta-driven, not frame-driven.
+let TIME_SCALE = 1;
+
+// TARGET_FPS caps how often the scene is actually rendered. A steady low
+// framerate (e.g. 15) looks far better after speeding up than a jittery
+// high one. 0 = uncapped (native rAF rate).
+let TARGET_FPS = 30;
+
+// Accumulator for the frame cap — reset every time we actually draw.
+let _frameAccumulator = 0;
 
 const clock = new THREE.Clock();
 
@@ -372,6 +394,7 @@ function buildHotspotRangeControls() {
     initMouseRotationToggle();
     initLogoClick();
     initHotspotPlacementMode();
+    // initRotationButtons();
 
 })();
 
@@ -456,6 +479,12 @@ function initKeyboardControls() {
 }
 function onKeyDown(event) {
 
+    // Ignore key events fired while the user is typing in a number/text field
+    // (e.g. the debug overlay's hotspot-angle inputs) so N/M don't spin the
+    // model mid-edit.
+    const tag = event.target && event.target.tagName;
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || (event.target && event.target.isContentEditable)) return;
+
     if (!keyboardMovementEnabled) return;
 
     switch (event.code) {
@@ -481,6 +510,18 @@ function onKeyDown(event) {
             break;
         case 'KeyE':
             moveState.up = true;
+            break;
+
+        // N / M — each *press* steps the model 45° (see ROTATION_STEP).
+        // `event.repeat` is true for OS key-repeat events that fire while
+        // the key is physically held, so we skip those — one physical press
+        // = one 45° step, not a burst. The existing lerp in
+        // updateModelRotations() smooths the motion to the new target.
+        case 'KeyN':
+            if (!event.repeat) targetYaw -= ROTATION_STEP;
+            break;
+        case 'KeyM':
+            if (!event.repeat) targetYaw += ROTATION_STEP;
             break;
 
     }
@@ -513,6 +554,8 @@ function onKeyUp(event) {
         case 'KeyE':
             moveState.up = false;
             break;
+
+        // N / M need no cleanup — they act on keydown only, no held state.
 
     }
 
@@ -1188,7 +1231,22 @@ function onWindowResize() {
 
 function animate() {
 
-    const delta = clock.getDelta();
+    const rawDelta = clock.getDelta();
+    _frameAccumulator += rawDelta;
+
+    // Frame cap — if not enough real time has passed, skip this rAF tick
+    // entirely (no update, no draw, no GPU work). rAF will call us again.
+    const frameInterval = TARGET_FPS > 0 ? 1 / TARGET_FPS : 0;
+    if (frameInterval > 0 && _frameAccumulator < frameInterval) {
+        return;
+    }
+
+    // Cap delta so a long stall (tab backgrounded, GC pause, etc.) doesn't
+    // cause one gigantic jump when rendering resumes, then apply TIME_SCALE.
+    // With TIME_SCALE = 0.1 the scene animates at one-tenth real speed —
+    // record at normal capture rate, then speed the footage up 10× in edit.
+    const delta = Math.min(_frameAccumulator, 0.1) * TIME_SCALE;
+    _frameAccumulator = 0;
 
     updateModelRotations(delta); // rotates every registered model toward targetYaw
 
@@ -1517,17 +1575,15 @@ function initDebugOverlay() {
     debugModelRotEl = document.getElementById('debug-model-rot');
 
     // Rotate-left/right buttons live in the HTML template (#rotate-left-btn /
-    // #rotate-right-btn) — just wire them up here. They nudge targetYaw, reusing the
-    // existing smooth lerp-based rotation in updateModelRotations() rather than
-    // snapping the model instantly.
-    const rotateStep = THREE.MathUtils.degToRad(15); // degrees per click — adjust to taste
-
+    // #rotate-right-btn) — each click steps targetYaw by ROTATION_STEP (45°),
+    // reusing the existing smooth lerp-based rotation in updateModelRotations()
+    // rather than snapping the model instantly.
     document.getElementById('rotate-left-btn').addEventListener('click', () => {
-        targetYaw -= rotateStep;
+        targetYaw -= ROTATION_STEP;
     });
 
     document.getElementById('rotate-right-btn').addEventListener('click', () => {
-        targetYaw += rotateStep;
+        targetYaw += ROTATION_STEP;
     });
 
     window.addEventListener('keydown', (event) => {
@@ -2412,6 +2468,7 @@ function closeHotspotOverlay() {
     // huge delta and snap the model rotation.
     if (!renderLoopRunning) {
         clock.getDelta();
+        _frameAccumulator = 0;
         renderer.setAnimationLoop(animate);
         renderLoopRunning = true;
     }
@@ -2892,6 +2949,81 @@ function toggleMouseRotationMode() {
     }
 
     updateMouseRotationToggleVisual();
+
+}
+
+// ---------------------------------------------------------------------------
+// Persistent on-screen rotate buttons (click to spin 45° per press).
+// Both feed `targetYaw`, so the existing updateModelRotations() lerp smooths
+// the motion automatically — no extra tweening needed here.
+// NOTE: currently NOT called from bootstrap() (see `// initRotationButtons();`).
+// N/M keyboard keys still work independently.
+// ---------------------------------------------------------------------------
+function initRotationButtons() {
+
+    const wrap = document.createElement('div');
+    wrap.id = 'rotation-buttons';
+    wrap.style.cssText = `
+        position: fixed;
+        left: 50%;
+        bottom: 24px;
+        transform: translateX(-50%);
+        display: flex;
+        gap: 12px;
+        z-index: 50;
+        pointer-events: auto;
+    `;
+
+    function makeButton(direction, iconSrc, label) {
+        const btn = document.createElement('button');
+        btn.className = `rotation-btn rotation-btn--${direction}`;
+        btn.setAttribute('aria-label', label);
+        btn.style.cssText = `
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(0, 0, 0, 0.55);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+            padding: 0;
+            transition: background 120ms ease;
+        `;
+
+        const icon = document.createElement('img');
+        icon.src = iconSrc;
+        icon.alt = '';
+        icon.draggable = false;
+        icon.style.cssText = 'width:24px;height:24px;pointer-events:none;filter:invert(1);';
+        btn.appendChild(icon);
+
+        // One press = one 45° step. Uses the native 'click' event so it works
+        // identically for mouse, touch, and pointer input.
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            targetYaw += (direction === 'left' ? -ROTATION_STEP : ROTATION_STEP);
+
+            // Brief visual feedback.
+            btn.style.background = 'rgba(0, 0, 0, 0.8)';
+            setTimeout(() => {
+                btn.style.background = 'rgba(0, 0, 0, 0.55)';
+            }, 120);
+        });
+
+        wrap.appendChild(btn);
+    }
+
+    // Reuses the same chevron icons the slideshow already uses.
+    makeButton('left',  'static/images/icons/chevron-left.svg',  'Modell 45° nach links drehen');
+    makeButton('right', 'static/images/icons/chevron-right.svg', 'Modell 45° nach rechts drehen');
+
+    document.body.appendChild(wrap);
 
 }
 

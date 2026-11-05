@@ -247,12 +247,12 @@
 </div>
 
 <script type="importmap">
-    {
-      "imports": {
-        "three": "https://unpkg.com/three@0.170.0/build/three.module.js",
-        "three/addons/": "https://unpkg.com/three@0.170.0/examples/jsm/"
-      }
-    }
+{
+  "imports": {
+    "three": "{{ url_for('static', filename='js/vendor/three/build/three.module.js') }}",
+    "three/addons/": "{{ url_for('static', filename='js/vendor/three/examples/jsm/') }}"
+  }
+}
 </script>
 
 <script type="module" src="{{ url_for('static', filename='js/main.js') }}"></script>
