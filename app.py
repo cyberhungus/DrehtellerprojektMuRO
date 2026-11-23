@@ -39,7 +39,7 @@ CORS(app)
 
 # ---- Serial configuration ----
 SERIAL_BAUD = 115200
-SERIAL_PORT_FILTER = None      # e.g. "arduino" / "usb serial" to pick a specific port by description
+SERIAL_PORT_FILTER = "26"      # e.g. "arduino" / "usb serial" to pick a specific port by description
 SENSOR_STALE_AFTER = 1.0       # seconds without a valid reading before the sensor counts as lost
 
 # ---- Angle configuration ----
@@ -53,7 +53,7 @@ SENSOR_STALE_AFTER = 1.0       # seconds without a valid reading before the sens
 # ANGLE_FILTER_ALPHA: 1.0 = no smoothing; lower (e.g. 0.3) = smoother but laggier.
 # ACTIVITY_THRESHOLD_DEG: angle change that counts as "someone touched/spun the object"
 #                         (suppresses the screensaver on the frontend).
-ROTATION_DIRECTION = 1
+ROTATION_DIRECTION = -1
 ANGLE_OFFSET = 0.0
 ROTATION_MULTIPLIER = 1.0
 ANGLE_FILTER_ALPHA = 1.0

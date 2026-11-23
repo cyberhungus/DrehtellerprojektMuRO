@@ -31,6 +31,7 @@
   .row {
     display: flex;
     justify-content: space-between;
+    align-items: center;
     padding: 5px 0;
     border-bottom: 1px solid #1f262d;
     font-size: 0.92rem;
@@ -46,7 +47,7 @@
   }
   .status-on { background: #3ddc84; }
   .status-off { background: #e5484d; }
-  input[type=number] {
+  input[type=number], select {
     background: #0d1116;
     border: 1px solid #2a323a;
     color: #e6e6e6;
@@ -66,46 +67,45 @@
     margin-left: 8px;
   }
   button:hover { background: #4a82f0; }
+  button.secondary { background: #3a4450; }
+  button.secondary:hover { background: #4a5664; }
   .saved-flash { color: #3ddc84; font-size: 0.8rem; margin-left: 10px; opacity: 0; transition: opacity 0.3s; }
-  #camera-snapshot-img {
-    display: none;
-    width: 100%;
-    margin-top: 12px;
-    border-radius: 6px;
-    border: 1px solid #262e36;
-  }
+  .error-flash { color: #e5484d; font-size: 0.8rem; margin-left: 10px; }
+
+  /* Angle dial */
+  .dial-wrap { display: flex; justify-content: center; padding: 4px 0 12px; }
+  #dial { width: 160px; height: 160px; }
+  .dial-ring { fill: none; stroke: #2a323a; stroke-width: 2; }
+  .dial-tick { stroke: #3a4450; stroke-width: 2; }
+  .dial-needle { stroke: #2f6fed; stroke-width: 3; stroke-linecap: round; transition: none; }
+  .dial-hub { fill: #2f6fed; }
+  .dial-text { fill: #e6e6e6; font-family: monospace; font-size: 16px; text-anchor: middle; }
 </style>
 </head>
 <body>
 
 <h1>Backend Debug</h1>
-<div class="subtitle">Live telemetry — auto-refreshes every 500ms</div>
+<div class="subtitle">Live telemetry — auto-refreshes every 250ms</div>
 
 <div class="card">
-  <h2>Camera</h2>
-  <div class="row"><span class="label">Active</span>
-    <span class="value"><span id="cam-dot" class="status-dot"></span><span id="cam-active">—</span></span></div>
-  <div class="row"><span class="label">Index</span><span class="value" id="cam-index">—</span></div>
-  <div class="row"><span class="label">Resolution</span><span class="value" id="cam-resolution">—</span></div>
-  <div class="row"><span class="label">Exposure (requested / actual)</span><span class="value" id="cam-exposure">—</span></div>
-  <div class="row"><span class="label">Gain (requested / actual)</span><span class="value" id="cam-gain">—</span></div>
-</div>
-
-<div class="card">
-  <h2>Camera Image</h2>
-  <div class="row" style="border-bottom: none;">
-    <span class="label">Live snapshot</span>
-    <span class="value"><button onclick="toggleCameraImage()" id="camera-toggle-btn">Show</button></span>
+  <h2>Angle (AS5047P)</h2>
+  <div class="dial-wrap">
+    <svg id="dial" viewBox="-100 -100 200 200">
+      <circle class="dial-ring" r="80"></circle>
+      <line class="dial-tick" x1="0" y1="-80" x2="0" y2="-70"></line>
+      <line class="dial-tick" x1="80" y1="0" x2="70" y2="0"></line>
+      <line class="dial-tick" x1="0" y1="80" x2="0" y2="70"></line>
+      <line class="dial-tick" x1="-80" y1="0" x2="-70" y2="0"></line>
+      <line id="dial-needle" class="dial-needle" x1="0" y1="0" x2="0" y2="-68"></line>
+      <circle class="dial-hub" r="5"></circle>
+      <text id="dial-text" class="dial-text" x="0" y="40">—</text>
+    </svg>
   </div>
-  <!-- No request to /api/camera_snapshot is made until the button above is clicked. -->
-  <img id="camera-snapshot-img" alt="Latest camera frame">
-</div>
-
-<div class="card">
-  <h2>Markers</h2>
-  <div class="row"><span class="label">Last detected</span><span class="value" id="last-markers">—</span></div>
-  <div class="row"><span class="label">Last marker time</span><span class="value" id="last-marker-time">—</span></div>
-  <div class="row"><span class="label">Current yaw</span><span class="value" id="current-yaw">—</span></div>
+  <div class="row"><span class="label">Sensor</span>
+    <span class="value"><span id="sensor-dot" class="status-dot"></span><span id="sensor-ok">—</span></span></div>
+  <div class="row"><span class="label">Final yaw (sent to frontend)</span><span class="value" id="current-yaw">—</span></div>
+  <div class="row"><span class="label">Raw sensor angle</span><span class="value" id="raw-angle">—</span></div>
+  <div class="row"><span class="label">Magnitude</span><span class="value" id="magnitude">—</span></div>
 </div>
 
 <div class="card">
@@ -118,46 +118,73 @@
 </div>
 
 <div class="card">
+  <h2>Calibration</h2>
+  <div class="row">
+    <span class="label">Angle offset (°)</span>
+    <span class="value">
+      <input type="number" id="offset-input" step="0.1">
+      <button onclick="saveSetting('angle_offset', 'offset-input', parseFloat)">Set</button>
+    </span>
+  </div>
+  <div class="row">
+    <span class="label">Set current position as 0°</span>
+    <span class="value"><button class="secondary" onclick="calibrateZero()">Calibrate zero</button></span>
+  </div>
+  <div class="row">
+    <span class="label">Rotation direction</span>
+    <span class="value">
+      <select id="direction-input">
+        <option value="1">+1 (normal)</option>
+        <option value="-1">-1 (reversed)</option>
+      </select>
+      <button onclick="saveSetting('rotation_direction', 'direction-input', v => parseInt(v, 10))">Set</button>
+    </span>
+  </div>
+  <div class="row" style="border-bottom: none;">
+    <span class="value" id="flash-area"><span class="saved-flash" id="saved-flash">saved</span><span class="error-flash" id="error-flash"></span></span>
+  </div>
+</div>
+
+<div class="card">
   <h2>Interaction</h2>
   <div class="row">
     <span class="label">Rotation multiplier</span>
     <span class="value">
       <input type="number" id="multiplier-input" step="0.1">
-      <button onclick="saveMultiplier()">Set</button>
-      <span class="saved-flash" id="saved-flash">saved</span>
+      <button onclick="saveSetting('rotation_multiplier', 'multiplier-input', parseFloat)">Set</button>
+    </span>
+  </div>
+  <div class="row">
+    <span class="label">Smoothing alpha (1 = off)</span>
+    <span class="value">
+      <input type="number" id="alpha-input" step="0.05" min="0.01" max="1">
+      <button onclick="saveSetting('angle_filter_alpha', 'alpha-input', parseFloat)">Set</button>
     </span>
   </div>
 </div>
 
 <script>
-let userIsEditingMultiplier = false;
-document.getElementById('multiplier-input').addEventListener('focus', () => userIsEditingMultiplier = true);
-document.getElementById('multiplier-input').addEventListener('blur', () => userIsEditingMultiplier = false);
-
-// Camera snapshot: stays untouched (no network request at all) until the
-// user explicitly clicks "Show". Once shown, it rides along with the
-// existing 500ms telemetry refresh loop below to stay live; clicking
-// "Hide" stops the requests again.
-let cameraImageVisible = false;
-
-function toggleCameraImage() {
-  cameraImageVisible = !cameraImageVisible;
-  const img = document.getElementById('camera-snapshot-img');
-  const btn = document.getElementById('camera-toggle-btn');
-  img.style.display = cameraImageVisible ? 'block' : 'none';
-  btn.textContent = cameraImageVisible ? 'Hide' : 'Show';
-  if (cameraImageVisible) refreshCameraImage();
-}
-
-function refreshCameraImage() {
-  // Cache-bust so the browser doesn't just show a stale cached image.
-  document.getElementById('camera-snapshot-img').src = '/api/camera_snapshot?t=' + Date.now();
+// Inputs the user is currently editing must not be overwritten by the refresh loop.
+const editing = {};
+for (const id of ['offset-input', 'direction-input', 'multiplier-input', 'alpha-input']) {
+  const el = document.getElementById(id);
+  el.addEventListener('focus', () => editing[id] = true);
+  el.addEventListener('blur', () => editing[id] = false);
 }
 
 function fmtTime(epochSeconds) {
   if (epochSeconds === null || epochSeconds === undefined) return '—';
-  const d = new Date(epochSeconds * 1000);
-  return d.toLocaleTimeString();
+  return new Date(epochSeconds * 1000).toLocaleTimeString();
+}
+
+function fmtDeg(v, digits = 2) {
+  return (v === null || v === undefined) ? '—' : v.toFixed(digits) + '°';
+}
+
+function syncInput(id, value) {
+  if (!editing[id] && value !== null && value !== undefined) {
+    document.getElementById(id).value = value;
+  }
 }
 
 async function refresh() {
@@ -165,53 +192,72 @@ async function refresh() {
     const res = await fetch('/api/state');
     const s = await res.json();
 
-    document.getElementById('cam-active').textContent = s.camera_active ? 'Active' : 'Inactive';
-    document.getElementById('cam-dot').className = 'status-dot ' + (s.camera_active ? 'status-on' : 'status-off');
-    document.getElementById('cam-index').textContent = s.camera_index ?? '—';
-    document.getElementById('cam-resolution').textContent = s.camera_resolution ? s.camera_resolution.join(' x ') : '—';
-    document.getElementById('cam-exposure').textContent = `${s.camera_exposure_requested ?? '—'} / ${s.camera_exposure_actual ?? '—'}`;
-    document.getElementById('cam-gain').textContent = `${s.camera_gain_requested ?? '—'} / ${s.camera_gain_actual ?? '—'}`;
+    // Angle
+    const yaw = s.current_yaw ?? 0;
+    document.getElementById('current-yaw').textContent = fmtDeg(yaw);
+    document.getElementById('raw-angle').textContent = fmtDeg(s.raw_angle, 3);
+    document.getElementById('magnitude').textContent = s.magnitude ?? '—';
+    document.getElementById('sensor-ok').textContent = s.sensor_ok ? 'OK' : 'No data';
+    document.getElementById('sensor-dot').className = 'status-dot ' + (s.sensor_ok ? 'status-on' : 'status-off');
+    document.getElementById('dial-needle').setAttribute('transform', `rotate(${yaw})`);
+    document.getElementById('dial-text').textContent = yaw.toFixed(1) + '°';
 
-    document.getElementById('last-markers').textContent = (s.last_markers && s.last_markers.length) ? s.last_markers.join(', ') : 'none';
-    document.getElementById('last-marker-time').textContent = fmtTime(s.last_marker_time);
-    document.getElementById('current-yaw').textContent = (s.current_yaw ?? 0).toFixed(2) + '°';
-
+    // Serial
     document.getElementById('serial-connected').textContent = s.serial_connected ? 'Connected' : 'Disconnected';
     document.getElementById('serial-dot').className = 'status-dot ' + (s.serial_connected ? 'status-on' : 'status-off');
     document.getElementById('serial-port').textContent = s.serial_port ?? '—';
     document.getElementById('last-serial-line').textContent = s.last_serial_line ?? '—';
     document.getElementById('last-serial-time').textContent = fmtTime(s.last_serial_time);
 
-    if (!userIsEditingMultiplier) {
-      document.getElementById('multiplier-input').value = s.rotation_multiplier ?? 1.0;
-    }
-
-    if (cameraImageVisible) {
-      refreshCameraImage();
-    }
-
+    // Settings
+    syncInput('offset-input', s.angle_offset !== undefined ? Number(s.angle_offset).toFixed(2) : null);
+    syncInput('direction-input', s.rotation_direction);
+    syncInput('multiplier-input', s.rotation_multiplier);
+    syncInput('alpha-input', s.angle_filter_alpha);
   } catch (e) {
     console.error('Failed to fetch state:', e);
   }
 }
 
-async function saveMultiplier() {
-  const value = parseFloat(document.getElementById('multiplier-input').value);
-  if (isNaN(value)) return;
+function flash(ok, message) {
+  const saved = document.getElementById('saved-flash');
+  const err = document.getElementById('error-flash');
+  if (ok) {
+    err.textContent = '';
+    saved.style.opacity = 1;
+    setTimeout(() => saved.style.opacity = 0, 1000);
+  } else {
+    err.textContent = message || 'error';
+    setTimeout(() => err.textContent = '', 3000);
+  }
+}
 
-  await fetch('/api/settings', {
+async function postSettings(payload) {
+  const res = await fetch('/api/settings', {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({rotation_multiplier: value})
+    body: JSON.stringify(payload)
   });
+  const body = await res.json().catch(() => ({}));
+  flash(res.ok, body.error);
+  return res.ok;
+}
 
-  const flash = document.getElementById('saved-flash');
-  flash.style.opacity = 1;
-  setTimeout(() => flash.style.opacity = 0, 1000);
+async function saveSetting(key, inputId, parse) {
+  const value = parse(document.getElementById(inputId).value);
+  if (typeof value === 'number' && isNaN(value)) return;
+  editing[inputId] = false;
+  await postSettings({[key]: value});
+  refresh();
+}
+
+async function calibrateZero() {
+  await postSettings({calibrate_zero: true});
+  refresh();
 }
 
 refresh();
-setInterval(refresh, 500);
+setInterval(refresh, 250);
 </script>
 
 </body>

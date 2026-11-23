@@ -69,6 +69,13 @@ let mouseRotationToggleIconEl; // <-- moved up here
 let mouseRotationSavedCameraState = null; // camera position/rotation/target, restored on toggle-off
 
 
+// Ghost mode — makes the boat models see-through. Persists across model switches.
+let ghostModeEnabled = false;
+let ghostToggleBtn;
+const GHOST_OPACITY = 0.25;   // tune to taste
+
+
+
 // Global 3D offset applied to every hotspot marker, in the pivot's local space.
 // Adding (0.1, 0, 0) moves every marker 0.1 units along the pivot's +X axis —
 // same unit system the hotspot localPosition values use. Adjustable via the
@@ -395,7 +402,7 @@ function buildHotspotRangeControls() {
     initLogoClick();
     initHotspotPlacementMode();
     // initRotationButtons();
-
+initGhostToggle();
 })();
 
 // Queries the backend for --final mode and, if enabled, overrides the three
@@ -1352,6 +1359,63 @@ function runScreensaverCycle(showingA) {
 
         // No recursive call → cycle stops after this single transition
     }, screensaverImageHoldTime);
+}
+
+
+function applyGhostToEntry(entry) {
+    if (!entry || !entry.object) return;
+
+    entry.materials.forEach((mat) => {
+        mat.opacity = ghostModeEnabled ? GHOST_OPACITY : 1;
+        // depthWrite off so the inside of the ghosted model stays visible
+        // instead of being hidden by its own outer surfaces.
+        mat.depthWrite = !ghostModeEnabled;
+        mat.needsUpdate = true;
+    });
+
+    // A transparent model would otherwise still cast a fully solid shadow.
+    entry.object.traverse((node) => {
+        if (node.isMesh) node.castShadow = !ghostModeEnabled;
+    });
+}
+
+function applyGhostToAllModels() {
+    toggleableModels.forEach(applyGhostToEntry);
+}
+
+function initGhostToggle() {
+    ghostToggleBtn = document.createElement('button');
+    ghostToggleBtn.id = 'ghost-toggle';
+    ghostToggleBtn.className = 'inactive';
+    ghostToggleBtn.title = 'Ghost-Modus';
+    ghostToggleBtn.textContent = '👻';
+    // Inline fallback styling — move to your CSS if you prefer, and
+    // adjust `top` so it doesn't overlap #mouse-rotation-toggle.
+    ghostToggleBtn.style.cssText = `
+        position: fixed;
+        top: 90px;
+        right: 20px;
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        border: none;
+        font-size: 22px;
+        cursor: pointer;
+        z-index: 50;
+        background: rgba(0, 0, 0, 0.55);
+        touch-action: manipulation;
+        transition: opacity 150ms ease;
+    `;
+
+    ghostToggleBtn.addEventListener('click', (event) => {
+        event.stopPropagation();
+        ghostModeEnabled = !ghostModeEnabled;
+        ghostToggleBtn.style.opacity = ghostModeEnabled ? '1' : '0.5';
+        applyGhostToAllModels();
+    });
+
+    ghostToggleBtn.style.opacity = '0.5';
+    document.body.appendChild(ghostToggleBtn);
 }
 
 function hideScreensaver() {
